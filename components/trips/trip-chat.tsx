@@ -16,7 +16,9 @@ import {
   Pin,
   Reply,
   X,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Download,
+  File as FileIcon
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -25,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PinnedMessages } from './pinned-messages';
+import { EmojiPicker } from './emoji-picker';
 
 type Message = {
   id: string;
@@ -48,6 +51,7 @@ type Message = {
     type: 'image' | 'file';
     url: string;
     name: string;
+    size?: number;
   }[];
 };
 
@@ -125,9 +129,11 @@ export function TripChat({ tripId, members }: TripChatProps) {
 
   const [newMessage, setNewMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
 
@@ -145,6 +151,23 @@ export function TripChat({ tripId, members }: TripChatProps) {
       setSelectedImages([...selectedImages, ...filesArray]);
       setImagePreviewUrls([...imagePreviewUrls, ...newImagePreviewUrls]);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedFiles([...selectedFiles, ...filesArray]);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    const newSelectedFiles = [...selectedFiles];
+    newSelectedFiles.splice(index, 1);
+    setSelectedFiles(newSelectedFiles);
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setNewMessage(prev => prev + emoji);
   };
 
   const handleRemoveImage = (index: number) => {
@@ -190,20 +213,36 @@ export function TripChat({ tripId, members }: TripChatProps) {
   };
 
   const handleSendMessage = async () => {
-    if ((!newMessage.trim() && selectedImages.length === 0) || !user) return;
+    if ((!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0) || !user) return;
 
-    // Create attachments from selected images
-    const attachments = selectedImages.length > 0
-      ? await Promise.all(selectedImages.map(async (file, index) => {
-          // In a real app, you would upload the file to a server and get a URL
-          // For now, we'll just use the object URL
-          return {
-            type: 'image' as const,
-            url: imagePreviewUrls[index],
-            name: file.name,
-          };
-        }))
-      : undefined;
+    // Create attachments from selected images and files
+    let attachments = [];
+
+    // Add images to attachments
+    if (selectedImages.length > 0) {
+      const imageAttachments = await Promise.all(selectedImages.map(async (file, index) => {
+        // In a real app, you would upload the file to a server and get a URL
+        // For now, we'll just use the object URL
+        return {
+          type: 'image' as const,
+          url: imagePreviewUrls[index],
+          name: file.name,
+          size: file.size,
+        };
+      }));
+      attachments.push(...imageAttachments);
+    }
+
+    // Add files to attachments
+    if (selectedFiles.length > 0) {
+      const fileAttachments = selectedFiles.map(file => ({
+        type: 'file' as const,
+        url: URL.createObjectURL(file), // In a real app, this would be a server URL
+        name: file.name,
+        size: file.size,
+      }));
+      attachments.push(...fileAttachments);
+    }
 
     const message: Message = {
       id: Date.now().toString(),
@@ -230,6 +269,7 @@ export function TripChat({ tripId, members }: TripChatProps) {
     setMessages([...messages, message]);
     setNewMessage('');
     setSelectedImages([]);
+    setSelectedFiles([]);
     setImagePreviewUrls([]);
     setReplyingTo(null);
   };
@@ -310,9 +350,26 @@ export function TripChat({ tripId, members }: TripChatProps) {
                             />
                           </div>
                         ) : (
-                          <div key={index} className="flex items-center gap-2 text-sm">
-                            <Paperclip className="h-4 w-4" />
-                            <span>{attachment.name}</span>
+                          <div key={index} className="flex items-center justify-between gap-2 text-sm bg-secondary-foreground/10 p-2 rounded">
+                            <div className="flex items-center gap-2">
+                              <FileIcon className="h-4 w-4" />
+                              <div className="flex flex-col">
+                                <span className="truncate max-w-[150px]">{attachment.name}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {attachment.size ? `${Math.round(attachment.size / 1024)} KB` : ''}
+                                </span>
+                              </div>
+                            </div>
+                            <a
+                              href={attachment.url}
+                              download={attachment.name}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 hover:bg-secondary-foreground/20 rounded"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Download className="h-3 w-3" />
+                            </a>
                           </div>
                         )
                       ))}
@@ -349,20 +406,51 @@ export function TripChat({ tripId, members }: TripChatProps) {
       <div className="p-4 border-t border-purple-100 dark:border-purple-900">
         {/* Image preview area */}
         {imagePreviewUrls.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
-            {imagePreviewUrls.map((url, index) => (
-              <div key={index} className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary">
-                <img src={url} alt="preview" className="w-full h-full object-cover" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-0 right-0 h-5 w-5 p-0 bg-black/50 rounded-full"
-                  onClick={() => handleRemoveImage(index)}
-                >
-                  <X className="h-3 w-3 text-white" />
-                </Button>
-              </div>
-            ))}
+          <div className="mb-3">
+            <div className="text-xs text-muted-foreground mb-1">Hình ảnh ({imagePreviewUrls.length})</div>
+            <div className="flex flex-wrap gap-2">
+              {imagePreviewUrls.map((url, index) => (
+                <div key={index} className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary">
+                  <img src={url} alt="preview" className="w-full h-full object-cover" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-0 right-0 h-5 w-5 p-0 bg-black/50 rounded-full"
+                    onClick={() => handleRemoveImage(index)}
+                  >
+                    <X className="h-3 w-3 text-white" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* File preview area */}
+        {selectedFiles.length > 0 && (
+          <div className="mb-3">
+            <div className="text-xs text-muted-foreground mb-1">Tệp đính kèm ({selectedFiles.length})</div>
+            <div className="space-y-2">
+              {selectedFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-2 rounded bg-secondary/50">
+                  <div className="flex items-center gap-2">
+                    <FileIcon className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex flex-col">
+                      <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                      <span className="text-xs text-muted-foreground">{Math.round(file.size / 1024)} KB</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 p-0"
+                    onClick={() => handleRemoveFile(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -397,22 +485,33 @@ export function TripChat({ tripId, members }: TripChatProps) {
             accept="image/*"
             multiple
             className="hidden"
-            ref={fileInputRef}
+            ref={imageInputRef}
             onChange={handleImageChange}
+          />
+          <input
+            type="file"
+            multiple
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleFileChange}
           />
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => imageInputRef.current?.click()}
+            title="Tải lên hình ảnh"
           >
             <ImageIcon className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            title="Đính kèm tệp"
+          >
             <Paperclip className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
-            <Smile className="h-5 w-5" />
-          </Button>
+          <EmojiPicker onEmojiSelect={handleEmojiSelect} />
 
           <Input
             placeholder="Nhập tin nhắn..."
@@ -424,7 +523,7 @@ export function TripChat({ tripId, members }: TripChatProps) {
 
           <Button
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() && selectedImages.length === 0}
+            disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
             className="bg-purple-600 hover:bg-purple-700 text-white"
           >
             <SendHorizontal className="h-5 w-5" />
