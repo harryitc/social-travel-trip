@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, Users, Clock, Globe, Lock } from 'lucide-react';
+import { InviteMembersDialog } from './invite-members-dialog';
 
 type TripDetailsProps = {
   trip: {
@@ -30,6 +32,13 @@ type TripDetailsProps = {
 };
 
 export function TripDetails({ trip }: TripDetailsProps) {
+  const [members, setMembers] = useState(trip.members.list);
+  const [memberCount, setMemberCount] = useState(trip.members.count);
+
+  const handleInviteMembers = (newMembers: typeof trip.members.list) => {
+    setMembers([...members, ...newMembers]);
+    setMemberCount(memberCount + newMembers.length);
+  };
   return (
     <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
       <Card className="lg:col-span-2 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
@@ -45,7 +54,7 @@ export function TripDetails({ trip }: TripDetailsProps) {
               className="w-full h-full object-cover"
             />
           </div>
-          
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -62,10 +71,10 @@ export function TripDetails({ trip }: TripDetailsProps) {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="h-4 w-4" />
-                <span>{trip.members.count}/{trip.members.max} thành viên</span>
+                <span>{memberCount}/{trip.members.max} thành viên</span>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 {trip.isPrivate ? (
@@ -80,7 +89,7 @@ export function TripDetails({ trip }: TripDetailsProps) {
                   </Badge>
                 )}
               </div>
-              
+
               <div className="flex flex-wrap gap-2">
                 {trip.hashtags.map((tag) => (
                   <Badge key={tag} variant="outline" className="bg-purple-100/50 hover:bg-purple-200/50 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-800/30 dark:text-purple-300 border-purple-200 dark:border-purple-800">
@@ -90,21 +99,21 @@ export function TripDetails({ trip }: TripDetailsProps) {
               </div>
             </div>
           </div>
-          
+
           <div>
             <h3 className="font-medium mb-2">Mô tả</h3>
             <p className="text-muted-foreground">{trip.description}</p>
           </div>
         </CardContent>
       </Card>
-      
+
       <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Thành viên</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {trip.members.list.map((member) => (
+            {members.map((member) => (
               <div key={member.id} className="flex items-center gap-3">
                 <Avatar>
                   <AvatarImage src={member.avatar} alt={member.name} />
@@ -115,12 +124,14 @@ export function TripDetails({ trip }: TripDetailsProps) {
                 </div>
               </div>
             ))}
-            
-            {trip.members.count < trip.members.max && (
-              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                <Users className="h-4 w-4 mr-2" />
-                Mời thêm thành viên
-              </Button>
+
+            {memberCount < trip.members.max && (
+              <InviteMembersDialog
+                tripId={trip.id}
+                currentMembers={members}
+                maxMembers={trip.members.max}
+                onInvite={handleInviteMembers}
+              />
             )}
           </div>
         </CardContent>
