@@ -33,6 +33,11 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
     shares: 3,
     createdAt: '2 giờ trước',
     hashtags: ['DaLat', 'DuLich', 'ViVuDaLat'],
+    location: 'Đà Lạt, Lâm Đồng',
+    mentions: [
+      { id: '1', name: 'Lê Hoàng' },
+      { id: '2', name: 'Ngọc Mai' }
+    ]
   },
   {
     id: '2',
@@ -53,20 +58,21 @@ Lưu ý cho ai muốn đi: nên chuẩn bị đầy đủ nước ngọt, đồ 
     shares: 4,
     createdAt: '5 giờ trước',
     hashtags: ['QuyNhon', 'CamTrai', 'BienDep'],
+    location: 'Quy Nhơn, Bình Định'
   },
 ];
 
 export function ForumFeed() {
   const [posts, setPosts] = useState(DEMO_POSTS);
-  
+
   const handleAddPost = (newPost: any) => {
     setPosts([newPost, ...posts]);
   };
-  
+
   return (
     <div className="space-y-6">
       <PostCreator onPostCreated={handleAddPost} />
-      
+
       <div className="flex items-center justify-between">
         <Tabs defaultValue="newest" className="w-auto">
           <TabsList>
@@ -75,15 +81,15 @@ export function ForumFeed() {
             <TabsTrigger value="following">Đang theo dõi</TabsTrigger>
           </TabsList>
         </Tabs>
-        
+
         <HashtagTrending />
       </div>
-      
+
       <div className="space-y-4">
         {posts.map((post) => (
           <ForumPost key={post.id} post={post} />
         ))}
-        
+
         <Button variant="outline" className="w-full">Xem thêm</Button>
       </div>
     </div>
