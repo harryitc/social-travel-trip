@@ -9,6 +9,7 @@ import {
   MessageSquare, 
   Calendar, 
   Home, 
+  MemoryStick,
   Map, 
   BookText, 
   Settings,
@@ -51,6 +52,11 @@ const sidebarItems: SidebarItem[] = [
     name: 'Blog Mini',
     path: '/blog',
     icon: <BookText className="h-5 w-5" />,
+  },
+  {
+    name: 'Memories',
+    path: '/memories',
+    icon: <MemoryStick className="h-5 w-5" />,
   },
   {
     name: 'Cài đặt',
