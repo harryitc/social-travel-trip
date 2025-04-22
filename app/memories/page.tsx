@@ -10,7 +10,7 @@ import { MapView } from '@/components/memories/map-view';
 import { TimelineView } from '@/components/memories/timeline-view';
 
 export default function MemoriesPage() {
-  const [viewMode, setViewMode] = useState<'grid' | 'timeline'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'map' | 'timeline'>('grid');
 
   return (
     <div className="container mx-auto">
@@ -41,13 +41,13 @@ export default function MemoriesPage() {
               >
                 Lưới
               </TabsTrigger>
-              {/* <TabsTrigger 
+              <TabsTrigger 
                 value="map" 
                 onClick={() => setViewMode('map')}
                 className={viewMode === 'map' ? 'bg-purple-500/10' : ''}
               >
                 Bản đồ
-              </TabsTrigger> */}
+              </TabsTrigger>
               <TabsTrigger 
                 value="timeline" 
                 onClick={() => setViewMode('timeline')}
@@ -61,7 +61,7 @@ export default function MemoriesPage() {
 
         <TabsContent value="all">
           {viewMode === 'grid' && <MemoriesGrid />}
-          {/* {viewMode === 'map' && <MapView />} */}
+          {viewMode === 'map' && <MapView />}
           {viewMode === 'timeline' && <TimelineView />}
         </TabsContent>
 
