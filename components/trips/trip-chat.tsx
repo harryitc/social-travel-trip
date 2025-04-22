@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,14 +11,15 @@ import {
   SendHorizontal,
   Image as ImageIcon,
   Paperclip,
-  Smile,
   MoreVertical,
   Pin,
   Reply,
   X,
   MessageSquareQuote,
   Download,
-  File as FileIcon
+  File as FileIcon,
+  AtSign,
+  SmilePlus
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,6 +29,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PinnedMessages } from './pinned-messages';
 import { EmojiPicker } from './emoji-picker';
+import { MentionSuggestion } from './mention-suggestion';
+import { MessageReactions } from './message-reactions';
+
+type Mention = {
+  id: string; // User ID or 'all'
+  name: string;
+  startIndex: number;
+  endIndex: number;
+};
+
+type Reaction = {
+  emoji: string;
+  count: number;
+  users: string[]; // User IDs who reacted with this emoji
+};
 
 type Message = {
   id: string;
@@ -39,6 +55,8 @@ type Message = {
   };
   timestamp: string;
   pinned?: boolean;
+  mentions?: Mention[];
+  reactions?: Reaction[];
   replyTo?: {
     id: string;
     content: string;
@@ -62,11 +80,11 @@ type Member = {
 };
 
 type TripChatProps = {
-  tripId: string;
+  tripId?: string; // Made optional since it's not used
   members: Member[];
 };
 
-export function TripChat({ tripId, members }: TripChatProps) {
+export function TripChat({ members }: TripChatProps) {
   const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -132,10 +150,16 @@ export function TripChat({ tripId, members }: TripChatProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
+  const [cursorPosition, setCursorPosition] = useState(0);
+
+  // Removed unused scrollAreaRef
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (messageEndRef.current) {
@@ -167,7 +191,152 @@ export function TripChat({ tripId, members }: TripChatProps) {
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    setNewMessage(prev => prev + emoji);
+    const beforeCursor = newMessage.substring(0, cursorPosition);
+    const afterCursor = newMessage.substring(cursorPosition);
+    const newValue = beforeCursor + emoji + afterCursor;
+    setNewMessage(newValue);
+    setCursorPosition(cursorPosition + emoji.length);
+
+    // Focus back on input and set cursor position after emoji
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+        inputRef.current.setSelectionRange(cursorPosition + emoji.length, cursorPosition + emoji.length);
+      }
+    }, 0);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const cursorPos = e.target.selectionStart || 0;
+    setCursorPosition(cursorPos);
+    setNewMessage(value);
+
+    // Check for @ symbol to trigger mention suggestions
+    const lastAtSymbolIndex = value.lastIndexOf('@', cursorPos - 1);
+    if (lastAtSymbolIndex !== -1 && (lastAtSymbolIndex === 0 || value[lastAtSymbolIndex - 1] === ' ')) {
+      const query = value.substring(lastAtSymbolIndex + 1, cursorPos);
+      if (!query.includes(' ')) {
+        setMentionQuery(query);
+        setShowMentionSuggestions(true);
+
+        // Calculate position for suggestion dropdown
+        if (inputRef.current) {
+          const inputRect = inputRef.current.getBoundingClientRect();
+          setMentionPosition({
+            top: Math.max(inputRect.top - 250, 10), // Position above the input, but at least 10px from top
+            left: inputRect.left + 10,
+          });
+        }
+        return;
+      }
+    }
+
+    setShowMentionSuggestions(false);
+  };
+
+  const handleMentionSelect = (member: Member | { id: 'all'; name: 'all'; avatar: '' }) => {
+    if (member.id === '') {
+      // This is the escape case - just close the suggestions
+      setShowMentionSuggestions(false);
+      return;
+    }
+
+    const lastAtSymbolIndex = newMessage.lastIndexOf('@', cursorPosition - 1);
+    if (lastAtSymbolIndex !== -1) {
+      const beforeMention = newMessage.substring(0, lastAtSymbolIndex);
+      const afterMention = newMessage.substring(cursorPosition);
+
+      // Use name for display but keep ID in a data attribute for processing
+      const displayName = member.id === 'all' ? 'all' : member.name;
+      const mentionText = `@${displayName}`;
+
+      // Store the actual ID in a hidden data attribute that will be parsed later
+      const newValue = beforeMention + mentionText + ' ' + afterMention;
+
+      setNewMessage(newValue);
+      setCursorPosition(lastAtSymbolIndex + mentionText.length + 1); // +1 for the space
+      setShowMentionSuggestions(false);
+
+      // Focus back on input and set cursor position after mention
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          inputRef.current.setSelectionRange(
+            lastAtSymbolIndex + mentionText.length + 1,
+            lastAtSymbolIndex + mentionText.length + 1
+          );
+        }
+      }, 0);
+    }
+  };
+
+  const handleAddReaction = (messageId: string, emoji: string) => {
+    setMessages(messages.map(message => {
+      if (message.id === messageId) {
+        const reactions = message.reactions || [];
+        const existingReaction = reactions.find(r => r.emoji === emoji);
+
+        if (existingReaction) {
+          // User already reacted with this emoji, add them again
+          if (!existingReaction.users.includes(user?.id || '')) {
+            return {
+              ...message,
+              reactions: reactions.map(r =>
+                r.emoji === emoji
+                  ? { ...r, count: r.count + 1, users: [...r.users, user?.id || ''] }
+                  : r
+              )
+            };
+          }
+          return message; // User already reacted with this emoji
+        } else {
+          // New reaction
+          return {
+            ...message,
+            reactions: [
+              ...reactions,
+              { emoji, count: 1, users: [user?.id || ''] }
+            ]
+          };
+        }
+      }
+      return message;
+    }));
+  };
+
+  const handleRemoveReaction = (messageId: string, emoji: string) => {
+    setMessages(messages.map(message => {
+      if (message.id === messageId && message.reactions) {
+        const reactions = message.reactions;
+        const existingReaction = reactions.find(r => r.emoji === emoji);
+
+        if (existingReaction && existingReaction.users.includes(user?.id || '')) {
+          if (existingReaction.count === 1) {
+            // Last reaction, remove it completely
+            return {
+              ...message,
+              reactions: reactions.filter(r => r.emoji !== emoji)
+            };
+          } else {
+            // Decrease count and remove user
+            return {
+              ...message,
+              reactions: reactions.map(r =>
+                r.emoji === emoji
+                  ? {
+                      ...r,
+                      count: r.count - 1,
+                      users: r.users.filter(id => id !== user?.id)
+                    }
+                  : r
+              )
+            };
+          }
+        }
+      }
+      return message;
+    }));
   };
 
   const handleRemoveImage = (index: number) => {
@@ -212,6 +381,102 @@ export function TripChat({ tripId, members }: TripChatProps) {
     }
   };
 
+  // Parse message content for @mentions
+  const parseMentions = (content: string): Mention[] => {
+    const mentions: Mention[] = [];
+    // Match @name pattern
+    const mentionRegex = /@([^\s]+)\b/g;
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      const mentionedName = match[1]; // The name after @
+      const startIndex = match.index;
+      const endIndex = startIndex + match[0].length;
+
+      // Handle the special case for @all
+      if (mentionedName.toLowerCase() === 'all') {
+        mentions.push({
+          id: 'all',
+          name: 'all',
+          startIndex,
+          endIndex
+        });
+        continue;
+      }
+
+      // Try to find the member by name first
+      let member = members.find(m =>
+        m.name.toLowerCase() === mentionedName.toLowerCase() ||
+        m.name === mentionedName
+      );
+
+      // If not found by name, try by ID as fallback
+      if (!member) {
+        member = members.find(m => m.id === mentionedName);
+      }
+
+      if (member) {
+        mentions.push({
+          id: member.id,
+          name: member.name,
+          startIndex,
+          endIndex
+        });
+      }
+    }
+
+    return mentions;
+  };
+
+  // Render message content with highlighted mentions
+  const renderMessageWithMentions = useCallback((message: Message) => {
+    if (!message.mentions || message.mentions.length === 0) {
+      return <span>{message.content}</span>;
+    }
+
+    const parts: JSX.Element[] = [];
+    let lastIndex = 0;
+
+    // Sort mentions by startIndex to process them in order
+    const sortedMentions = [...message.mentions].sort((a, b) => a.startIndex - b.startIndex);
+
+    sortedMentions.forEach((mention, index) => {
+      // Add text before the mention
+      if (mention.startIndex > lastIndex) {
+        parts.push(
+          <span key={`text-${index}`}>
+            {message.content.substring(lastIndex, mention.startIndex)}
+          </span>
+        );
+      }
+
+      // Add the mention with special styling
+      const mentionText = message.content.substring(mention.startIndex, mention.endIndex);
+      parts.push(
+        <span
+          key={`mention-${index}`}
+          className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded px-1 py-0.5"
+          title={mention.id === 'all' ? 'Tất cả mọi người' : `@${mention.name} (ID: ${mention.id})`}
+        >
+          {mentionText}
+        </span>
+      );
+
+      lastIndex = mention.endIndex;
+    });
+
+    // Add any remaining text after the last mention
+    if (lastIndex < message.content.length) {
+      parts.push(
+        <span key="text-end">
+          {message.content.substring(lastIndex)}
+        </span>
+      );
+    }
+
+    return <>{parts}</>;
+  }, [members]);
+
   const handleSendMessage = async () => {
     if ((!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0) || !user) return;
 
@@ -244,6 +509,9 @@ export function TripChat({ tripId, members }: TripChatProps) {
       attachments.push(...fileAttachments);
     }
 
+    // Parse mentions in the message
+    const mentions = parseMentions(newMessage);
+
     const message: Message = {
       id: Date.now().toString(),
       content: newMessage,
@@ -254,6 +522,8 @@ export function TripChat({ tripId, members }: TripChatProps) {
       },
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       attachments,
+      mentions: mentions.length > 0 ? mentions : undefined,
+      reactions: [],
       ...(replyingTo && {
         replyTo: {
           id: replyingTo.id,
@@ -274,7 +544,7 @@ export function TripChat({ tripId, members }: TripChatProps) {
     setReplyingTo(null);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -335,7 +605,20 @@ export function TripChat({ tripId, members }: TripChatProps) {
                     </div>
                   )}
 
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-sm whitespace-pre-wrap">{renderMessageWithMentions(message)}</p>
+
+                  {/* Message reactions */}
+                  {((message.reactions && message.reactions.length > 0) || message.sender.id !== user?.id) && (
+                    <div id={`reaction-${message.id}`}>
+                      <MessageReactions
+                        reactions={message.reactions || []}
+                        messageId={message.id}
+                        currentUserId={user?.id || ''}
+                        onAddReaction={handleAddReaction}
+                        onRemoveReaction={handleRemoveReaction}
+                      />
+                    </div>
+                  )}
 
                   {message.attachments && message.attachments.length > 0 && (
                     <div className="mt-2 space-y-2">
@@ -391,6 +674,19 @@ export function TripChat({ tripId, members }: TripChatProps) {
                         <DropdownMenuItem onClick={() => handlePinMessage(message.id)}>
                           <Pin className="h-4 w-4 mr-2" />
                           {message.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          // Close dropdown and show reaction bar for this message
+                          const reactionComponent = document.getElementById(`reaction-${message.id}`);
+                          if (reactionComponent) {
+                            const reactionButton = reactionComponent.querySelector('button');
+                            if (reactionButton) {
+                              reactionButton.click();
+                            }
+                          }
+                        }}>
+                          <SmilePlus className="h-4 w-4 mr-2" />
+                          Thả cảm xúc
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -513,13 +809,65 @@ export function TripChat({ tripId, members }: TripChatProps) {
           </Button>
           <EmojiPicker onEmojiSelect={handleEmojiSelect} />
 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => {
+              if (inputRef.current) {
+                const cursorPos = inputRef.current.selectionStart || 0;
+                const beforeCursor = newMessage.substring(0, cursorPos);
+                const afterCursor = newMessage.substring(cursorPos);
+                const newValue = beforeCursor + '@' + afterCursor;
+
+                setNewMessage(newValue);
+                setCursorPosition(cursorPos + 1);
+
+                // Focus back on input and set cursor position after @
+                setTimeout(() => {
+                  if (inputRef.current) {
+                    inputRef.current.focus();
+                    inputRef.current.setSelectionRange(cursorPos + 1, cursorPos + 1);
+
+                    // Show mention suggestions
+                    setMentionQuery('');
+                    setShowMentionSuggestions(true);
+
+                    // Calculate position for suggestion dropdown
+                    const inputRect = inputRef.current.getBoundingClientRect();
+                    setMentionPosition({
+                      top: Math.max(inputRect.top - 250, 10), // Position above the input, but at least 10px from top
+                      left: inputRect.left + 10,
+                    });
+                  }
+                }, 0);
+              }
+            }}
+            title="Nhắc đến (@)"
+          >
+            <AtSign className="h-5 w-5" />
+          </Button>
+
           <Input
+            ref={inputRef}
             placeholder="Nhập tin nhắn..."
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onFocus={(e) => setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)}
+            onClick={(e) => setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)}
             className="flex-1"
           />
+
+          {/* Mention suggestions */}
+          {showMentionSuggestions && (
+            <MentionSuggestion
+              members={members}
+              query={mentionQuery}
+              position={mentionPosition}
+              onSelect={handleMentionSelect}
+            />
+          )}
 
           <Button
             onClick={handleSendMessage}
