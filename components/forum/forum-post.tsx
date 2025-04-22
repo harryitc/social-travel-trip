@@ -136,17 +136,27 @@ export function ForumPost({ post }: ForumPostProps) {
         )}
 
         {post.images && post.images.length > 0 && (
-          <div className={`grid gap-2 ${post.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {post.images.map((image, index) => (
-              <div key={index} className="relative aspect-video rounded-md overflow-hidden">
-                {/* eslint-disable-next-line */}
-                <img
-                  src={image}
-                  alt={`Post image ${index + 1}`}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            ))}
+          <div className="space-y-2">
+            <div className={`grid gap-2 ${post.images.length > 1 ? (post.images.length > 2 ? 'grid-cols-3' : 'grid-cols-2') : 'grid-cols-1'}`}>
+              {post.images.slice(0, post.images.length > 4 ? 4 : post.images.length).map((image, index) => (
+                <div
+                  key={index}
+                  className={`relative rounded-md overflow-hidden ${post.images && post.images.length > 2 && index === 0 ? 'col-span-full row-span-2 aspect-video' : 'aspect-square'}`}
+                >
+                  {/* eslint-disable-next-line */}
+                  <img
+                    src={image}
+                    alt={`Ảnh bài viết ${index + 1}`}
+                    className="object-cover w-full h-full"
+                  />
+                  {post.images && post.images.length > 4 && index === 3 && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <span className="text-white text-xl font-medium">+{post.images.length - 4}</span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
