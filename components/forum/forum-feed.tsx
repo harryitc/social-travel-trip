@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import React from 'react';
 import { ForumPost } from './forum-post';
 import { PostCreator } from './post-creator';
 import { Button } from '@/components/ui/button';
@@ -64,10 +65,34 @@ Lưu ý cho ai muốn đi: nên chuẩn bị đầy đủ nước ngọt, đồ 
 
 export function ForumFeed() {
   const [posts, setPosts] = useState(DEMO_POSTS);
+  const [hiddenPosts, setHiddenPosts] = useState<string[]>([]);
 
   const handleAddPost = (newPost: any) => {
     setPosts([newPost, ...posts]);
   };
+
+  const handleHidePost = (postId: string) => {
+    // Thêm bài viết vào danh sách ẩn
+    setHiddenPosts([...hiddenPosts, postId]);
+
+    // Lưu danh sách bài viết ẩn vào localStorage để giữ lại sau khi làm mới trang
+    try {
+      const storedHiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
+      localStorage.setItem('hiddenPosts', JSON.stringify([...storedHiddenPosts, postId]));
+    } catch (error) {
+      console.error('Error saving hidden posts to localStorage:', error);
+    }
+  };
+
+  // Load danh sách bài viết ẩn từ localStorage khi component được tải
+  React.useEffect(() => {
+    try {
+      const storedHiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
+      setHiddenPosts(storedHiddenPosts);
+    } catch (error) {
+      console.error('Error loading hidden posts from localStorage:', error);
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -86,11 +111,58 @@ export function ForumFeed() {
       </div>
 
       <div className="space-y-4">
-        {posts.map((post) => (
-          <ForumPost key={post.id} post={post} />
-        ))}
+        {posts
+          .filter(post => !hiddenPosts.includes(post.id)) // Lọc bỏ các bài viết đã ẩn
+          .map((post) => (
+            <ForumPost
+              key={post.id}
+              post={post}
+              onHidePost={handleHidePost}
+            />
+          ))}
 
-        <Button variant="outline" className="w-full">Xem thêm</Button>
+        {/* Hiển thị thông báo khi tất cả bài viết đều bị ẩn */}
+        {posts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.id)).length === 0 && (
+          <div className="text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="text-4xl mb-4">😎</div>
+            <h3 className="text-lg font-medium mb-2">Tất cả bài viết đã được ẩn</h3>
+            <p className="text-muted-foreground mb-4">Bạn đã ẩn {hiddenPosts.length} bài viết khỏi feed của mình.</p>
+            <Button
+              variant="outline"
+              className="mt-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200 hover:border-purple-300 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800"
+              onClick={() => {
+                // Xóa danh sách bài viết ẩn
+                setHiddenPosts([]);
+                localStorage.removeItem('hiddenPosts');
+                alert('Tất cả bài viết đã được hiển thị lại.');
+              }}
+            >
+              Hiển thị lại tất cả bài viết
+            </Button>
+          </div>
+        )}
+
+        {/* Hiển thị thông tin về số lượng bài viết đã ẩn nếu có */}
+        {hiddenPosts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.id)).length > 0 && (
+          <div className="text-center py-3 px-4 bg-gray-50 dark:bg-gray-800/30 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-muted-foreground">
+            Bạn đã ẩn {hiddenPosts.length} bài viết.
+            <Button
+              variant="link"
+              className="text-purple-600 dark:text-purple-400 p-0 h-auto text-sm ml-2"
+              onClick={() => {
+                setHiddenPosts([]);
+                localStorage.removeItem('hiddenPosts');
+                alert('Tất cả bài viết đã được hiển thị lại.');
+              }}
+            >
+              Hiển thị lại tất cả
+            </Button>
+          </div>
+        )}
+
+        {posts.filter(post => !hiddenPosts.includes(post.id)).length > 0 && (
+          <Button variant="outline" className="w-full">Xem thêm</Button>
+        )}
       </div>
     </div>
   );
