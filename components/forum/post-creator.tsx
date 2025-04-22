@@ -43,10 +43,58 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // In a real app, you would upload the file to a server
-    // For demo, we'll use a random placeholder image from our samples
-    const randomIndex = Math.floor(Math.random() * SAMPLE_IMAGES.length);
-    setImages([...images, SAMPLE_IMAGES[randomIndex]]);
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files);
+      const maxFileSize = 5 * 1024 * 1024; // 5MB
+
+      // Kiểm tra số lượng ảnh
+      if (images.length + selectedFiles.length > 6) {
+        alert('Bạn chỉ có thể tải lên tối đa 6 ảnh cho một bài viết.');
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+        return;
+      }
+
+      // Xử lý từng file được chọn
+      selectedFiles.forEach(file => {
+        // Kiểm tra kích thước file
+        if (file.size > maxFileSize) {
+          alert(`File "${file.name}" vượt quá kích thước cho phép (5MB).`);
+          return;
+        }
+
+        // Kiểm tra loại file
+        if (!file.type.startsWith('image/')) {
+          alert(`File "${file.name}" không phải là ảnh.`);
+          return;
+        }
+
+        // Sử dụng FileReader để chuyển file thành Data URL
+        // Data URL sẽ được lưu trữ trong bài đăng và không bị mất khi refresh trang
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+          if (event.target && event.target.result) {
+            // Thêm ảnh vào danh sách ảnh
+            setImages(prevImages => [...prevImages, event.target!.result as string]);
+          }
+        };
+
+        // Xử lý lỗi khi đọc file
+        reader.onerror = () => {
+          alert(`Không thể đọc file "${file.name}". Vui lòng thử lại.`);
+        };
+
+        // Đọc file dưới dạng Data URL
+        reader.readAsDataURL(file);
+      });
+
+      // Reset input để có thể chọn cùng một file nhiều lần
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   // Handle content changes and detect @ mentions
@@ -109,7 +157,7 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
           avatar: user?.imageUrl || 'https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
         },
         content,
-        images: images.length > 0 ? images : undefined,
+        images: images.length > 0 ? [...images] : undefined,
         likes: 0,
         comments: 0,
         shares: 0,
@@ -120,6 +168,11 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
       };
 
       onPostCreated(newPost);
+
+      // Không giải phóng URL object ngay lập tức để ảnh có thể hiển thị trong bài đăng
+      // Chúng ta sẽ để trình duyệt tự giải phóng khi trang được làm mới hoặc đóng
+
+      // Reset các trạng thái
       setContent('');
       setImages([]);
       setHashtags([]);
@@ -175,21 +228,55 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
         </div>
 
         {images.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            {images.map((img, index) => (
-              <div key={index} className="relative rounded-md overflow-hidden">
-                {/* eslint-disable-next-line */}
-                <img src={img} alt="Post" className="w-full h-32 object-cover" />
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  className="absolute top-1 right-1 h-6 w-6"
-                  onClick={() => setImages(images.filter((_, i) => i !== index))}
-                >
-                  <XIcon className="h-4 w-4" />
-                </Button>
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div>
+                <h4 className="text-sm font-medium">Ảnh đã chọn ({images.length}/6)</h4>
+                <p className="text-xs text-muted-foreground">Tối đa 5MB mỗi ảnh</p>
               </div>
-            ))}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/20 h-8 px-2"
+                onClick={() => {
+                  // Chỉ xóa danh sách ảnh, không giải phóng URL
+                  setImages([]);
+                }}
+              >
+                Xóa tất cả
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {images.map((img, index) => (
+                <div key={index} className="relative rounded-md overflow-hidden group border border-purple-100 dark:border-purple-900 aspect-square">
+                  {/* eslint-disable-next-line */}
+                  <img src={img} alt={`Ảnh ${index + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        // Chỉ xóa ảnh khỏi mảng, không giải phóng URL để tránh lỗi hiển thị
+                        setImages(images.filter((_, i) => i !== index));
+                      }}
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {images.length < 6 && (
+                <Button
+                  variant="outline"
+                  className="border-dashed border-2 border-purple-200 dark:border-purple-800 flex flex-col items-center justify-center h-full aspect-square"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <ImageIcon className="h-6 w-6 mb-1 text-purple-500" />
+                  <span className="text-xs text-center text-muted-foreground">Thêm ảnh</span>
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -220,16 +307,17 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
                 className="hidden"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
+                multiple
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground"
+                className={`text-muted-foreground ${images.length > 0 ? 'text-purple-600 dark:text-purple-400' : ''}`}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <ImageIcon className="h-4 w-4 mr-2" />
-                Ảnh
+                Ảnh {images.length > 0 ? `(${images.length})` : ''}
               </Button>
               <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
                 <PopoverTrigger asChild>
