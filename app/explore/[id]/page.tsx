@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Heart, MapPin, Users, Calendar, Star, Share2, Bookmark, Camera } from 'lucide-react';
-import Map from 'react-map-gl';
+import { Map as MapGL, Marker } from 'react-map-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 type Review = {
   id: string;
@@ -196,7 +197,7 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
             <TabsContent value="map" className="mt-6">
               <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm overflow-hidden">
                 <div className="h-[400px]">
-                  <Map
+                  <MapGL
                     initialViewState={{
                       longitude: destination.coordinates[0],
                       latitude: destination.coordinates[1],
@@ -204,7 +205,15 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
                     }}
                     mapStyle="mapbox://styles/mapbox/streets-v11"
                     mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
-                  />
+                  >
+                    <Marker 
+                      longitude={destination.coordinates[0]} 
+                      latitude={destination.coordinates[1]}
+                      anchor="bottom"
+                    >
+                      <MapPin className="h-6 w-6 text-purple-600" />
+                    </Marker>
+                  </MapGL>
                 </div>
               </Card>
             </TabsContent>
