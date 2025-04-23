@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { PlusIcon, MapPin, Smile } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { PlusIcon, MapPin } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,57 +11,69 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useRouter } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
-import { useDropzone } from 'react-dropzone';
-import EmojiPicker from 'emoji-picker-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
+import { useDropzone } from "react-dropzone";
+import { Emotion } from "@/types";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 export function CreateBlogButton() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const [content, setContent] = useState('');
-  const [location, setLocation] = useState('');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [location, setLocation] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
-  const [selectedEmoji, setSelectedEmoji] = useState('');
+  // const [selectedEmoji, setSelectedEmoji] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  
+  const [emotion, setEmotion] = useState<Emotion>("happy");
+
+  const emotionOptions: { value: Emotion; label: string; icon: string }[] = [
+    { value: "happy", label: "Happy", icon: "😊" },
+    { value: "excited", label: "Excited", icon: "🤩" },
+    { value: "peaceful", label: "Peaceful", icon: "😌" },
+    { value: "amazed", label: "Amazed", icon: "😲" },
+    { value: "nostalgic", label: "Nostalgic", icon: "🥹" },
+  ];
+
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
-      'image/*': []
+      "image/*": [],
     },
     maxFiles: 3,
     onDrop: (acceptedFiles) => {
       // In a real app, you would upload these files to a server
       // For demo, we'll use URLs directly
-      const newImages = acceptedFiles.slice(0, 3).map(file => URL.createObjectURL(file));
-      setImages(prev => [...prev, ...newImages].slice(0, 3));
-    }
+      const newImages = acceptedFiles
+        .slice(0, 3)
+        .map((file) => URL.createObjectURL(file));
+      setImages((prev) => [...prev, ...newImages].slice(0, 3));
+    },
   });
 
   const handleCreateBlog = () => {
     // In a real application, create the blog post
     // For demo, we just close the dialog and redirect
     setIsOpen(false);
-    router.push('/blog/new');
+    router.push("/blog/new");
   };
 
   const handleAddHashtag = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && e.currentTarget.value) {
-      const newTag = e.currentTarget.value.replace(/\s+/g, '');
+    if (e.key === "Enter" && e.currentTarget.value) {
+      const newTag = e.currentTarget.value.replace(/\s+/g, "");
       if (!hashtags.includes(newTag)) {
         setHashtags([...hashtags, newTag]);
       }
-      e.currentTarget.value = '';
+      e.currentTarget.value = "";
     }
   };
 
   const removeHashtag = (tagToRemove: string) => {
-    setHashtags(hashtags.filter(tag => tag !== tagToRemove));
+    setHashtags(hashtags.filter((tag) => tag !== tagToRemove));
   };
 
   return (
@@ -79,15 +91,27 @@ export function CreateBlogButton() {
             Chia sẻ trải nghiệm du lịch của bạn với cộng đồng.
           </DialogDescription>
         </DialogHeader>
+
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
+            <Label>Tiêu đề</Label>
+            <Input
+              placeholder="Give your story a catchy title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            ></Input>
+          </div>
+
+          <div className="grid gap-2">
             <Label>Nội dung</Label>
-            <Textarea 
+            <Textarea
               placeholder="Chia sẻ trải nghiệm của bạn..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
               className="min-h-[100px]"
               maxLength={500}
+              required
             />
             <div className="text-xs text-muted-foreground text-right">
               {content.length}/500 ký tự
@@ -96,14 +120,22 @@ export function CreateBlogButton() {
 
           <div className="grid gap-2">
             <Label>Hình ảnh</Label>
-            <div {...getRootProps()} className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-purple-500 transition-colors">
+            <div
+              {...getRootProps()}
+              className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:border-purple-500 transition-colors"
+            >
               <input {...getInputProps()} />
-              <p className="text-sm text-muted-foreground">Kéo thả hoặc click để chọn ảnh (tối đa 3 ảnh)</p>
+              <p className="text-sm text-muted-foreground">
+                Kéo thả hoặc click để chọn ảnh (tối đa 3 ảnh)
+              </p>
             </div>
             {images.length > 0 && (
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {images.map((image, index) => (
-                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
+                  <div
+                    key={index}
+                    className="relative aspect-square rounded-lg overflow-hidden"
+                  >
                     {/* eslint-disable-next-line */}
                     <img
                       src={image}
@@ -114,7 +146,9 @@ export function CreateBlogButton() {
                       variant="destructive"
                       size="icon"
                       className="absolute top-1 right-1 h-6 w-6"
-                      onClick={() => setImages(images.filter((_, i) => i !== index))}
+                      onClick={() =>
+                        setImages(images.filter((_, i) => i !== index))
+                      }
                     >
                       <PlusIcon className="h-4 w-4 rotate-45" />
                     </Button>
@@ -137,7 +171,7 @@ export function CreateBlogButton() {
             </div>
           </div>
 
-          <div className="grid gap-2">
+          {/* <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <Label>Cảm xúc</Label>
               <Popover>
@@ -154,6 +188,31 @@ export function CreateBlogButton() {
                 </PopoverContent>
               </Popover>
             </div>
+          </div> */}
+
+          <div className="space-y-3">
+            <Label>Bạn đang cảm thấy thế nào?</Label>
+            <RadioGroup
+              value={emotion}
+              onValueChange={(value) => setEmotion(value as Emotion)}
+              className="flex flex-wrap gap-4"
+            >
+              {emotionOptions.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem
+                    value={option.value}
+                    id={`emotion-${option.value}`}
+                  />
+                  <Label
+                    htmlFor={`emotion-${option.value}`}
+                    className="flex items-center cursor-pointer"
+                  >
+                    <span className="mr-2 text-xl">{option.icon}</span>
+                    {option.label}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
           </div>
 
           <div className="grid gap-2">
@@ -180,11 +239,13 @@ export function CreateBlogButton() {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>Hủy</Button>
-          <Button 
-            onClick={handleCreateBlog} 
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleCreateBlog}
             className="bg-purple-600 hover:bg-purple-700 text-white"
-            disabled={!content.trim() || images.length === 0}
+            disabled={!content.trim() || images.length === 0 || !title.trim()}
           >
             Đăng bài
           </Button>
