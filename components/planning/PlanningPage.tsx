@@ -1,80 +1,144 @@
 import React, { useState } from 'react';
-import { Layout, Menu, Typography, Tabs } from 'antd';
-import { 
-  TemplateOutlined, 
-  TeamOutlined, 
-  CalendarOutlined, 
-  PlusOutlined,
-  SettingOutlined
-} from '@ant-design/icons';
 import TemplatesList from './TemplatesList';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  LayoutTemplate,
+  Users,
+  Calendar,
+  Plus,
+  Settings,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-const { Header, Sider, Content } = Layout;
-const { Title } = Typography;
-const { TabPane } = Tabs;
+interface NavItem {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+}
 
 const PlanningPage: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState('templates');
-  
+
+  const navItems: NavItem[] = [
+    {
+      key: 'templates',
+      icon: <LayoutTemplate className="h-5 w-5" />,
+      label: 'Mẫu kế hoạch'
+    },
+    {
+      key: 'myplans',
+      icon: <Calendar className="h-5 w-5" />,
+      label: 'Kế hoạch của tôi'
+    },
+    {
+      key: 'groups',
+      icon: <Users className="h-5 w-5" />,
+      label: 'Nhóm của tôi'
+    },
+    {
+      key: 'create',
+      icon: <Plus className="h-5 w-5" />,
+      label: 'Tạo kế hoạch mới'
+    },
+    {
+      key: 'settings',
+      icon: <Settings className="h-5 w-5" />,
+      label: 'Cài đặt'
+    }
+  ];
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider 
-        collapsible 
-        collapsed={collapsed} 
-        onCollapse={setCollapsed}
-        theme="light"
-        style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.09)' }}
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <div
+        className={cn(
+          "flex flex-col border-r bg-background transition-all duration-300",
+          collapsed ? "w-[70px]" : "w-[240px]"
+        )}
       >
-        <div className="logo p-4 flex items-center justify-center">
-          <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
-            {collapsed ? 'ST' : 'Social Travel'}
-          </Title>
+        {/* Logo */}
+        <div className="flex h-14 items-center justify-center border-b px-4">
+          <h1 className="text-lg font-semibold text-primary">
+            {collapsed ? "ST" : "Social Travel"}
+          </h1>
         </div>
-        <Menu
-          mode="inline"
-          defaultSelectedKeys={['templates']}
-          selectedKeys={[activeTab]}
-          onClick={({ key }) => setActiveTab(key as string)}
-          items={[
-            {
-              key: 'templates',
-              icon: <TemplateOutlined />,
-              label: 'Mẫu kế hoạch'
-            },
-            {
-              key: 'myplans',
-              icon: <CalendarOutlined />,
-              label: 'Kế hoạch của tôi'
-            },
-            {
-              key: 'groups',
-              icon: <TeamOutlined />,
-              label: 'Nhóm của tôi'
-            },
-            {
-              key: 'create',
-              icon: <PlusOutlined />,
-              label: 'Tạo kế hoạch mới'
-            },
-            {
-              key: 'settings',
-              icon: <SettingOutlined />,
-              label: 'Cài đặt'
-            }
-          ]}
-        />
-      </Sider>
-      <Layout>
-        <Content style={{ margin: '24px', background: '#fff', padding: '24px', borderRadius: '8px' }}>
+
+        {/* Navigation */}
+        <ScrollArea className="flex-1">
+          <nav className="flex flex-col gap-1 p-2">
+            {navItems.map((item) => (
+              <Button
+                key={item.key}
+                variant={activeTab === item.key ? "secondary" : "ghost"}
+                className={cn(
+                  "justify-start gap-2 px-3",
+                  collapsed && "justify-center px-2"
+                )}
+                onClick={() => setActiveTab(item.key)}
+              >
+                {item.icon}
+                {!collapsed && <span>{item.label}</span>}
+              </Button>
+            ))}
+          </nav>
+        </ScrollArea>
+
+        {/* Collapse button */}
+        <div className="border-t p-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className="w-full"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
+        <div className="container mx-auto p-6">
           {activeTab === 'templates' && <TemplatesList />}
-          {activeTab === 'myplans' && <div>Kế hoạch của tôi (Đang phát triển)</div>}
-          {activeTab === 'groups' && <div>Nhóm của tôi (Đang phát triển)</div>}
-          {activeTab === 'create' && <div>Tạo kế hoạch mới (Đang phát triển)</div>}
-          {activeTab === 'settings' && <div>Cài đặt (Đang phát triển)</div>}
-        </Content>
-      </Layout>
-    </Layout>
+          {activeTab === 'myplans' && (
+            <div className="flex h-[80vh] items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">Kế hoạch của tôi</h2>
+                <p className="text-muted-foreground mt-2">Tính năng đang được phát triển</p>
+              </div>
+            </div>
+          )}
+          {activeTab === 'groups' && (
+            <div className="flex h-[80vh] items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">Nhóm của tôi</h2>
+                <p className="text-muted-foreground mt-2">Tính năng đang được phát triển</p>
+              </div>
+            </div>
+          )}
+          {activeTab === 'create' && (
+            <div className="flex h-[80vh] items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">Tạo kế hoạch mới</h2>
+                <p className="text-muted-foreground mt-2">Tính năng đang được phát triển</p>
+              </div>
+            </div>
+          )}
+          {activeTab === 'settings' && (
+            <div className="flex h-[80vh] items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">Cài đặt</h2>
+                <p className="text-muted-foreground mt-2">Tính năng đang được phát triển</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

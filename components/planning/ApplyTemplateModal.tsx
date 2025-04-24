@@ -1,172 +1,195 @@
-import React, { useState } from 'react';
-import { TravelPlanTemplate, Day, Activity } from './mock-data';
-import { TripGroup, getUserGroups } from './trip-groups-data';
-import { Modal, Button, List, Avatar, Typography, Divider, message, Tabs, Tag, Tooltip } from 'antd';
-import { UserOutlined, TeamOutlined, CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
+'use client';
 
-const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
+import React, { useState } from 'react';
+import { TravelPlanTemplate } from './mock-data';
+import { getUserGroups } from './trip-groups-data';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Button } from '../ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { useToast } from '../ui/use-toast';
+import { cn } from '../../lib/utils';
+import { Info, Users, Check, MapPin, Clock } from 'lucide-react';
 
 interface ApplyTemplateModalProps {
-  isVisible: boolean;
+  isOpen: boolean;
   onClose: () => void;
   template: TravelPlanTemplate | null;
 }
 
-const ApplyTemplateModal: React.FC<ApplyTemplateModalProps> = ({ isVisible, onClose, template }) => {
+const ApplyTemplateModal: React.FC<ApplyTemplateModalProps> = ({ isOpen, onClose, template }) => {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('groups');
   const [isApplying, setIsApplying] = useState<boolean>(false);
-  
+  const { toast } = useToast();
+
   // Get user groups
   const userGroups = getUserGroups();
-  
+
   // Handle apply template to group
   const handleApplyTemplate = () => {
     if (!selectedGroup || !template) return;
-    
+
     setIsApplying(true);
-    
+
     // Simulate API call
     setTimeout(() => {
-      message.success(`Đã áp dụng mẫu kế hoạch "${template.name}" cho nhóm "${userGroups.find(g => g.id === selectedGroup)?.title}"`);
+      toast({
+        title: "Áp dụng thành công",
+        description: `Đã áp dụng mẫu kế hoạch "${template.name}" cho nhóm "${userGroups.find(g => g.id === selectedGroup)?.title}"`,
+      });
       setIsApplying(false);
       onClose();
     }, 1000);
   };
-  
+
   if (!template) return null;
-  
+
   return (
-    <Modal
-      title={<Title level={4}>Áp dụng mẫu kế hoạch</Title>}
-      open={isVisible}
-      onCancel={onClose}
-      width={800}
-      footer={[
-        <Button key="cancel" onClick={onClose}>
-          Hủy
-        </Button>,
-        <Button 
-          key="apply" 
-          type="primary" 
-          onClick={handleApplyTemplate}
-          disabled={!selectedGroup || isApplying}
-          loading={isApplying}
-        >
-          Áp dụng
-        </Button>
-      ]}
-    >
-      <Tabs activeKey={activeTab} onChange={setActiveTab}>
-        <TabPane tab="Chọn nhóm" key="groups">
-          <Paragraph>
-            Chọn nhóm/chuyến đi bạn muốn áp dụng mẫu kế hoạch này:
-          </Paragraph>
-          
-          <List
-            itemLayout="horizontal"
-            dataSource={userGroups}
-            renderItem={(group) => {
-              const isSelected = selectedGroup === group.id;
-              const hasPlan = group.hasPlan;
-              
-              return (
-                <List.Item
-                  onClick={() => setSelectedGroup(group.id)}
-                  className={`cursor-pointer p-3 rounded-lg transition-all ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-                  style={{ cursor: 'pointer', padding: '12px', borderRadius: '8px', transition: 'all 0.3s ease' }}
-                >
-                  <List.Item.Meta
-                    avatar={<Avatar src={group.image} size={64} shape="square" style={{ borderRadius: '8px' }} />}
-                    title={
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold">Áp dụng mẫu kế hoạch</DialogTitle>
+        </DialogHeader>
+
+        <Tabs defaultValue="groups" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="groups">Chọn nhóm</TabsTrigger>
+            <TabsTrigger value="details">Chi tiết mẫu</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="groups" className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              Chọn nhóm/chuyến đi bạn muốn áp dụng mẫu kế hoạch này:
+            </p>
+
+            <div className="space-y-3">
+              {userGroups.map((group) => {
+                const isSelected = selectedGroup === group.id;
+                const hasPlan = group.hasPlan;
+
+                return (
+                  <div
+                    key={group.id}
+                    onClick={() => setSelectedGroup(group.id)}
+                    className={cn(
+                      "flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:bg-accent"
+                    )}
+                  >
+                    <Avatar className="h-16 w-16 rounded-md">
+                      <AvatarImage src={group.image} alt={group.title} className="object-cover" />
+                      <AvatarFallback className="rounded-md">{group.title.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Text strong>{group.title}</Text>
+                        <h3 className="font-medium">{group.title}</h3>
                         {hasPlan && (
-                          <Tooltip title="Nhóm này đã có kế hoạch. Nếu áp dụng mẫu mới, kế hoạch cũ sẽ bị ghi đè.">
-                            <Tag color="orange" icon={<InfoCircleOutlined />}>Đã có kế hoạch</Tag>
-                          </Tooltip>
-                        )}
-                        {isSelected && <CheckCircleOutlined style={{ color: '#1890ff' }} />}
-                      </div>
-                    }
-                    description={
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Text type="secondary">{group.location}</Text>
-                          <Divider type="vertical" />
-                          <Text type="secondary">{group.date}</Text>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <TeamOutlined /> <Text type="secondary">{group.members.count} thành viên</Text>
-                          <Divider type="vertical" />
-                          <Text type="secondary">{group.duration}</Text>
-                        </div>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              );
-            }}
-          />
-        </TabPane>
-        
-        <TabPane tab="Chi tiết mẫu" key="details">
-          <div className="mb-4">
-            <Title level={4}>{template.name}</Title>
-            <div className="flex items-center gap-2 mb-2">
-              <Text>{template.destination}</Text>
-              <Divider type="vertical" />
-              <Text>{template.duration} ngày</Text>
-            </div>
-            <Paragraph>{template.description}</Paragraph>
-            
-            <div className="flex flex-wrap gap-2 mt-2">
-              {template.tags.map(tag => (
-                <Tag key={tag}>#{tag}</Tag>
-              ))}
-            </div>
-          </div>
-          
-          <Divider />
-          
-          <div>
-            <Title level={5}>Lịch trình chi tiết:</Title>
-            
-            {template.days.map((day, index) => (
-              <div key={day.id} className="mb-6">
-                <Title level={5} className="mb-3">Ngày {index + 1}</Title>
-                
-                <List
-                  size="small"
-                  dataSource={day.activities}
-                  renderItem={(activity) => (
-                    <List.Item>
-                      <List.Item.Meta
-                        title={
-                          <div className="flex items-center gap-2">
-                            <Text strong>{activity.time}</Text>
-                            <Text>{activity.title}</Text>
-                          </div>
-                        }
-                        description={
-                          <div>
-                            <Text type="secondary">{activity.description}</Text>
-                            <div>
-                              <Text type="secondary">Địa điểm: {activity.location}</Text>
+                          <div className="group relative">
+                            <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-200 flex items-center gap-1">
+                              <Info className="h-3 w-3" />
+                              <span>Đã có kế hoạch</span>
+                            </Badge>
+                            <div className="absolute left-0 top-full mt-2 z-50 w-64 p-2 bg-white dark:bg-gray-900 rounded-md shadow-md border text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                              Nhóm này đã có kế hoạch. Nếu áp dụng mẫu mới, kế hoạch cũ sẽ bị ghi đè.
                             </div>
                           </div>
-                        }
-                      />
-                    </List.Item>
-                  )}
-                />
+                        )}
+                        {isSelected && <Check className="h-5 w-5 text-primary ml-auto" />}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{group.location}</span>
+                        </div>
+                        <div className="hidden sm:block h-4 w-px bg-border"></div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{group.date}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          <span>{group.members.count} thành viên</span>
+                        </div>
+                        <div className="h-4 w-px bg-border"></div>
+                        <span>{group.duration}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="details" className="space-y-4 mt-4">
+            <div className="space-y-3">
+              <h2 className="text-xl font-semibold">{template.name}</h2>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>{template.destination}</span>
+                <div className="h-4 w-px bg-border"></div>
+                <span>{template.duration} ngày</span>
               </div>
-            ))}
-          </div>
-        </TabPane>
-      </Tabs>
-    </Modal>
+              <p className="text-sm">{template.description}</p>
+
+              <div className="flex flex-wrap gap-2 mt-2">
+                {template.tags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-xs">#{tag}</Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="h-px w-full bg-border my-4"></div>
+
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium">Lịch trình chi tiết:</h3>
+
+              {template.days.map((day, index) => (
+                <div key={day.id} className="space-y-3">
+                  <h4 className="font-medium">Ngày {index + 1}</h4>
+
+                  <div className="space-y-3 pl-4 border-l">
+                    {day.activities.map((activity) => (
+                      <div key={activity.id} className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{activity.time}</span>
+                          <span>{activity.title}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{activity.description}</p>
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          <span>{activity.location}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Hủy
+          </Button>
+          <Button
+            onClick={handleApplyTemplate}
+            disabled={!selectedGroup || isApplying}
+            className={isApplying ? "opacity-80" : ""}
+          >
+            {isApplying ? "Đang áp dụng..." : "Áp dụng"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

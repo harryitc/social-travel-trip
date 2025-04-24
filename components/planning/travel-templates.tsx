@@ -4,17 +4,19 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock, MapPin, Star, Users, Info, Copy, Search, UserPlus, UsersRound } from 'lucide-react';
-import { TRAVEL_PLAN_TEMPLATES, TravelPlanTemplate, Day, Activity } from './mock-data';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, Clock, MapPin, Star, Users, Info, Copy, Search, UserPlus, UsersRound, PlusIcon, Globe, Lock, User } from 'lucide-react';
+import { ScheduleChart } from './ScheduleChart';
+import { TRAVEL_PLAN_TEMPLATES, TravelPlanTemplate } from './mock-data';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SelectTripGroup } from './select-trip-group';
 import { TripGroup } from './trip-groups-data';
-import { Separator } from '@/components/ui/separator';
+import { EditableTemplateDetailsPage } from './EditableTemplateDetailsPage';
+import { CreatePlanPage } from './CreatePlanPage';
 
 export function TravelTemplates() {
   const [templates, setTemplates] = useState(TRAVEL_PLAN_TEMPLATES);
@@ -28,6 +30,7 @@ export function TravelTemplates() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(null);
   const [applyMethod, setApplyMethod] = useState<'new' | 'existing'>('new');
+  const [showCreatePlan, setShowCreatePlan] = useState(false);
 
   // Mock user data for demonstration
   const mockUsers = [
@@ -50,16 +53,11 @@ export function TravelTemplates() {
 
   const handleViewDetails = (template: TravelPlanTemplate) => {
     setSelectedTemplate(template);
-    setShowTemplateDetails(true);
+    // Không mở dialog nữa, mà chuyển sang trang chi tiết
   };
 
+  // Xử lý khi nhấn nút "Áp dụng"
   const handleApplyTemplate = (template: TravelPlanTemplate) => {
-    setSelectedTemplate(template);
-    setApplyMethod('new');
-    setShowApplyDialog(true);
-  };
-
-  const handleApplyToExistingGroup = (template: TravelPlanTemplate) => {
     setSelectedTemplate(template);
     setShowSelectGroupDialog(true);
   };
@@ -85,6 +83,9 @@ export function TravelTemplates() {
         groupName,
         members: selectedMembers
       });
+
+      // Hiển thị thông báo thành công
+      alert(`Đã tạo nhóm "${groupName}" và áp dụng mẫu kế hoạch thành công!`);
     } else if (applyMethod === 'existing' && selectedGroup) {
       // Apply to existing group
       console.log('Applying template to existing group:', {
@@ -92,6 +93,9 @@ export function TravelTemplates() {
         groupId: selectedGroup.id,
         groupName: selectedGroup.title
       });
+
+      // Hiển thị thông báo thành công
+      alert(`Đã áp dụng mẫu kế hoạch cho nhóm "${selectedGroup.title}" thành công!`);
     }
 
     // Close dialog and reset form
@@ -100,7 +104,46 @@ export function TravelTemplates() {
     setGroupName('');
     setSelectedMembers([]);
     setSelectedGroup(null);
+
+    // Quay lại tab mẫu kế hoạch (danh sách các mẫu)
+    setSelectedTemplate(null);
   };
+
+  // Thêm hàm xử lý lưu mẫu kế hoạch mới
+  const handleSaveNewTemplate = (newTemplate: TravelPlanTemplate) => {
+    setTemplates([newTemplate, ...templates]);
+  };
+
+  // Hàm xử lý áp dụng mẫu kế hoạch cho nhóm
+  const handleApplyTemplateToGroup = (template: TravelPlanTemplate, groupId: string) => {
+    console.log('Áp dụng mẫu kế hoạch cho nhóm:', {
+      templateId: template.id,
+      templateName: template.name,
+      groupId: groupId
+    });
+    // Trong thực tế, đây là nơi bạn sẽ gọi API để áp dụng mẫu kế hoạch cho nhóm
+  };
+
+  // Nếu đang ở trang tạo kế hoạch mới
+  if (showCreatePlan) {
+    return (
+      <CreatePlanPage
+        onBack={() => setShowCreatePlan(false)}
+        onSave={handleSaveNewTemplate}
+        onApplyToGroup={handleApplyTemplateToGroup}
+      />
+    );
+  }
+
+  // Nếu đã chọn một mẫu, hiển thị trang chi tiết
+  if (selectedTemplate && !showTemplateDetails && !showApplyDialog && !showSelectGroupDialog) {
+    return (
+      <EditableTemplateDetailsPage
+        template={selectedTemplate}
+        onBack={() => setSelectedTemplate(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,96 +155,131 @@ export function TravelTemplates() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Input
-                type="search"
-                placeholder="Tìm kiếm mẫu kế hoạch..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col md:flex-row gap-4 justify-between">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+              <div className="relative">
+                <Input
+                  type="search"
+                  placeholder="Tìm kiếm mẫu kế hoạch..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              </div>
+
+              <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn khu vực" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tất cả khu vực</SelectItem>
+                  <SelectItem value="Miền Bắc">Miền Bắc</SelectItem>
+                  <SelectItem value="Miền Trung">Miền Trung</SelectItem>
+                  <SelectItem value="Miền Nam">Miền Nam</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn khu vực" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả khu vực</SelectItem>
-                <SelectItem value="Miền Bắc">Miền Bắc</SelectItem>
-                <SelectItem value="Miền Trung">Miền Trung</SelectItem>
-                <SelectItem value="Miền Nam">Miền Nam</SelectItem>
-              </SelectContent>
-            </Select>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => setShowCreatePlan(true)}
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Tạo kế hoạch mới
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {filteredTemplates.map((template) => (
-          <Card key={template.id} className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm overflow-hidden">
-            <div className="relative h-48">
+          <Card key={template.id} className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div className="relative h-36">
               {/* eslint-disable-next-line */}
               <img
                 src={template.image}
                 alt={template.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
-                <h3 className="text-white font-semibold text-lg">{template.name}</h3>
-                <div className="flex items-center text-white/90 text-sm">
-                  <MapPin className="h-3.5 w-3.5 mr-1" />
-                  <span>{template.destination}</span>
+              <div className="absolute top-2 right-2">
+                {template.isPublic ? (
+                  <Badge className="bg-green-500 flex items-center gap-0.5 text-[10px] h-5 px-1.5">
+                    <Globe className="h-2.5 w-2.5" />
+                    Công khai
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="flex items-center gap-0.5 text-[10px] h-5 px-1.5">
+                    <Lock className="h-2.5 w-2.5" />
+                    Riêng tư
+                  </Badge>
+                )}
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-3">
+                <h3 className="text-white font-semibold text-sm line-clamp-1">{template.name}</h3>
+                <div className="flex items-center text-white/90 text-xs">
+                  <MapPin className="h-3 w-3 mr-1" />
+                  <span className="truncate">{template.destination}</span>
                 </div>
               </div>
             </div>
 
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
+            <CardContent className="p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs">
                 <div className="flex items-center">
-                  <Star className="h-4 w-4 text-yellow-400 fill-yellow-400 mr-1" />
+                  <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 mr-1" />
                   <span className="font-medium">{template.rating}</span>
-                  <span className="text-sm text-muted-foreground ml-1">
-                    ({template.usageCount} lượt sử dụng)
+                  <span className="text-muted-foreground ml-1">
+                    ({template.usageCount})
                   </span>
                 </div>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4 mr-1" />
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-3 w-3 mr-1" />
                   <span>{template.duration} ngày</span>
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground line-clamp-2">
+              {template.authorName && (
+                <div className="flex items-center text-xs text-muted-foreground">
+                  <User className="h-3 w-3 mr-1" />
+                  <span>Tác giả: {template.authorName}</span>
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground line-clamp-2 h-8">
                 {template.description}
               </p>
 
-              <div className="flex flex-wrap gap-1 mt-2">
-                {template.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="bg-purple-100/50 hover:bg-purple-200/50 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-800/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-xs">
+              <div className="flex flex-wrap gap-1">
+                {template.tags.slice(0, 2).map((tag) => (
+                  <Badge key={tag} variant="outline" className="bg-purple-100/50 hover:bg-purple-200/50 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-800/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px] px-1.5 py-0">
                     #{tag}
                   </Badge>
                 ))}
+                {template.tags.length > 2 && (
+                  <Badge variant="outline" className="bg-purple-100/50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-[10px] px-1.5 py-0">
+                    +{template.tags.length - 2}
+                  </Badge>
+                )}
               </div>
             </CardContent>
 
-            <CardFooter className="p-4 pt-0 flex gap-2">
+            <CardFooter className="p-3 pt-0 flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-7 text-xs px-2"
                 onClick={() => handleViewDetails(template)}
               >
-                <Info className="h-4 w-4 mr-2" />
+                <Info className="h-3 w-3 mr-1" />
                 Chi tiết
               </Button>
               <Button
                 size="sm"
-                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                className="flex-1 bg-purple-600 hover:bg-purple-700 text-white h-7 text-xs px-2"
                 onClick={() => handleApplyTemplate(template)}
               >
-                <Copy className="h-4 w-4 mr-2" />
+                <Copy className="h-3 w-3 mr-1" />
                 Áp dụng
               </Button>
             </CardFooter>
@@ -222,7 +300,24 @@ export function TravelTemplates() {
                   <span className="mx-2">•</span>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span>{selectedTemplate.duration} ngày</span>
+                  {selectedTemplate.isPublic ? (
+                    <Badge className="ml-2 bg-green-500 flex items-center gap-1 text-xs">
+                      <Globe className="h-3 w-3" />
+                      Công khai
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="ml-2 flex items-center gap-1 text-xs">
+                      <Lock className="h-3 w-3" />
+                      Riêng tư
+                    </Badge>
+                  )}
                 </div>
+                {selectedTemplate.authorName && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span>Tác giả: {selectedTemplate.authorName}</span>
+                  </div>
+                )}
               </DialogDescription>
             </DialogHeader>
 
@@ -243,50 +338,73 @@ export function TravelTemplates() {
 
               <div>
                 <h3 className="text-lg font-medium mb-4">Lịch trình chi tiết</h3>
-                <Tabs defaultValue={selectedTemplate.days[0].id} className="w-full">
-                  <TabsList className="grid grid-cols-3 mb-4">
-                    {selectedTemplate.days.map((day, index) => (
-                      <TabsTrigger key={day.id} value={day.id}>
-                        Ngày {index + 1}
-                      </TabsTrigger>
-                    ))}
+                <Tabs defaultValue="schedule" className="w-full">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="schedule">Lịch trình chi tiết</TabsTrigger>
+                    <TabsTrigger value="chart">Biểu đồ</TabsTrigger>
                   </TabsList>
 
-                  {selectedTemplate.days.map((day, dayIndex) => (
-                    <TabsContent key={day.id} value={day.id} className="space-y-4">
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">Ngày {dayIndex + 1}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {day.activities.map((activity) => (
-                              <div
-                                key={activity.id}
-                                className="border border-purple-100 dark:border-purple-900 rounded-lg p-3 space-y-2"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-purple-600 dark:text-purple-400 w-16">
-                                      {activity.time}
-                                    </span>
-                                    <span className="font-medium">{activity.title}</span>
+                  <TabsContent value="schedule" className="space-y-4">
+                    <Tabs defaultValue={selectedTemplate.days[0].id} className="w-full">
+                      <TabsList className="grid grid-cols-3 mb-4">
+                        {selectedTemplate.days.map((day, index) => (
+                          <TabsTrigger key={day.id} value={day.id}>
+                            Ngày {index + 1}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
+
+                      {selectedTemplate.days.map((day, dayIndex) => (
+                        <TabsContent key={day.id} value={day.id} className="space-y-4">
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-base">Ngày {dayIndex + 1}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-4">
+                                {day.activities.map((activity) => (
+                                  <div
+                                    key={activity.id}
+                                    className="border border-purple-100 dark:border-purple-900 rounded-lg p-3 space-y-2"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-purple-600 dark:text-purple-400 w-16">
+                                          {activity.time}
+                                        </span>
+                                        <span className="font-medium">{activity.title}</span>
+                                      </div>
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">
+                                      <div className="flex items-start gap-2 mb-1">
+                                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                        <span>{activity.location}</span>
+                                      </div>
+                                      <p className="pl-6">{activity.description}</p>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  <div className="flex items-start gap-2 mb-1">
-                                    <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                    <span>{activity.location}</span>
-                                  </div>
-                                  <p className="pl-6">{activity.description}</p>
-                                </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                  ))}
+                            </CardContent>
+                          </Card>
+                        </TabsContent>
+                      ))}
+                    </Tabs>
+                  </TabsContent>
+
+                  <TabsContent value="chart">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Biểu đồ lịch trình</CardTitle>
+                        <CardDescription>
+                          Xem tổng quan lịch trình theo thời gian và địa điểm
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ScheduleChart days={selectedTemplate.days} />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
                 </Tabs>
               </div>
             </div>
@@ -297,7 +415,7 @@ export function TravelTemplates() {
                   variant="outline"
                   onClick={() => {
                     setShowTemplateDetails(false);
-                    handleApplyToExistingGroup(selectedTemplate);
+                    setShowSelectGroupDialog(true);
                   }}
                 >
                   <UsersRound className="h-4 w-4 mr-2" />
@@ -307,7 +425,8 @@ export function TravelTemplates() {
                   className="bg-purple-600 hover:bg-purple-700 text-white"
                   onClick={() => {
                     setShowTemplateDetails(false);
-                    handleApplyTemplate(selectedTemplate);
+                    setApplyMethod('new');
+                    setShowApplyDialog(true);
                   }}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
@@ -321,12 +440,28 @@ export function TravelTemplates() {
 
       {/* Apply Template Dialog */}
       {selectedTemplate && (
-        <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
+        <Dialog
+          open={showApplyDialog}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              // Đóng dialog áp dụng
+              setShowApplyDialog(false);
+              // Reset các state liên quan
+              if (applyMethod === 'new') {
+                setGroupName('');
+                setSelectedMembers([]);
+              }
+              // Quay lại tab mẫu kế hoạch (danh sách các mẫu)
+              setSelectedTemplate(null);
+            } else {
+              setShowApplyDialog(isOpen);
+            }
+          }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{applyMethod === 'new' ? 'Tạo nhóm mới' : 'Áp dụng cho nhóm đã có'}</DialogTitle>
               <DialogDescription>
-                Áp dụng mẫu "{selectedTemplate.name}" {applyMethod === 'new' ? 'cho nhóm mới' : `cho nhóm ${selectedGroup?.title || ''}`}
+                Áp dụng mẫu &quot;{selectedTemplate.name}&quot; {applyMethod === 'new' ? 'cho nhóm mới' : `cho nhóm ${selectedGroup?.title || ''}`}
               </DialogDescription>
             </DialogHeader>
 
@@ -440,7 +575,17 @@ export function TravelTemplates() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowApplyDialog(false)}>
+              <Button variant="outline" onClick={() => {
+                // Đóng dialog áp dụng
+                setShowApplyDialog(false);
+                // Reset các state liên quan
+                if (applyMethod === 'new') {
+                  setGroupName('');
+                  setSelectedMembers([]);
+                }
+                // Quay lại tab mẫu kế hoạch (danh sách các mẫu)
+                setSelectedTemplate(null);
+              }}>
                 Hủy
               </Button>
               <Button
@@ -459,15 +604,31 @@ export function TravelTemplates() {
       {selectedTemplate && (
         <SelectTripGroup
           open={showSelectGroupDialog}
-          onOpenChange={setShowSelectGroupDialog}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              // Đóng dialog chọn nhóm
+              setShowSelectGroupDialog(false);
+              // Quay lại tab mẫu kế hoạch (danh sách các mẫu)
+              setSelectedTemplate(null);
+            } else {
+              setShowSelectGroupDialog(isOpen);
+            }
+          }}
           onSelectGroup={(group) => {
             handleSelectGroup(group);
             setShowSelectGroupDialog(false);
             setShowApplyDialog(true);
           }}
+          onCreateNewGroup={() => {
+            setShowSelectGroupDialog(false);
+            setApplyMethod('new');
+            setShowApplyDialog(true);
+          }}
           templateName={selectedTemplate.name}
         />
       )}
+
+
     </div>
   );
 }
