@@ -17,6 +17,7 @@ export type Activity = {
   title: string;
   description: string;
   location: string;
+  mainLocation: string; // For chart display
   type?: ActivityType; // Loại hoạt động (tùy chọn)
 };
 

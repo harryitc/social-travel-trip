@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TravelPlanTemplate, Activity } from './mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,15 +14,44 @@ import { Calendar, MapPin, Star, Users, ArrowLeft, Edit, Save, Plus, Trash2, Sha
 import { InteractiveScheduleChart } from './InteractiveScheduleChart';
 import { SelectTripGroup } from './select-trip-group';
 import { TripGroup } from './trip-groups-data';
+// @ts-ignore
+import { TemplateProvider, useTemplate } from './context/TemplateContext';
+// @ts-ignore
+import { AutoSaveIndicator } from './AutoSaveIndicator';
+import { toast } from 'sonner';
 
 interface EditableTemplateDetailsPageProps {
   template: TravelPlanTemplate;
   onBack: () => void;
+  onSave?: (template: TravelPlanTemplate) => Promise<void>;
 }
 
-export function EditableTemplateDetailsPage({ template: initialTemplate, onBack }: EditableTemplateDetailsPageProps) {
-  const [template, setTemplate] = useState<TravelPlanTemplate>({ ...initialTemplate });
-  const [isEditing, setIsEditing] = useState(false);
+export default function EditableTemplateDetailsPage({
+  template: initialTemplate,
+  onBack
+}: EditableTemplateDetailsPageProps) {
+  return (
+    <TemplateProvider initialTemplate={initialTemplate}>
+      <EditableTemplateDetailsContent onBack={onBack} />
+    </TemplateProvider>
+  );
+}
+
+function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
+  const {
+    template,
+    isEditing,
+    setIsEditing,
+    saveState,
+    lastSaved,
+    saveError,
+    updateTemplate,
+    updateActivities,
+    saveTemplate,
+    revertChanges,
+    hasUnsavedChanges
+  } = useTemplate();
+
   const [isFavorite, setIsFavorite] = useState(false);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [showSelectGroupDialog, setShowSelectGroupDialog] = useState(false);
@@ -36,30 +65,64 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
   });
   const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(null);
 
+  // Unsaved changes warning
+  const handleBeforeUnload = useCallback((e: BeforeUnloadEvent) => {
+    if (hasUnsavedChanges) {
+      // Standard way to show a confirmation dialog when leaving the page
+      e.preventDefault();
+      // For older browsers
+      const message = 'Bạn có thay đổi chưa lưu. Bạn có chắc chắn muốn rời đi?';
+      // @ts-ignore - Deprecated but still needed for some browsers
+      e.returnValue = message;
+      return message;
+    }
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [handleBeforeUnload]);
+
+  if (!template) return null;
+
   // Bắt đầu chỉnh sửa
   const handleStartEditing = () => {
     setIsEditing(true);
+    toast.info('Đã bật chế độ chỉnh sửa', {
+      description: 'Các thay đổi sẽ được tự động lưu.',
+    });
   };
 
   // Lưu thay đổi
-  const handleSaveChanges = () => {
-    // Trong thực tế, đây là nơi bạn sẽ gọi API để lưu thay đổi
-    alert("Đã lưu thay đổi thành công!");
-    setIsEditing(false);
+  const handleSaveChanges = async () => {
+    try {
+      await saveTemplate();
+      setIsEditing(false);
+      toast.success('Đã lưu thay đổi thành công!');
+    } catch (error) {
+      toast.error('Lỗi khi lưu thay đổi', {
+        description: 'Vui lòng thử lại sau.',
+      });
+    }
   };
 
   // Hủy chỉnh sửa
   const handleCancelEditing = () => {
-    setTemplate({ ...initialTemplate });
-    setIsEditing(false);
+    if (hasUnsavedChanges) {
+      if (confirm('Bạn có chắc chắn muốn hủy các thay đổi chưa lưu?')) {
+        revertChanges();
+        setIsEditing(false);
+      }
+    } else {
+      setIsEditing(false);
+    }
   };
 
   // Cập nhật thông tin cơ bản
   const handleBasicInfoChange = (field: keyof TravelPlanTemplate, value: any) => {
-    setTemplate({
-      ...template,
-      [field]: value
-    });
+    updateTemplate({ [field]: value });
   };
 
   // Mở dialog chỉnh sửa hoạt động
@@ -87,7 +150,7 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
   // Lưu hoạt động
   const handleSaveActivity = () => {
     if (!newActivity.title || !newActivity.time || !newActivity.location) {
-      alert("Vui lòng điền đầy đủ thông tin hoạt động.");
+      toast.error("Vui lòng điền đầy đủ thông tin hoạt động.");
       return;
     }
 
@@ -96,7 +159,7 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
     if (editingActivity) {
       // Cập nhật hoạt động hiện có
       const { dayIndex, activity } = editingActivity;
-      const activityIndex = updatedDays[dayIndex].activities.findIndex(a => a.id === activity.id);
+      const activityIndex = updatedDays[dayIndex].activities.findIndex((a: Activity) => a.id === activity.id);
 
       if (activityIndex !== -1) {
         updatedDays[dayIndex].activities[activityIndex] = {
@@ -115,35 +178,40 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
         title: newActivity.title!,
         time: newActivity.time!,
         description: newActivity.description || '',
-        location: newActivity.location!
+        location: newActivity.location!,
+        mainLocation: newActivity.location! // Set mainLocation to the same as location
       };
 
       updatedDays[dayIndex].activities.push(newActivityObj);
 
       // Sắp xếp lại các hoạt động theo thời gian
-      updatedDays[dayIndex].activities.sort((a, b) => a.time.localeCompare(b.time));
+      updatedDays[dayIndex].activities.sort((a: Activity, b: Activity) => a.time.localeCompare(b.time));
     }
 
-    setTemplate({
-      ...template,
+    // Update the template with the new days
+    updateTemplate({
       days: updatedDays
     });
 
     setEditingActivity(null);
     setIsAddingActivity(null);
+
+    toast.success(editingActivity ? 'Đã cập nhật hoạt động' : 'Đã thêm hoạt động mới');
   };
 
   // Xóa hoạt động
   const handleDeleteActivity = (activityId: string, dayIndex: number) => {
     const updatedDays = [...template.days];
     updatedDays[dayIndex].activities = updatedDays[dayIndex].activities.filter(
-      activity => activity.id !== activityId
+      (activity: Activity) => activity.id !== activityId
     );
 
-    setTemplate({
-      ...template,
+    // Update the template with the new days
+    updateTemplate({
       days: updatedDays
     });
+
+    toast.success('Đã xóa hoạt động');
   };
 
   // Áp dụng mẫu cho nhóm
@@ -160,6 +228,8 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
     }
   };
 
+
+
   return (
     <div className="max-w-5xl mx-auto space-y-4">
       <div className="flex justify-between items-center">
@@ -168,15 +238,38 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
           Quay lại
         </Button>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {isEditing && (
+            <AutoSaveIndicator
+              state={saveState}
+              lastSaved={lastSaved}
+              error={saveError}
+              onRetry={saveTemplate}
+            />
+          )}
+
           {isEditing ? (
             <>
               <Button variant="outline" onClick={handleCancelEditing} size="sm">
                 Hủy
               </Button>
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white" onClick={handleSaveChanges} size="sm">
-                <Save className="h-3.5 w-3.5 mr-1.5" />
-                Lưu thay đổi
+              <Button
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                onClick={handleSaveChanges}
+                size="sm"
+                disabled={saveState === 'saving'}
+              >
+                {saveState === 'saving' ? (
+                  <>
+                    <Clock className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3.5 w-3.5 mr-1.5" />
+                    Lưu thay đổi
+                  </>
+                )}
               </Button>
             </>
           ) : (
@@ -359,7 +452,7 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
             </CardHeader>
             <CardContent className="py-2 px-4">
               <div className="flex flex-wrap gap-1.5">
-                {template.tags.map((tag) => (
+                {template.tags.map((tag: string) => (
                   <Badge key={tag} variant="outline" className="bg-purple-100/50 hover:bg-purple-200/50 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-800/30 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-xs">
                     #{tag}
                   </Badge>
@@ -393,17 +486,17 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
             <CardContent className="py-2 px-4">
               <Tabs defaultValue={`day-0`} className="w-full">
                 <TabsList className="grid grid-cols-3 mb-3">
-                  {template.days.map((day, index) => (
+                  {template.days.map((day: any, index: number) => (
                     <TabsTrigger key={day.id} value={`day-${index}`} className="text-xs py-1">
                       Ngày {index + 1}
                     </TabsTrigger>
                   ))}
                 </TabsList>
 
-                {template.days.map((day, dayIndex) => (
+                {template.days.map((day: any, dayIndex: number) => (
                   <TabsContent key={day.id} value={`day-${dayIndex}`} className="space-y-3">
                     <div className="space-y-3">
-                      {day.activities.map((activity) => (
+                      {day.activities.map((activity: Activity) => (
                         <div
                           key={activity.id}
                           className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-sm"
@@ -488,21 +581,27 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
                 <p>Kéo cạnh trái/phải để điều chỉnh thời gian. Kéo thả hoạt động để thay đổi thời gian bắt đầu.</p>
                 <p>Giữ phím Ctrl khi kéo để sao chép hoạt động. Nhấn Ctrl+Z để hoàn tác thao tác gần nhất.</p>
               </div>
-              <InteractiveScheduleChart
-                days={template.days}
-                isEditing={isEditing}
-                onUpdateActivities={(dayIndex, activities) => {
-                  const updatedDays = [...template.days];
-                  updatedDays[dayIndex] = {
-                    ...updatedDays[dayIndex],
-                    activities
-                  };
-                  setTemplate({
-                    ...template,
-                    days: updatedDays
-                  });
-                }}
-              />
+              <div className="relative">
+                <InteractiveScheduleChart
+                  days={template.days}
+                  isEditing={isEditing}
+                  onUpdateActivities={(dayIndex, activities) => {
+                    updateActivities(dayIndex, activities);
+                  }}
+                />
+
+                {isEditing && (
+                  <div className="absolute top-2 right-2 z-10">
+                    <AutoSaveIndicator
+                      state={saveState}
+                      lastSaved={lastSaved}
+                      error={saveError}
+                      onRetry={saveTemplate}
+                      className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1"
+                    />
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -645,16 +744,18 @@ export function EditableTemplateDetailsPage({ template: initialTemplate, onBack 
       </Dialog>
 
       {/* Dialog chọn nhóm */}
-      <SelectTripGroup
-        open={showSelectGroupDialog}
-        onOpenChange={setShowSelectGroupDialog}
-        onSelectGroup={(group) => {
-          setSelectedGroup(group);
-          setShowSelectGroupDialog(false);
-          setShowApplyDialog(true);
-        }}
-        templateName={template.name}
-      />
+      {showSelectGroupDialog && (
+        <SelectTripGroup
+          open={showSelectGroupDialog}
+          onOpenChange={setShowSelectGroupDialog}
+          onSelectGroup={(group) => {
+            setSelectedGroup(group);
+            setShowSelectGroupDialog(false);
+            setShowApplyDialog(true);
+          }}
+          templateName={template.name}
+        />
+      )}
     </div>
   );
 }
