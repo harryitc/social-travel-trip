@@ -5,16 +5,17 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  MessageSquare, 
-  Calendar, 
-  Home, 
+import {
+  MessageSquare,
+  Calendar,
+  Home,
   MemoryStick,
-  Map, 
-  BookText, 
+  Map,
+  BookText,
   Settings,
   Menu,
-  X
+  X,
+  MessagesSquare
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -37,6 +38,11 @@ const sidebarItems: SidebarItem[] = [
     name: 'Chuyến đi',
     path: '/trips',
     icon: <MessageSquare className="h-5 w-5" />,
+  },
+  {
+    name: 'Trò chuyện',
+    path: '/chat',
+    icon: <MessagesSquare className="h-5 w-5" />,
   },
   {
     name: 'Lập kế hoạch',
@@ -81,7 +87,7 @@ export function SidebarNav() {
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
       </Button>
 
-      <div 
+      <div
         className={cn(
           "bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-r border-purple-100 dark:border-purple-900 h-full w-64 transition-transform duration-300 ease-in-out lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -107,7 +113,7 @@ export function SidebarNav() {
                     variant={pathname === item.path ? "default" : "ghost"}
                     className={cn(
                       "w-full justify-start",
-                      pathname === item.path 
+                      pathname === item.path
                         ? "bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 hover:text-purple-700 dark:bg-purple-500/20 dark:text-purple-400 dark:hover:bg-purple-500/30"
                         : "text-gray-600 hover:bg-purple-500/10 hover:text-purple-600 dark:text-gray-300 dark:hover:bg-purple-500/20 dark:hover:text-purple-400"
                     )}

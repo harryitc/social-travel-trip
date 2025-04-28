@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
-import { TripChat } from '@/components/trips/trip-chat';
+import { TripChatLayout } from '@/components/trips/TripChatLayout';
 import { TripDetails } from '@/components/trips/trip-details';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -30,25 +30,9 @@ export default function TripPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="container mx-auto">
-      <PageHeader 
-        title={trip.title}
-        description={trip.description}
-      />
-      
-      <Tabs defaultValue="chat" className="mt-6">
-        <TabsList className="grid w-full md:w-auto grid-cols-2">
-          <TabsTrigger value="chat">Trò chuyện</TabsTrigger>
-          <TabsTrigger value="details">Chi tiết</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="chat" className="mt-6">
-          <TripChat tripId={trip.id} members={trip.members.list} />
-        </TabsContent>
-        
-        <TabsContent value="details" className="mt-6">
-          <TripDetails trip={trip} />
-        </TabsContent>
-      </Tabs>
+      <div className="h-[calc(100vh-8rem)]">
+        <TripChatLayout initialTripId={trip.id} />
+      </div>
     </div>
   );
 }
