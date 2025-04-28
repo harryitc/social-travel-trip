@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -11,7 +10,6 @@ import {
   SendHorizontal,
   Image as ImageIcon,
   Paperclip,
-  Smile,
   MoreVertical,
   Pin,
   Reply,
@@ -28,111 +26,24 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PinnedMessages } from './pinned-messages';
 import { EmojiPicker } from './emoji-picker';
-
-type Message = {
-  id: string;
-  content: string;
-  sender: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  timestamp: string;
-  pinned?: boolean;
-  replyTo?: {
-    id: string;
-    content: string;
-    sender: {
-      id: string;
-      name: string;
-    };
-  };
-  attachments?: {
-    type: 'image' | 'file';
-    url: string;
-    name: string;
-    size?: number;
-  }[];
-};
-
-type Member = {
-  id: string;
-  name: string;
-  avatar: string;
-};
+import { Message, Member, MOCK_CHAT_MESSAGES } from './mock-chat-data';
 
 type TripChatProps = {
   tripId: string;
-  members: Member[];
+  members?: Member[];
 };
 
-export function TripChat({ tripId, members }: TripChatProps) {
+export function TripChat({ tripId }: TripChatProps) {
   const { user } = useUser();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: 'Mọi người ơi, mình đã book được khách sạn rồi nhé!',
-      sender: {
-        id: '1',
-        name: 'Nguyễn Minh',
-        avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
-      },
-      timestamp: '10:30',
-      pinned: true,
-      attachments: [
-        {
-          type: 'image',
-          url: 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=600',
-          name: 'hotel.jpg',
-        },
-      ],
-    },
-    {
-      id: '2',
-      content: 'Tuyệt vời! Khách sạn nhìn đẹp quá.',
-      sender: {
-        id: '2',
-        name: 'Trần Hà',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
-      },
-      timestamp: '10:32',
-    },
-    {
-      id: '3',
-      content: 'Mình đã đặt vé máy bay cho cả nhóm rồi đó.',
-      sender: {
-        id: '3',
-        name: 'Lê Hoàng',
-        avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
-      },
-      timestamp: '10:45',
-    },
-    {
-      id: '4',
-      content: 'Cảm ơn bạn nhiều nhé!',
-      sender: {
-        id: '2',
-        name: 'Trần Hà',
-        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
-      },
-      timestamp: '10:47',
-      replyTo: {
-        id: '3',
-        content: 'Mình đã đặt vé máy bay cho cả nhóm rồi đó.',
-        sender: {
-          id: '3',
-          name: 'Lê Hoàng',
-        },
-      },
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(
+    MOCK_CHAT_MESSAGES[tripId] || []
+  );
 
   const [newMessage, setNewMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -274,7 +185,7 @@ export function TripChat({ tripId, members }: TripChatProps) {
     setReplyingTo(null);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -282,7 +193,7 @@ export function TripChat({ tripId, members }: TripChatProps) {
   };
 
   return (
-    <Card className="h-[calc(100vh-16rem)] flex flex-col border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+    <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 p-4">
         <PinnedMessages
           messages={messages}
@@ -299,12 +210,12 @@ export function TripChat({ tripId, members }: TripChatProps) {
                 message.sender.id === user?.id ? 'flex-row-reverse' : ''
               }`}
             >
-              <Avatar className="h-8 w-8 flex-shrink-0">
+              <Avatar className="h-9 w-9 flex-shrink-0 border-2 border-white shadow-sm">
                 <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
                 <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
               </Avatar>
 
-              <div className={`flex flex-col gap-1 max-w-[70%] ${
+              <div className={`flex flex-col gap-1 max-w-[75%] ${
                 message.sender.id === user?.id ? 'items-end' : ''
               }`}>
                 <div className="flex items-center gap-2">
@@ -318,8 +229,8 @@ export function TripChat({ tripId, members }: TripChatProps) {
 
                 <div className={`relative rounded-lg p-3 group ${
                   message.sender.id === user?.id
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-secondary'
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-secondary shadow-sm'
                 }`}>
                   {message.replyTo && (
                     <div className={`mb-2 p-2 rounded text-xs flex items-start gap-1 ${
@@ -341,8 +252,8 @@ export function TripChat({ tripId, members }: TripChatProps) {
                     <div className="mt-2 space-y-2">
                       {message.attachments.map((attachment, index) => (
                         attachment.type === 'image' ? (
-                          <div key={index} className="rounded-md overflow-hidden">
-                            {/* eslint-disable-next-line */}
+                          <div key={index} className="rounded-md overflow-hidden border border-white/20">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={attachment.url}
                               alt={attachment.name}
@@ -379,7 +290,7 @@ export function TripChat({ tripId, members }: TripChatProps) {
                   <div className={`absolute ${message.sender.id === user?.id ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === user?.id ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-sm">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -403,14 +314,15 @@ export function TripChat({ tripId, members }: TripChatProps) {
         </div>
       </ScrollArea>
 
-      <div className="p-4 border-t border-purple-100 dark:border-purple-900">
+      <div className="p-3 border-t border-purple-100 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-900/10">
         {/* Image preview area */}
         {imagePreviewUrls.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-2">
             <div className="text-xs text-muted-foreground mb-1">Hình ảnh ({imagePreviewUrls.length})</div>
             <div className="flex flex-wrap gap-2">
               {imagePreviewUrls.map((url, index) => (
-                <div key={index} className="relative w-16 h-16 rounded-md overflow-hidden bg-secondary">
+                <div key={index} className="relative w-14 h-14 rounded-md overflow-hidden bg-secondary border border-purple-100 dark:border-purple-800">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt="preview" className="w-full h-full object-cover" />
                   <Button
                     variant="ghost"
@@ -428,25 +340,25 @@ export function TripChat({ tripId, members }: TripChatProps) {
 
         {/* File preview area */}
         {selectedFiles.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-2">
             <div className="text-xs text-muted-foreground mb-1">Tệp đính kèm ({selectedFiles.length})</div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {selectedFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-2 rounded bg-secondary/50">
+                <div key={index} className="flex items-center justify-between p-1.5 rounded bg-secondary/50 border border-purple-100 dark:border-purple-800">
                   <div className="flex items-center gap-2">
-                    <FileIcon className="h-4 w-4 text-muted-foreground" />
+                    <FileIcon className="h-3.5 w-3.5 text-purple-500" />
                     <div className="flex flex-col">
-                      <span className="text-sm truncate max-w-[200px]">{file.name}</span>
-                      <span className="text-xs text-muted-foreground">{Math.round(file.size / 1024)} KB</span>
+                      <span className="text-xs truncate max-w-[180px]">{file.name}</span>
+                      <span className="text-[10px] text-muted-foreground">{Math.round(file.size / 1024)} KB</span>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 p-0"
+                    className="h-5 w-5 p-0"
                     onClick={() => handleRemoveFile(index)}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3 w-3" />
                   </Button>
                 </div>
               ))}
@@ -456,14 +368,14 @@ export function TripChat({ tripId, members }: TripChatProps) {
 
         {/* Reply preview */}
         {replyingTo && (
-          <div className="mb-3 p-2 rounded-md bg-secondary/50 flex items-center justify-between">
+          <div className="mb-2 p-1.5 rounded-md bg-secondary/50 border border-purple-100 dark:border-purple-800 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageSquareQuote className="h-4 w-4 text-muted-foreground" />
+              <MessageSquareQuote className="h-3.5 w-3.5 text-purple-500" />
               <div>
                 <div className="text-xs font-medium">
                   Đang trả lời {replyingTo.sender.name}
                 </div>
-                <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                <div className="text-xs text-muted-foreground truncate max-w-[180px]">
                   {replyingTo.content}
                 </div>
               </div>
@@ -471,15 +383,15 @@ export function TripChat({ tripId, members }: TripChatProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 p-0"
+              className="h-5 w-5 p-0"
               onClick={cancelReply}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <input
             type="file"
             accept="image/*"
@@ -500,16 +412,18 @@ export function TripChat({ tripId, members }: TripChatProps) {
             size="icon"
             onClick={() => imageInputRef.current?.click()}
             title="Tải lên hình ảnh"
+            className="h-8 w-8 text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20"
           >
-            <ImageIcon className="h-5 w-5" />
+            <ImageIcon className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             title="Đính kèm tệp"
+            className="h-8 w-8 text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20"
           >
-            <Paperclip className="h-5 w-5" />
+            <Paperclip className="h-4 w-4" />
           </Button>
           <EmojiPicker onEmojiSelect={handleEmojiSelect} />
 
@@ -517,19 +431,19 @@ export function TripChat({ tripId, members }: TripChatProps) {
             placeholder="Nhập tin nhắn..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="flex-1"
+            onKeyDown={handleKeyDown}
+            className="flex-1 h-8 bg-white dark:bg-gray-900 border-purple-100 dark:border-purple-800 focus-visible:ring-purple-500"
           />
 
           <Button
             onClick={handleSendMessage}
             disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="h-8 bg-purple-600 hover:bg-purple-700 text-white"
           >
-            <SendHorizontal className="h-5 w-5" />
+            <SendHorizontal className="h-4 w-4" />
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
