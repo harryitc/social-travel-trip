@@ -5,8 +5,10 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
 	"features": {
+		"ghcr.io/itsmechlark/features/redis-server:1": {},
 		"ghcr.io/devcontainers/features/python:1": {}
 	},
+
 	"customizations": {
 		"vscode": {
 			"extensions": [
@@ -29,7 +31,8 @@
 				"esbenp.prettier-vscode",
 				"christian-kohler.path-intellisense",
 				"usernamehw.errorlens",
-				"PKief.material-icon-theme"
+				"PKief.material-icon-theme",
+				"bradlc.vscode-tailwindcss"
 			]
 		}
 	}
