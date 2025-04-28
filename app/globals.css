@@ -80,3 +80,94 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+
+/* Custom styles for Leaflet popup */
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 280px !important;
+}
+
+.leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.leaflet-popup-tip {
+  background-color: white !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: white !important;
+  z-index: 10 !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border-radius: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  top: 8px !important;
+  right: 8px !important;
+}
+
+/* Custom marker cluster styles */
+.custom-marker-cluster {
+  background: rgba(16, 185, 129, 0.6);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  border: 2px solid rgba(16, 185, 129, 0.9);
+}
+
+.cluster-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Timeline styles */
+.timeline-container {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline-container::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background-color: #e5e7eb;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -30px;
+  top: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 4px solid white;
+  box-shadow: 0 0 0 1px #10b981;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
