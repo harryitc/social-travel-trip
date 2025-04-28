@@ -1,47 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import { TravelPlanTemplate, TRAVEL_PLAN_TEMPLATES } from './mock-data';
-import { Card, Typography, Tag, Button, Row, Col, Rate, Tooltip, Input, Select, Empty } from 'antd';
-import { 
-  EnvironmentOutlined, 
-  CalendarOutlined,
-  SearchOutlined,
-  FilterOutlined,
-  HeartOutlined,
-  HeartFilled,
-  DownloadOutlined
-} from '@ant-design/icons';
-import TemplateDetails from './TemplateDetails';
-
-const { Title, Text, Paragraph } = Typography;
-const { Search } = Input;
-const { Option } = Select;
+import { EditableTemplateDetailsPage } from './EditableTemplateDetailsPage';
+import Image from 'next/image';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from '@/lib/utils';
+import {
+  MapPin,
+  Calendar,
+  Search as SearchIcon,
+  FilterX,
+  Heart,
+  Download,
+  Star
+} from 'lucide-react';
 
 const TemplatesList: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<TravelPlanTemplate | null>(null);
   const [searchText, setSearchText] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState<number | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string | undefined>(undefined);
+  const [selectedDuration, setSelectedDuration] = useState<string | undefined>(undefined);
   const [favorites, setFavorites] = useState<string[]>([]);
-  
+
   // Filter templates based on search and filters
   const filteredTemplates = TRAVEL_PLAN_TEMPLATES.filter(template => {
     // Search filter
-    const searchMatch = 
-      searchText === '' || 
+    const searchMatch =
+      searchText === '' ||
       template.name.toLowerCase().includes(searchText.toLowerCase()) ||
       template.destination.toLowerCase().includes(searchText.toLowerCase()) ||
       template.description.toLowerCase().includes(searchText.toLowerCase()) ||
       template.tags.some(tag => tag.toLowerCase().includes(searchText.toLowerCase()));
-    
+
     // Region filter
-    const regionMatch = selectedRegion === null || template.region === selectedRegion;
-    
+    const regionMatch = !selectedRegion || template.region === selectedRegion;
+
     // Duration filter
-    const durationMatch = selectedDuration === null || template.duration === selectedDuration;
-    
+    const durationMatch = !selectedDuration || template.duration === parseInt(selectedDuration);
+
     return searchMatch && regionMatch && durationMatch;
   });
-  
+
   // Toggle favorite
   const toggleFavorite = (templateId: string, event: React.MouseEvent) => {
     event.stopPropagation();
@@ -51,157 +60,197 @@ const TemplatesList: React.FC = () => {
       setFavorites([...favorites, templateId]);
     }
   };
-  
+
   // Reset filters
   const resetFilters = () => {
     setSearchText('');
-    setSelectedRegion(null);
-    setSelectedDuration(null);
+    setSelectedRegion(undefined);
+    setSelectedDuration(undefined);
   };
-  
+
+  // Handle search input change
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchText(e.target.value);
+  };
+
   // If a template is selected, show its details
   if (selectedTemplate) {
     return (
       <div>
-        <Button 
-          onClick={() => setSelectedTemplate(null)} 
-          className="mb-4"
-          style={{ marginBottom: '16px' }}
-        >
-          ← Quay lại danh sách
-        </Button>
-        <TemplateDetails template={selectedTemplate} />
+        <EditableTemplateDetailsPage
+          template={selectedTemplate}
+          onBack={() => setSelectedTemplate(null)}
+        />
       </div>
     );
   }
-  
+
   return (
-    <div className="templates-list">
-      <div className="mb-6">
-        <Title level={3}>Mẫu kế hoạch du lịch</Title>
-        <Paragraph>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <h2 className="text-2xl font-bold">Mẫu kế hoạch du lịch</h2>
+        <p className="text-muted-foreground">
           Chọn một mẫu kế hoạch du lịch để áp dụng cho chuyến đi của bạn. Các mẫu này đã được chuẩn bị sẵn với lịch trình chi tiết.
-        </Paragraph>
+        </p>
       </div>
-      
-      <div className="filters mb-6" style={{ marginBottom: '24px' }}>
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} md={8}>
-            <Search
-              placeholder="Tìm kiếm mẫu kế hoạch..."
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-              style={{ width: '100%' }}
-            />
-          </Col>
-          <Col xs={12} md={5}>
-            <Select
-              placeholder="Chọn khu vực"
-              style={{ width: '100%' }}
-              value={selectedRegion}
-              onChange={value => setSelectedRegion(value)}
-              allowClear
-            >
-              <Option value="Miền Bắc">Miền Bắc</Option>
-              <Option value="Miền Trung">Miền Trung</Option>
-              <Option value="Miền Nam">Miền Nam</Option>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <div className="relative">
+              <SearchIcon className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Tìm kiếm mẫu kế hoạch..."
+                value={searchText}
+                onChange={handleSearchChange}
+                className="pl-8"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+              <SelectTrigger>
+                <SelectValue placeholder="Chọn khu vực" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Miền Bắc">Miền Bắc</SelectItem>
+                <SelectItem value="Miền Trung">Miền Trung</SelectItem>
+                <SelectItem value="Miền Nam">Miền Nam</SelectItem>
+              </SelectContent>
             </Select>
-          </Col>
-          <Col xs={12} md={5}>
-            <Select
-              placeholder="Số ngày"
-              style={{ width: '100%' }}
-              value={selectedDuration}
-              onChange={value => setSelectedDuration(value)}
-              allowClear
-            >
-              <Option value={2}>2 ngày</Option>
-              <Option value={3}>3 ngày</Option>
-              <Option value={4}>4 ngày</Option>
-              <Option value={5}>5 ngày</Option>
+          </div>
+
+          <div>
+            <Select value={selectedDuration} onValueChange={setSelectedDuration}>
+              <SelectTrigger>
+                <SelectValue placeholder="Số ngày" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2">2 ngày</SelectItem>
+                <SelectItem value="3">3 ngày</SelectItem>
+                <SelectItem value="4">4 ngày</SelectItem>
+                <SelectItem value="5">5 ngày</SelectItem>
+              </SelectContent>
             </Select>
-          </Col>
-          <Col xs={24} md={6}>
-            <Button onClick={resetFilters} icon={<FilterOutlined />}>
-              Xóa bộ lọc
-            </Button>
-          </Col>
-        </Row>
+          </div>
+        </div>
+
+        {(selectedRegion || selectedDuration || searchText) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetFilters}
+            className="flex items-center gap-1"
+          >
+            <FilterX className="h-4 w-4" />
+            Xóa bộ lọc
+          </Button>
+        )}
       </div>
-      
+
       {filteredTemplates.length === 0 ? (
-        <Empty description="Không tìm thấy mẫu kế hoạch nào phù hợp" />
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <SearchIcon className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="text-lg font-medium">Không tìm thấy mẫu kế hoạch nào phù hợp</h3>
+          <p className="text-muted-foreground mt-2">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+        </div>
       ) : (
-        <Row gutter={[16, 16]}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTemplates.map(template => (
-            <Col xs={24} sm={12} lg={8} key={template.id}>
-              <Card
-                hoverable
-                cover={
-                  <div className="relative" style={{ position: 'relative' }}>
-                    <img 
-                      alt={template.name} 
-                      src={template.image} 
-                      className="w-full h-48 object-cover"
-                      style={{ height: '200px', objectFit: 'cover' }}
-                    />
-                    <Button
-                      shape="circle"
-                      icon={favorites.includes(template.id) ? 
-                        <HeartFilled style={{ color: '#ff4d4f' }} /> : 
-                        <HeartOutlined />
-                      }
-                      className="absolute top-2 right-2"
-                      style={{ position: 'absolute', top: '8px', right: '8px' }}
-                      onClick={(e) => toggleFavorite(template.id, e)}
-                    />
+            <Card
+              key={template.id}
+              className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setSelectedTemplate(template)}
+            >
+              <div className="relative h-48">
+                <Image
+                  src={template.image}
+                  alt={template.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "absolute top-2 right-2 rounded-full bg-white/80 backdrop-blur-sm",
+                    favorites.includes(template.id) ? "text-red-500" : "text-gray-600"
+                  )}
+                  onClick={(e) => toggleFavorite(template.id, e)}
+                >
+                  <Heart className={cn("h-5 w-5", favorites.includes(template.id) && "fill-current")} />
+                </Button>
+              </div>
+
+              <CardContent className="p-4 space-y-3">
+                <h3 className="font-semibold text-lg line-clamp-1">{template.name}</h3>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>{template.destination}</span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>{template.duration} ngày</span>
                   </div>
-                }
-                onClick={() => setSelectedTemplate(template)}
-              >
-                <Title level={5}>{template.name}</Title>
-                
-                <div className="flex items-center gap-2 mb-2">
-                  <EnvironmentOutlined />
-                  <Text>{template.destination}</Text>
+
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={cn(
+                          "h-4 w-4",
+                          i < Math.floor(template.rating)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        )}
+                      />
+                    ))}
+                  </div>
                 </div>
-                
-                <div className="flex items-center gap-2 mb-2">
-                  <CalendarOutlined />
-                  <Text>{template.duration} ngày</Text>
-                  <Rate disabled defaultValue={template.rating} allowHalf style={{ fontSize: '14px' }} />
-                </div>
-                
-                <Paragraph ellipsis={{ rows: 2 }}>
+
+                <p className="text-sm text-muted-foreground line-clamp-2">
                   {template.description}
-                </Paragraph>
-                
-                <div className="flex flex-wrap gap-1 mt-2 mb-3">
+                </p>
+
+                <div className="flex flex-wrap gap-1 pt-1">
                   {template.tags.slice(0, 3).map(tag => (
-                    <Tag key={tag}>#{tag}</Tag>
+                    <Badge key={tag} variant="secondary" className="text-xs">#{tag}</Badge>
                   ))}
                 </div>
-                
-                <div className="flex justify-between items-center mt-2">
-                  <Text type="secondary">{template.usageCount} lượt sử dụng</Text>
-                  <Tooltip title="Áp dụng mẫu này">
-                    <Button 
-                      type="primary" 
-                      icon={<DownloadOutlined />}
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedTemplate(template);
-                      }}
-                    >
-                      Áp dụng
-                    </Button>
+              </CardContent>
+
+              <CardFooter className="px-4 py-3 border-t flex justify-between items-center">
+                <span className="text-xs text-muted-foreground">{template.usageCount} lượt sử dụng</span>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="sm"
+                        className="gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTemplate(template);
+                        }}
+                      >
+                        <Download className="h-4 w-4" />
+                        Áp dụng
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Áp dụng mẫu này</p>
+                    </TooltipContent>
                   </Tooltip>
-                </div>
-              </Card>
-            </Col>
+                </TooltipProvider>
+              </CardFooter>
+            </Card>
           ))}
-        </Row>
+        </div>
       )}
     </div>
   );

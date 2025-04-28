@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { TravelPlanTemplate } from './mock-data';
-import { Card, Typography, Tag, Button, Divider, List, Avatar, Tabs, Rate, Tooltip } from 'antd';
-import {
-  ClockCircleOutlined,
-  EnvironmentOutlined,
-  UserOutlined,
-  CalendarOutlined,
-  ShareAltOutlined,
-  HeartOutlined,
-  HeartFilled,
-  DownloadOutlined
-} from '@ant-design/icons';
+import Image from 'next/image';
 import ApplyTemplateModal from './ApplyTemplateModal';
-
-const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
+import { Card, CardContent, CardFooter } from '../ui/card';
+import { Button } from '../ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Separator } from '../ui/separator';
+import { cn } from '../../lib/utils';
+import {
+  MapPin,
+  Calendar,
+  Share,
+  Heart,
+  Download,
+  Star
+} from 'lucide-react';
 
 interface TemplateDetailsProps {
   template: TravelPlanTemplate;
@@ -23,150 +26,169 @@ interface TemplateDetailsProps {
 const TemplateDetails: React.FC<TemplateDetailsProps> = ({ template }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [activeDay, setActiveDay] = useState(0);
 
   return (
-    <div className="template-details">
-      <Card
-        bordered={false}
-        cover={
-          <div className="relative">
-            <img
+    <div className="template-details space-y-6">
+      <Card className="overflow-hidden">
+        <div className="relative">
+          <div className="relative w-full h-[300px]">
+            <Image
               alt={template.name}
               src={template.image}
-              className="w-full h-64 object-cover"
-              style={{ height: '300px', objectFit: 'cover' }}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"
-              style={{
-                background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)',
-                borderTopLeftRadius: '8px',
-                borderTopRightRadius: '8px'
-              }}
-            />
-            <div className="absolute bottom-4 left-4 text-white">
-              <Title level={2} style={{ color: 'white', margin: 0 }}>{template.name}</Title>
-              <div className="flex items-center gap-2 mt-2">
-                <EnvironmentOutlined />
-                <Text style={{ color: 'white' }}>{template.destination}</Text>
-                <Divider type="vertical" style={{ backgroundColor: 'rgba(255,255,255,0.5)' }} />
-                <CalendarOutlined />
-                <Text style={{ color: 'white' }}>{template.duration} ngày</Text>
-              </div>
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+          <div className="absolute bottom-4 left-4 text-white">
+            <h2 className="text-2xl font-bold text-white">{template.name}</h2>
+            <div className="flex items-center gap-2 mt-2">
+              <MapPin className="h-4 w-4" />
+              <span>{template.destination}</span>
+              <Separator orientation="vertical" className="h-4 bg-white/50" />
+              <Calendar className="h-4 w-4" />
+              <span>{template.duration} ngày</span>
             </div>
           </div>
-        }
-        actions={[
-          <Tooltip title={isFavorite ? "Bỏ yêu thích" : "Yêu thích"}>
-            <Button
-              type="text"
-              icon={isFavorite ? <HeartFilled style={{ color: '#ff4d4f' }} /> : <HeartOutlined />}
-              onClick={() => setIsFavorite(!isFavorite)}
-            >
-              Yêu thích
-            </Button>
-          </Tooltip>,
-          <Tooltip title="Chia sẻ mẫu kế hoạch">
-            <Button type="text" icon={<ShareAltOutlined />}>
-              Chia sẻ
-            </Button>
-          </Tooltip>,
-          <Button
-            type="primary"
-            icon={<DownloadOutlined />}
-            onClick={() => setIsModalVisible(true)}
-          >
-            Áp dụng mẫu
-          </Button>
-        ]}
-      >
-        <Tabs defaultActiveKey="1">
-          <TabPane tab="Tổng quan" key="1">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Rate disabled defaultValue={template.rating} allowHalf />
-                <Text>({template.usageCount} lượt sử dụng)</Text>
-              </div>
+        </div>
 
-              <Paragraph>{template.description}</Paragraph>
+        <CardContent className="pt-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="overview">Tổng quan</TabsTrigger>
+              <TabsTrigger value="schedule">Lịch trình chi tiết</TabsTrigger>
+            </TabsList>
 
-              <div className="flex items-center gap-2 mt-2">
-                <Avatar src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1" />
-                <Text>Tạo bởi {template.authorName}</Text>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-4">
-                {template.tags.map(tag => (
-                  <Tag key={tag}>#{tag}</Tag>
-                ))}
-              </div>
-            </div>
-          </TabPane>
-
-          <TabPane tab="Lịch trình chi tiết" key="2">
-            <Tabs
-              defaultActiveKey="day-0"
-              tabPosition="top"
-              type="card"
-              className="day-tabs"
-              style={{
-                marginBottom: '24px',
-                background: '#f9f9f9',
-                padding: '16px',
-                borderRadius: '8px'
-              }}
-            >
-              {template.days.map((day, index) => (
-                <TabPane
-                  tab={`Ngày ${index + 1}`}
-                  key={`day-${index}`}
-                  className="day-tab-content"
-                >
-                  <div className="day-activities" style={{ padding: '16px 0' }}>
-                    {/* Loại bỏ tiêu đề ngày trùng lặp */}
-                    <List
-                      itemLayout="horizontal"
-                      dataSource={day.activities}
-                      renderItem={(activity) => (
-                        <List.Item
-                          className="activity-item"
-                          style={{
-                            padding: '16px',
-                            borderRadius: '8px',
-                            marginBottom: '12px',
-                            border: '1px solid #f0f0f0',
-                            background: 'white'
-                          }}
-                        >
-                          <div className="activity-time" style={{
-                            minWidth: '80px',
-                            textAlign: 'center',
-                            borderRight: '1px solid #f0f0f0',
-                            paddingRight: '16px'
-                          }}>
-                            <Text strong style={{ fontSize: '18px', color: '#722ed1' }}>{activity.time}</Text>
-                          </div>
-                          <div className="activity-content" style={{ marginLeft: '16px', flex: 1 }}>
-                            <Title level={5} style={{ marginBottom: '8px' }}>{activity.title}</Title>
-                            <Paragraph style={{ marginBottom: '8px' }}>{activity.description}</Paragraph>
-                            <div className="activity-location" style={{ display: 'flex', alignItems: 'center' }}>
-                              <EnvironmentOutlined style={{ color: '#1890ff', marginRight: '8px' }} />
-                              <Text type="secondary">{activity.location}</Text>
-                            </div>
-                          </div>
-                        </List.Item>
+            <TabsContent value="overview" className="mt-4 space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={cn(
+                        "h-4 w-4",
+                        i < Math.floor(template.rating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
                       )}
                     />
-                  </div>
-                </TabPane>
-              ))}
-            </Tabs>
-          </TabPane>
-        </Tabs>
+                  ))}
+                </div>
+                <span className="text-sm text-muted-foreground">({template.usageCount} lượt sử dụng)</span>
+              </div>
+
+              <p className="text-sm">{template.description}</p>
+
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1" />
+                  <AvatarFallback>{template.authorName?.charAt(0) || 'U'}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm">Tạo bởi {template.authorName || 'Người dùng ẩn danh'}</span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {template.tags.map(tag => (
+                  <Badge key={tag} variant="secondary">#{tag}</Badge>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="schedule" className="mt-4">
+              <div className="bg-muted rounded-md p-4">
+                <Tabs
+                  value={`day-${activeDay}`}
+                  onValueChange={(value) => setActiveDay(parseInt(value.replace('day-', '')))}
+                >
+                  <TabsList className="mb-4">
+                    {template.days.map((_, index) => (
+                      <TabsTrigger key={`day-tab-${index}`} value={`day-${index}`}>
+                        Ngày {index + 1}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+
+                  {template.days.map((day, dayIndex) => (
+                    <TabsContent key={`day-content-${dayIndex}`} value={`day-${dayIndex}`}>
+                      <div className="space-y-4">
+                        {day.activities.map((activity, activityIndex) => (
+                          <div
+                            key={`activity-${dayIndex}-${activityIndex}`}
+                            className="flex bg-white rounded-md border p-4 gap-4"
+                          >
+                            <div className="min-w-[80px] text-center border-r pr-4">
+                              <span className="text-lg font-medium text-purple-600">{activity.time}</span>
+                            </div>
+                            <div className="flex-1">
+                              <h5 className="font-medium mb-2">{activity.title}</h5>
+                              <p className="text-sm text-muted-foreground mb-2">{activity.description}</p>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                                <span>{activity.location}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+
+        <CardFooter className="flex justify-between border-t pt-4">
+          <div className="flex gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsFavorite(!isFavorite)}
+                  >
+                    <Heart className={cn("mr-2 h-4 w-4", isFavorite ? "fill-red-500 text-red-500" : "")} />
+                    Yêu thích
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isFavorite ? "Bỏ yêu thích" : "Yêu thích"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Share className="mr-2 h-4 w-4" />
+                    Chia sẻ
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Chia sẻ mẫu kế hoạch</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => setIsModalVisible(true)}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Áp dụng mẫu
+          </Button>
+        </CardFooter>
       </Card>
 
       <ApplyTemplateModal
-        isVisible={isModalVisible}
+        isOpen={isModalVisible}
         onClose={() => setIsModalVisible(false)}
         template={template}
       />

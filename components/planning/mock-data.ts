@@ -1,11 +1,23 @@
 // Mock data for travel plan templates
 
+export type ActivityType =
+  | 'Ăn sáng'
+  | 'Ăn trưa'
+  | 'Ăn tối'
+  | 'Cà phê'
+  | 'Tham quan'
+  | 'Mua sắm'
+  | 'Nghỉ ngơi'
+  | 'Di chuyển'
+  | 'Khác';
+
 export type Activity = {
   id: string;
   time: string;
   title: string;
   description: string;
   location: string;
+  type?: ActivityType; // Loại hoạt động (tùy chọn)
 };
 
 export type Day = {
