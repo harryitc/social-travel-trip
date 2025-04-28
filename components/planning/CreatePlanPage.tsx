@@ -24,7 +24,7 @@ interface CreatePlanPageProps {
 
 export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPageProps) {
   // Get current user from Clerk
-  const { isLoaded, user } = useUser();
+  const { user } = useUser();
 
   // State for plan details
   const [planName, setPlanName] = useState('');
@@ -53,7 +53,6 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
   const [userGroups, setUserGroups] = useState<TripGroup[]>(getUserGroups());
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [applyAfterSave, setApplyAfterSave] = useState(false);
-  const [savedTemplate, setSavedTemplate] = useState<TravelPlanTemplate | null>(null);
 
   // Load user groups
   useEffect(() => {
@@ -167,7 +166,8 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
         title: newActivity.title!,
         time: newActivity.time!,
         description: newActivity.description || '',
-        location: newActivity.location!
+        location: newActivity.location!,
+        mainLocation: newActivity.location! // Set mainLocation to the same as location
       };
 
       updatedDays[currentDayIndex].activities.push(newActivityObj);
@@ -216,7 +216,6 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
 
     // Save the template
     onSave(newTemplate);
-    setSavedTemplate(newTemplate);
 
     if (applyAfterSave && selectedGroupId && onApplyToGroup) {
       // Apply to selected group

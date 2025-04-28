@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useEffect, useCallback, KeyboardEvent } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback, KeyboardEvent } from 'react';
 import { Day, Activity, ActivityType } from './mock-data';
 import { cn } from '@/lib/utils';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
@@ -15,7 +15,19 @@ import {
   MapPin,
   Search,
   PlusCircle,
-  Undo
+  Undo,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Store,
+  Utensils,
+  Landmark,
+  Trees,
+  Hotel,
+  Coffee,
+  ShoppingBag,
+  Church,
+  Building
 } from 'lucide-react';
 import { PopularLocation, searchLocations, getAllCities, getLocationsByCity, suggestLocationsByDestination, POPULAR_LOCATIONS } from './popular-locations';
 import {
@@ -36,6 +48,15 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
+import { debounce } from '@/lib/debounce';
+import { toast } from 'sonner';
 
 
 // Định nghĩa các loại hoạt động và màu sắc tương ứng
@@ -70,34 +91,205 @@ const getActivityType = (activity: Activity): ActivityType => {
   return 'Khác';
 };
 
-// Hàm chuyển đổi thời gian từ chuỗi "HH:MM" sang số phút từ 00:00
-const timeToMinutes = (time: string) => {
-  const [hours, minutes] = time.split(':').map(Number);
-  return hours * 60 + minutes;
+// Hàm xác định biểu tượng dựa trên tên địa điểm
+const getLocationIcon = (location: string) => {
+  const locationLower = location.toLowerCase();
+
+  // Nhà hàng, quán ăn
+  if (
+    locationLower.includes('nhà hàng') ||
+    locationLower.includes('quán ăn') ||
+    locationLower.includes('quán cơm') ||
+    locationLower.includes('ẩm thực') ||
+    locationLower.includes('restaurant')
+  ) {
+    return Utensils;
+  }
+
+  // Chợ, market
+  if (
+    locationLower.includes('chợ') ||
+    locationLower.includes('market') ||
+    locationLower.includes('siêu thị')
+  ) {
+    return Store;
+  }
+
+  // Địa điểm tham quan, du lịch
+  if (
+    locationLower.includes('tham quan') ||
+    locationLower.includes('du lịch') ||
+    locationLower.includes('danh lam') ||
+    locationLower.includes('thắng cảnh') ||
+    locationLower.includes('bảo tàng') ||
+    locationLower.includes('museum') ||
+    locationLower.includes('tourist')
+  ) {
+    return Landmark;
+  }
+
+  // Công viên, vườn
+  if (
+    locationLower.includes('công viên') ||
+    locationLower.includes('vườn') ||
+    locationLower.includes('park') ||
+    locationLower.includes('garden')
+  ) {
+    return Trees;
+  }
+
+  // Khách sạn, nhà nghỉ
+  if (
+    locationLower.includes('khách sạn') ||
+    locationLower.includes('nhà nghỉ') ||
+    locationLower.includes('hotel') ||
+    locationLower.includes('resort') ||
+    locationLower.includes('homestay')
+  ) {
+    return Hotel;
+  }
+
+  // Quán cà phê
+  if (
+    locationLower.includes('cà phê') ||
+    locationLower.includes('cafe') ||
+    locationLower.includes('coffee')
+  ) {
+    return Coffee;
+  }
+
+  // Trung tâm mua sắm
+  if (
+    locationLower.includes('trung tâm mua sắm') ||
+    locationLower.includes('shopping') ||
+    locationLower.includes('mall')
+  ) {
+    return ShoppingBag;
+  }
+
+  // Nhà thờ
+  if (
+    locationLower.includes('nhà thờ') ||
+    locationLower.includes('church') ||
+    locationLower.includes('cathedral')
+  ) {
+    return Church;
+  }
+
+  // Chùa, đền, miếu
+  if (
+    locationLower.includes('chùa') ||
+    locationLower.includes('đền') ||
+    locationLower.includes('miếu') ||
+    locationLower.includes('temple') ||
+    locationLower.includes('pagoda')
+  ) {
+    return Building;
+  }
+
+  // Mặc định là MapPin
+  return MapPin;
 };
 
-// Hàm chuyển đổi số phút từ 00:00 sang chuỗi "HH:MM"
-const minutesToTime = (minutes: number) => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+// Constants for time calculations
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+const MINUTES_PER_DAY = HOURS_PER_DAY * MINUTES_PER_HOUR;
+const MIN_ACTIVITY_DURATION = 15; // Minimum activity duration in minutes
+const DEFAULT_ACTIVITY_DURATION = 60; // Default activity duration in minutes
+const CHART_START_HOUR = 6; // Chart starts at 6:00 AM
+const CHART_END_HOUR = 24; // Chart ends at 00:00 (midnight)
+const PIXELS_PER_HOUR = 80; // 80px represents 1 hour on the chart
+const PIXELS_PER_MINUTE = PIXELS_PER_HOUR / MINUTES_PER_HOUR; // 80px / 60min = 1.33px per minute
+
+/**
+ * Converts time string in "HH:MM" format to minutes from 00:00
+ * @param time Time string in "HH:MM" format
+ * @returns Number of minutes from 00:00
+ */
+const timeToMinutes = (time: string): number => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * MINUTES_PER_HOUR + minutes;
+};
+
+/**
+ * Converts minutes from 00:00 to time string in "HH:MM" format
+ * @param minutes Number of minutes from 00:00
+ * @returns Time string in "HH:MM" format
+ */
+const minutesToTime = (minutes: number): string => {
+  // Handle negative minutes or minutes > 24 hours
+  minutes = ((minutes % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+
+  const hours = Math.floor(minutes / MINUTES_PER_HOUR);
+  const mins = Math.floor(minutes % MINUTES_PER_HOUR);
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 };
 
-// Hàm lấy thời gian kết thúc từ description
+/**
+ * Extracts end time from activity description
+ * @param description Activity description text
+ * @returns End time string in "HH:MM" format or null if not found
+ */
 const getEndTimeFromDescription = (description: string): string | null => {
   const match = description.match(/END_TIME:([^;]*);/);
   return match ? match[1] : null;
 };
 
-// Hàm tính thời gian kết thúc của hoạt động (giả định mỗi hoạt động kéo dài đến hoạt động tiếp theo)
-const calculateEndTime = (activities: Activity[], index: number) => {
+/**
+ * Calculates the end time of an activity based on the next activity or default duration
+ * @param activities List of activities
+ * @param index Index of the current activity
+ * @returns End time in minutes from 00:00
+ */
+const calculateEndTime = (activities: Activity[], index: number): number => {
   if (index === activities.length - 1) {
-    // Hoạt động cuối cùng trong ngày, giả định kéo dài 2 giờ
+    // Last activity of the day, use default duration
     const startMinutes = timeToMinutes(activities[index].time);
-    return startMinutes + 120;
+    return startMinutes + DEFAULT_ACTIVITY_DURATION * 2; // Last activity gets 2 hours by default
   }
 
   return timeToMinutes(activities[index + 1].time);
+};
+
+/**
+ * Converts pixel position to minutes on the timeline with snapping to 5-minute intervals
+ * @param pixelPosition X position in pixels
+ * @returns Minutes from the start of the chart (6:00 AM)
+ */
+const pixelsToMinutes = (pixelPosition: number): number => {
+  // Convert pixels to exact minutes
+  const exactMinutes = pixelPosition / PIXELS_PER_MINUTE;
+
+  // Snap to 5-minute intervals for better grid alignment
+  const snappedMinutes = Math.round(exactMinutes / 5) * 5;
+
+  return snappedMinutes;
+};
+
+/**
+ * Converts minutes to pixel position on the timeline with precise calculation
+ * @param minutes Minutes from the start of the chart (6:00 AM)
+ * @returns X position in pixels
+ */
+const minutesToPixels = (minutes: number): number => {
+  // Ensure we're working with a multiple of 5 minutes for grid alignment
+  const snappedMinutes = Math.round(minutes / 5) * 5;
+
+  // Calculate exact pixel position
+  return Math.round(snappedMinutes * PIXELS_PER_MINUTE);
+};
+
+/**
+ * Validates and adjusts time to ensure it's within the valid range (6:00 - 00:00)
+ * @param minutes Minutes from 00:00
+ * @returns Adjusted minutes within valid range
+ */
+const validateTimeRange = (minutes: number): number => {
+  const minTime = CHART_START_HOUR * MINUTES_PER_HOUR; // 6:00 AM
+  const maxTime = CHART_END_HOUR * MINUTES_PER_HOUR; // 00:00 (midnight)
+
+  return Math.max(minTime, Math.min(minutes, maxTime - 1));
 };
 
 // Kiểu dữ liệu cho hoạt động trong biểu đồ
@@ -155,6 +347,30 @@ export function InteractiveScheduleChart({
   const [activityHistory, setActivityHistory] = useState<Activity[][]>([]);
   const [canUndo, setCanUndo] = useState<boolean>(false);
 
+  // State cho visual feedback khi kéo thả
+  const [dragFeedback, setDragFeedback] = useState<{
+    currentTime: string;
+    isValidPosition: boolean;
+    activityId: string | null;
+    position: { x: number, y: number } | null;
+    edge?: 'start' | 'end' | null;
+  }>({
+    currentTime: '',
+    isValidPosition: true,
+    activityId: null,
+    position: null,
+    edge: null
+  });
+
+  // State cho vị trí chuột hiện tại (used in event handlers)
+  const [, setMousePosition] = useState<{ x: number, y: number } | null>(null);
+
+  // State for toggling location column on mobile
+  const [isLocationColumnVisible, setIsLocationColumnVisible] = useState<boolean>(true);
+
+  // We don't need this ref anymore since we're using the debounce function directly
+  // const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Hàm xử lý Undo (Ctrl+Z)
   const handleUndo = useCallback(() => {
     if (activityHistory.length > 0 && onUpdateActivities) {
@@ -183,6 +399,12 @@ export function InteractiveScheduleChart({
       if (e.key === 'z' && e.ctrlKey && isEditing && onUpdateActivities && canUndo) {
         e.preventDefault();
         handleUndo();
+      }
+
+      // Xử lý phím tắt để ẩn/hiện cột địa điểm (Alt+L)
+      if (e.key === 'l' && e.altKey) {
+        e.preventDefault();
+        setIsLocationColumnVisible(prev => !prev);
       }
     };
 
@@ -252,15 +474,81 @@ export function InteractiveScheduleChart({
     return Array.from(locations);
   }, [chartData]);
 
+  // Đếm số hoạt động cho mỗi địa điểm
+  const locationActivityCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    chartData.forEach(activity => {
+      const location = activity.mainLocation;
+      counts[location] = (counts[location] || 0) + 1;
+    });
+    return counts;
+  }, [chartData]);
+
+  // Cache biểu tượng cho mỗi địa điểm để tránh tính toán lại
+  const locationIcons = useMemo(() => {
+    const icons: Record<string, React.ReactElement> = {};
+    activeLocations.forEach(location => {
+      const IconComponent = getLocationIcon(location);
+      icons[location] = React.createElement(IconComponent, { size: 14 });
+
+      // Tạo thêm biểu tượng lớn hơn cho tooltip
+      icons[`${location}-large`] = React.createElement(IconComponent, { size: 18 });
+    });
+    return icons;
+  }, [activeLocations]);
+
   // Tạo các giờ trong ngày (từ 6:00 đến 00:00)
-  const startHour = 6; // Giờ bắt đầu của biểu đồ
-  const endHour = 24; // Giờ kết thúc của biểu đồ (00:00)
-  const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => i + startHour);
+  const hours = Array.from({ length: CHART_END_HOUR - CHART_START_HOUR + 1 }, (_, i) => i + CHART_START_HOUR);
+
+  // Create debounce function outside of useCallback
+  const debounceSave = debounce((dayIndex: number, updatedActivities: Activity[], callback?: (dayIndex: number, activities: Activity[]) => void) => {
+    if (callback) {
+      callback(dayIndex, updatedActivities);
+      toast.success('Lịch trình đã được lưu', {
+        duration: 1500,
+        position: 'bottom-right',
+      });
+    }
+  }, 500); // 500ms debounce time
+
+  // Debounced function to save activities
+  // We don't need to include debounceSave in the dependency array because it's defined outside and doesn't change
+  const debouncedSaveActivities = useCallback(
+    (dayIndex: number, updatedActivities: Activity[]) => {
+      debounceSave(dayIndex, updatedActivities, onUpdateActivities);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onUpdateActivities]
+  );
+
+  // Track mouse movement for visual feedback
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (isDragging) {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+      }
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [isDragging]);
 
   // Xử lý khi bắt đầu kéo thả hoạt động
   const handleDragStart = (activity: ChartActivity) => {
     setIsDragging(true);
     setSelectedActivityId(activity.id);
+
+    // Initialize drag feedback
+    setDragFeedback({
+      currentTime: activity.time,
+      isValidPosition: true,
+      activityId: activity.id,
+      position: null,
+      edge: null
+    });
 
     // Lưu trạng thái hiện tại vào lịch sử trước khi thay đổi
     if (isEditing && onUpdateActivities) {
@@ -270,7 +558,7 @@ export function InteractiveScheduleChart({
   };
 
   // Xử lý khi kéo thả hoạt động
-  const handleDrag = (activity: ChartActivity, data: DraggableData, _e: DraggableEvent) => {
+  const handleDrag = (activity: ChartActivity, data: DraggableData, e: DraggableEvent) => {
     if (!isEditing || !onUpdateActivities) return;
 
     // Nếu đang giữ phím Ctrl, tạo bản sao của hoạt động
@@ -279,42 +567,128 @@ export function InteractiveScheduleChart({
       return;
     }
 
-    const pixelsPerMinute = 80/60; // 80px = 60 phút
+    // Get mouse position from the event
+    const mouseEvent = e as unknown as React.MouseEvent;
+    const currentMousePosition = { x: mouseEvent.clientX, y: mouseEvent.clientY };
 
-    // Tính toán thời gian mới dựa trên vị trí kéo thả
-    const newStartMinutes = startHour * 60 + Math.round(data.x / pixelsPerMinute);
+    // Calculate new time based on drag position with improved precision
+    // Snap to 5-minute intervals for better grid alignment
+    const dragMinutes = pixelsToMinutes(data.x);
+    const newStartMinutes = CHART_START_HOUR * MINUTES_PER_HOUR + dragMinutes;
 
-    // Đảm bảo thời gian bắt đầu không âm và không vượt quá 23:45
-    const maxStartTime = endHour * 60 - 15; // 23:45
-    const adjustedStartMinutes = Math.max(0, Math.min(newStartMinutes, maxStartTime));
-    const newTime = minutesToTime(adjustedStartMinutes);
+    // Validate time range
+    const validatedStartMinutes = validateTimeRange(newStartMinutes);
+    const newTime = minutesToTime(validatedStartMinutes);
 
-    // Lưu trạng thái hiện tại vào lịch sử trước khi thay đổi
+    // Update drag feedback
+    setDragFeedback({
+      currentTime: newTime,
+      isValidPosition: validatedStartMinutes === newStartMinutes,
+      activityId: activity.id,
+      position: currentMousePosition
+    });
+
+    // Lưu trạng thái hiện tại vào lịch sử trước khi thay đổi (only once at the start)
     if (!isDragging) {
       setActivityHistory(prev => [...prev, [...days[selectedDay].activities]]);
       setCanUndo(true);
     }
 
-    // Chỉ thay đổi thời gian, không thay đổi địa điểm
+    // Update activities with new time
     const updatedActivities = days[selectedDay].activities.map(act => {
       if (act.id === activity.id) {
-        return {
+        // Update the activity with the new time
+        const updatedActivity = {
           ...act,
           time: newTime
         };
+
+        // If there's an end time in the description, we need to maintain the duration
+        const endTimeStr = getEndTimeFromDescription(act.description);
+        if (endTimeStr) {
+          const oldStartMinutes = timeToMinutes(act.time);
+          const oldEndMinutes = timeToMinutes(endTimeStr);
+          const duration = oldEndMinutes > oldStartMinutes
+            ? oldEndMinutes - oldStartMinutes
+            : (24 * 60 - oldStartMinutes) + oldEndMinutes;
+
+          // Calculate new end time based on the same duration
+          const newEndMinutes = (validatedStartMinutes + duration) % (24 * 60);
+          const newEndTime = minutesToTime(newEndMinutes);
+
+          // Update the end time in the description
+          updatedActivity.description = act.description.replace(
+            /END_TIME:[^;]*;/,
+            `END_TIME:${newEndTime};`
+          );
+        }
+
+        return updatedActivity;
       }
       return act;
     });
 
-    // Gọi callback để cập nhật dữ liệu mà không sắp xếp lại
+    // Update UI immediately
     if (onUpdateActivities) {
       onUpdateActivities(selectedDay, updatedActivities);
     }
   };
 
   // Xử lý khi kết thúc kéo thả
-  const handleDragStop = () => {
+  const handleDragStop = (activity: ChartActivity, data: DraggableData) => {
     setIsDragging(false);
+    setDragFeedback({
+      currentTime: '',
+      isValidPosition: true,
+      activityId: null,
+      position: null
+    });
+
+    if (!isEditing || !onUpdateActivities) return;
+
+    // Calculate final position and time with improved precision
+    // Snap to 5-minute intervals for better grid alignment
+    const dragMinutes = pixelsToMinutes(data.x);
+    const newStartMinutes = CHART_START_HOUR * MINUTES_PER_HOUR + dragMinutes;
+    const validatedStartMinutes = validateTimeRange(newStartMinutes);
+    const newTime = minutesToTime(validatedStartMinutes);
+
+    // Update activities with final position
+    const updatedActivities = days[selectedDay].activities.map(act => {
+      if (act.id === activity.id) {
+        // Update the activity with the new time
+        const updatedActivity = {
+          ...act,
+          time: newTime
+        };
+
+        // If there's an end time in the description, we need to maintain the duration
+        const endTimeStr = getEndTimeFromDescription(act.description);
+        if (endTimeStr) {
+          const oldStartMinutes = timeToMinutes(act.time);
+          const oldEndMinutes = timeToMinutes(endTimeStr);
+          const duration = oldEndMinutes > oldStartMinutes
+            ? oldEndMinutes - oldStartMinutes
+            : (24 * 60 - oldStartMinutes) + oldEndMinutes;
+
+          // Calculate new end time based on the same duration
+          const newEndMinutes = (validatedStartMinutes + duration) % (24 * 60);
+          const newEndTime = minutesToTime(newEndMinutes);
+
+          // Update the end time in the description
+          updatedActivity.description = act.description.replace(
+            /END_TIME:[^;]*;/,
+            `END_TIME:${newEndTime};`
+          );
+        }
+
+        return updatedActivity;
+      }
+      return act;
+    });
+
+    // Save to database with debounce
+    debouncedSaveActivities(selectedDay, updatedActivities);
   };
 
   // Xử lý khi bắt đầu thay đổi kích thước
@@ -325,6 +699,17 @@ export function InteractiveScheduleChart({
     // Lưu trạng thái hiện tại vào lịch sử trước khi thay đổi
     setActivityHistory(prev => [...prev, [...days[selectedDay].activities]]);
     setCanUndo(true);
+
+    // Initialize drag feedback
+    setDragFeedback({
+      currentTime: edge === 'start' ? activity.time : getEndTimeFromDescription(activity.description) || minutesToTime(activity.endMinutes),
+      isValidPosition: true,
+      activityId: activity.id,
+      position: { x: event.clientX, y: event.clientY },
+      edge: edge
+    });
+
+    setIsDragging(true);
 
     // Lưu vị trí ban đầu của chuột
     const startX = event.clientX;
@@ -340,68 +725,71 @@ export function InteractiveScheduleChart({
       if (!isEditing || !onUpdateActivities) return;
 
       const deltaX = moveEvent.clientX - startX;
-      const pixelsPerMinute = 80/60; // 80px = 60 phút
-      const minutesDelta = Math.round(deltaX / pixelsPerMinute);
+      const minutesDelta = pixelsToMinutes(deltaX);
+
+      // Update mouse position for visual feedback
+      setDragFeedback(prev => ({
+        ...prev,
+        position: { x: moveEvent.clientX, y: moveEvent.clientY }
+      }));
 
       let newTime = activity.time;
       let newEndTime = endTimeStr || minutesToTime(endTime);
       let newDuration = activity.duration;
+      let isValid = true;
 
       if (edge === 'start') {
         // Thay đổi thời gian bắt đầu, giữ nguyên thời gian kết thúc
         const newStartMinutes = startTime + minutesDelta;
 
+        // Validate time range
+        const minStartTime = CHART_START_HOUR * MINUTES_PER_HOUR; // 6:00 AM
+        const maxStartTime = calculatedEndTime - MIN_ACTIVITY_DURATION; // End time - 15 minutes
+
+        // Check if position is valid
+        isValid = newStartMinutes >= minStartTime && newStartMinutes <= maxStartTime;
+
         // Đảm bảo thời gian bắt đầu không âm và không vượt quá thời gian kết thúc - 15 phút
-        const adjustedStartMinutes = Math.max(0, Math.min(newStartMinutes, calculatedEndTime - 15));
+        const adjustedStartMinutes = Math.max(minStartTime, Math.min(newStartMinutes, maxStartTime));
         newTime = minutesToTime(adjustedStartMinutes);
 
         // Tính toán duration mới
-        if (calculatedEndTime > adjustedStartMinutes) {
-          newDuration = calculatedEndTime - adjustedStartMinutes;
-        } else {
-          // Trường hợp thời gian kết thúc qua ngày mới
-          newDuration = (24 * 60 - adjustedStartMinutes) + calculatedEndTime;
-        }
+        newDuration = calculatedEndTime - adjustedStartMinutes;
 
-        console.log('Resize start:', {
-          startTime,
-          endTime: calculatedEndTime,
-          newStartMinutes,
-          adjustedStartMinutes,
-          newTime,
-          newDuration
-        });
+        // Update visual feedback
+        setDragFeedback(prev => ({
+          ...prev,
+          currentTime: newTime,
+          isValidPosition: isValid
+        }));
       } else if (edge === 'end') {
         // Thay đổi thời gian kết thúc, giữ nguyên thời gian bắt đầu
         const newEndMinutes = calculatedEndTime + minutesDelta;
 
-        // Đảm bảo thời gian kết thúc không nhỏ hơn thời gian bắt đầu + 15 phút
-        // Giới hạn thời gian kết thúc tối đa là 00:00 (24 * 60 phút)
-        const maxEndTime = 24 * 60; // 00:00
-        const adjustedEndMinutes = Math.min(maxEndTime, Math.max(newEndMinutes, startTime + 15));
+        // Validate time range
+        const minEndTime = startTime + MIN_ACTIVITY_DURATION; // Start time + 15 minutes
+        const maxEndTime = CHART_END_HOUR * MINUTES_PER_HOUR; // 00:00 (midnight)
 
+        // Check if position is valid
+        isValid = newEndMinutes >= minEndTime && newEndMinutes <= maxEndTime;
+
+        // Đảm bảo thời gian kết thúc không nhỏ hơn thời gian bắt đầu + 15 phút và không vượt quá 00:00
+        const adjustedEndMinutes = Math.min(maxEndTime, Math.max(newEndMinutes, minEndTime));
         newEndTime = minutesToTime(adjustedEndMinutes);
 
         // Tính toán duration mới
-        if (adjustedEndMinutes > startTime) {
-          newDuration = adjustedEndMinutes - startTime;
-        } else {
-          // Trường hợp thời gian kết thúc qua ngày mới
-          newDuration = (24 * 60 - startTime) + adjustedEndMinutes;
-        }
+        newDuration = adjustedEndMinutes - startTime;
 
-        console.log('Resize end:', {
-          startTime,
-          endTime: calculatedEndTime,
-          newEndMinutes,
-          adjustedEndMinutes,
-          newEndTime,
-          newDuration
-        });
+        // Update visual feedback
+        setDragFeedback(prev => ({
+          ...prev,
+          currentTime: newEndTime,
+          isValidPosition: isValid
+        }));
       }
 
       // Đảm bảo duration tối thiểu là 15 phút
-      if (newDuration < 15) {
+      if (newDuration < MIN_ACTIVITY_DURATION) {
         return;
       }
 
@@ -447,6 +835,14 @@ export function InteractiveScheduleChart({
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
 
+      setIsDragging(false);
+      setDragFeedback({
+        currentTime: '',
+        isValidPosition: true,
+        activityId: null,
+        position: null
+      });
+
       // Lưu lại độ dài của timeline
       if (onUpdateActivities && days[selectedDay]) {
         // Tìm hoạt động hiện tại
@@ -461,17 +857,7 @@ export function InteractiveScheduleChart({
             const updatedActivities = days[selectedDay].activities.map(act => {
               if (act.id === activity.id) {
                 // Tính toán lại duration dựa trên thời gian bắt đầu và kết thúc
-                const startMinutes = timeToMinutes(act.time);
-                const endMinutes = timeToMinutes(endTimeStr);
-                const duration = endMinutes > startMinutes ? endMinutes - startMinutes : (24 * 60 - startMinutes) + endMinutes;
-
-                console.log('Updated duration:', {
-                  time: act.time,
-                  endTime: endTimeStr,
-                  startMinutes,
-                  endMinutes,
-                  duration
-                });
+                // We don't need to calculate these values here as they're already in the description
 
                 return {
                   ...act,
@@ -484,8 +870,8 @@ export function InteractiveScheduleChart({
               return act;
             });
 
-            // Gọi callback để cập nhật dữ liệu
-            onUpdateActivities(selectedDay, updatedActivities);
+            // Save to database with debounce
+            debouncedSaveActivities(selectedDay, updatedActivities);
           }
         }
       }
@@ -726,6 +1112,7 @@ export function InteractiveScheduleChart({
         time: '12:00',
         description: 'END_TIME:13:00;',
         location: newLocation,
+        mainLocation: newLocation,
         type: 'Tham quan'
       };
 
@@ -797,6 +1184,7 @@ export function InteractiveScheduleChart({
         title: newActivity.title!,
         description: newActivity.description || '',
         location: newActivity.location!,
+        mainLocation: newActivity.location!, // Set mainLocation to the same as location
         type: newActivity.type as ActivityType
       };
 
@@ -846,54 +1234,144 @@ export function InteractiveScheduleChart({
       <div className="border rounded-md shadow-sm flex flex-col">
         {/* Header với các giờ */}
         <div className="flex border-b sticky top-0 bg-background z-10 shadow-sm">
-          <div className="min-w-[180px] p-2 border-r font-medium text-sm flex justify-between items-center bg-gray-50 dark:bg-gray-900">
-            <span className="uppercase text-xs text-gray-500 dark:text-gray-400">Địa điểm</span>
-            {isEditing && (
+          <div
+            className={cn(
+              "p-2 border-r font-medium text-sm flex justify-between items-center bg-gray-50 dark:bg-gray-900 transition-all duration-200",
+              isLocationColumnVisible ? "w-[200px] flex-shrink-0" : "w-[40px] flex-shrink-0"
+            )}
+          >
+            <div className="flex items-center">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "h-6 w-6 p-0 mr-1 transition-colors",
+                        isLocationColumnVisible ? "hover:bg-gray-200 dark:hover:bg-gray-800" : "bg-gray-200/50 dark:bg-gray-800/50"
+                      )}
+                      onClick={() => setIsLocationColumnVisible(!isLocationColumnVisible)}
+                    >
+                      {isLocationColumnVisible ? (
+                        <ChevronLeft className="h-3 w-3" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-xs">
+                    <div className="flex flex-col">
+                      <span>{isLocationColumnVisible ? "Ẩn cột địa điểm" : "Hiện cột địa điểm"}</span>
+                      <span className="text-muted-foreground text-[10px] mt-0.5">Phím tắt: Alt+L</span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {isLocationColumnVisible && (
+                <div className="flex items-center">
+                  <span className="uppercase text-xs text-gray-500 dark:text-gray-400">Địa điểm</span>
+                  <Badge variant="outline" className="ml-2 text-[9px] px-1 py-0 h-4">
+                    {activeLocations.length}
+                  </Badge>
+                </div>
+              )}
+            </div>
+            {isEditing && isLocationColumnVisible && (
               <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={handleOpenAddLocation}
-                  title="Thêm địa điểm mới"
-                >
-                  <PlusCircle className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={() => handleAddActivity('')}
-                  title="Thêm hoạt động mới"
-                >
-                  <Plus className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0"
-                  onClick={handleUndo}
-                  title="Hoàn tác (Ctrl+Z)"
-                  disabled={!canUndo}
-                >
-                  <Undo className="h-3 w-3" />
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+                        onClick={handleOpenAddLocation}
+                      >
+                        <PlusCircle className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      Thêm địa điểm mới
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+                        onClick={() => handleAddActivity('')}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      Thêm hoạt động mới
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
+                        onClick={handleUndo}
+                        disabled={!canUndo}
+                      >
+                        <Undo className="h-3 w-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">
+                      Hoàn tác (Ctrl+Z)
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
           </div>
           <div
-            className="flex flex-1 overflow-x-auto bg-gray-50 dark:bg-gray-900"
+            className="flex flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 relative"
             ref={headerScrollRef}
-            onScroll={(e) => {
-              if (timelineRef.current) {
-                timelineRef.current.scrollLeft = e.currentTarget.scrollLeft;
-              }
-            }}
           >
+            {/* Grid Background - Light Mode */}
+            <div
+              className="absolute inset-0 grid-background dark:hidden"
+              style={{
+                backgroundSize: `${PIXELS_PER_HOUR}px 100%`,
+                backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px)`,
+                backgroundPosition: '0 0',
+                backgroundRepeat: 'repeat',
+                width: `${hours.length * PIXELS_PER_HOUR}px`,
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 0
+              }}
+            />
+            {/* Grid Background - Dark Mode */}
+            <div
+              className="absolute inset-0 grid-background hidden dark:block"
+              style={{
+                backgroundSize: `${PIXELS_PER_HOUR}px 100%`,
+                backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px)`,
+                backgroundPosition: '0 0',
+                backgroundRepeat: 'repeat',
+                width: `${hours.length * PIXELS_PER_HOUR}px`,
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 0
+              }}
+            />
             {hours.map(hour => (
               <div
                 key={hour}
-                className="w-[80px] flex-shrink-0 p-2 text-center text-xs border-r last:border-r-0 text-gray-500 dark:text-gray-400"
+                className="w-[80px] flex-shrink-0 p-2 text-center text-xs text-gray-500 dark:text-gray-400 relative z-10"
               >
                 {hour === 24 ? '00:00' : `${hour}:00`}
               </div>
@@ -901,51 +1379,146 @@ export function InteractiveScheduleChart({
           </div>
         </div>
 
-        {/* Nội dung biểu đồ - chỉ cuộn ngang ở dưới cùng */}
+        {/* Nội dung biểu đồ - không có thanh cuộn ngang */}
         <div
           className="overflow-x-hidden"
           ref={timelineRef}
-          onScroll={(e) => {
-            if (headerScrollRef.current) {
-              headerScrollRef.current.scrollLeft = e.currentTarget.scrollLeft;
-            }
-          }}
         >
           {activeLocations.length > 0 ? (
             activeLocations.map(location => (
-              <div key={location} className="flex border-b last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-gray-900/50 location-row transition-colors group" data-location={location}>
-                <div className="min-w-[180px] py-2 px-3 border-r text-sm truncate flex justify-between items-center">
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs mr-2 text-gray-700 dark:text-gray-300">
-                      {location.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="font-medium">{location}</span>
-                  </div>
-                  {isEditing && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
-                      onClick={() => handleAddActivity(location)}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
+              <div key={location} className="flex border-b border-gray-200 dark:border-gray-700 last:border-b-0 hover:bg-gray-50/50 dark:hover:bg-gray-900/50 location-row transition-colors group" data-location={location}>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          "py-2 px-3 border-r text-sm flex justify-between items-center transition-all duration-200 cursor-default",
+                          isLocationColumnVisible ? "w-[200px] flex-shrink-0" : "w-[40px] flex-shrink-0"
+                        )}
+                      >
+                        <div className={cn(
+                          "flex items-center min-w-0",
+                          isLocationColumnVisible ? "max-w-full" : "hidden"
+                        )}>
+                          <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-2 flex-shrink-0 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+                            {locationIcons[location]}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-medium truncate">{location}</span>
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <span className="truncate">{locationActivityCounts[location] || 0} hoạt động</span>
+                            </div>
+                          </div>
+                        </div>
+                        {!isLocationColumnVisible && (
+                          <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+                            {locationIcons[location]}
+                          </div>
+                        )}
+                        {isEditing && isLocationColumnVisible && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 flex-shrink-0 ml-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddActivity(location);
+                            }}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="p-3 max-w-xs">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-gray-400">
+                            {locationIcons[`${location}-large`]}
+                          </div>
+                          <div>
+                            <h4 className="font-medium">{location}</h4>
+                            <p className="text-xs text-muted-foreground">
+                              {locationActivityCounts[location] || 0} hoạt động
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-xs">
+                          <div className="grid grid-cols-2 gap-1">
+                            {chartData
+                              .filter(activity => activity.mainLocation === location)
+                              .slice(0, 4)
+                              .map(activity => {
+                                const { color } = ACTIVITY_TYPES[activity.type as keyof typeof ACTIVITY_TYPES] || ACTIVITY_TYPES['Khác'];
+                                return (
+                                  <div key={activity.id} className="flex items-center gap-1">
+                                    <div className={cn("w-2 h-2 rounded-full", color)}></div>
+                                    <span className="truncate">{activity.time} - {activity.title}</span>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                          {locationActivityCounts[location] > 4 && (
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              + {locationActivityCounts[location] - 4} hoạt động khác
+                            </div>
+                          )}
+                        </div>
+
+                        {isEditing && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full h-7 mt-1 text-xs"
+                            onClick={() => handleAddActivity(location)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Thêm hoạt động
+                          </Button>
+                        )}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <div className="flex flex-1 relative h-14">
-                  {hours.map(hour => (
-                    <div
-                      key={hour}
-                      className={`w-[80px] flex-shrink-0 border-r last:border-r-0 ${hour % 2 === 0 ? 'bg-gray-50/30 dark:bg-gray-900/30' : ''}`}
-                    ></div>
-                  ))}
+                  {/* Grid Background - Light Mode */}
+                  <div
+                    className="absolute inset-0 grid-background dark:hidden"
+                    style={{
+                      backgroundSize: `${PIXELS_PER_HOUR}px 100%`,
+                      backgroundImage: `linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px)`,
+                      backgroundPosition: '0 0',
+                      backgroundRepeat: 'repeat',
+                      width: `${hours.length * PIXELS_PER_HOUR}px`,
+                      height: '100%',
+                      pointerEvents: 'none',
+                      zIndex: 0
+                    }}
+                  />
+
+                  {/* Grid Background - Dark Mode */}
+                  <div
+                    className="absolute inset-0 grid-background hidden dark:block"
+                    style={{
+                      backgroundSize: `${PIXELS_PER_HOUR}px 100%`,
+                      backgroundImage: `linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px)`,
+                      backgroundPosition: '0 0',
+                      backgroundRepeat: 'repeat',
+                      width: `${hours.length * PIXELS_PER_HOUR}px`,
+                      height: '100%',
+                      pointerEvents: 'none',
+                      zIndex: 0
+                    }}
+                  />
 
                   {/* Hiển thị các hoạt động */}
                   {chartData
                     .filter(activity => activity.mainLocation === location)
                     .map(activity => {
-                      const startHour = 6; // Giờ bắt đầu của biểu đồ
-                      const startPosition = (activity.startMinutes - startHour * 60) / 60 * 80; // Vị trí bắt đầu (px) - 80px cho mỗi giờ
+                      // Calculate start position with precise alignment to grid
+                      const startMinutesFromChartStart = activity.startMinutes - (CHART_START_HOUR * MINUTES_PER_HOUR);
+                      const startPosition = minutesToPixels(startMinutesFromChartStart);
 
                       // Lấy thời gian kết thúc từ description
                       const endTimeStr = getEndTimeFromDescription(activity.description);
@@ -964,8 +1537,11 @@ export function InteractiveScheduleChart({
 
                       // Đảm bảo độ rộng tối thiểu là 40px (30 phút) để dễ dàng kéo thả
                       const minWidth = 40;
-                      const calculatedWidth = duration / 60 * 80; // Độ rộng (px) - 80px cho mỗi giờ
-                      const width = Math.max(calculatedWidth, minWidth);
+
+                      // Calculate width with precise alignment to grid
+                      // First convert duration to pixels precisely
+                      const durationInPixels = minutesToPixels(duration);
+                      const width = Math.max(durationInPixels, minWidth);
                       const type = activity.type;
                       const { color, textColor } = ACTIVITY_TYPES[type as keyof typeof ACTIVITY_TYPES] || ACTIVITY_TYPES['Khác'];
 
@@ -974,20 +1550,27 @@ export function InteractiveScheduleChart({
                           key={activity.id}
                           axis="x" // Chỉ cho phép kéo theo chiều ngang
                           disabled={!isEditing}
-                          grid={[15, 0]} // Snap theo grid để dễ kéo thả
+                          grid={[PIXELS_PER_MINUTE * 5, 0]} // Snap to 5-minute intervals for better alignment
                           defaultPosition={{ x: startPosition, y: 0 }}
                           position={{ x: startPosition, y: 0 }}
                           onStart={() => handleDragStart(activity)}
                           onDrag={(e, data) => handleDrag(activity, data, e)}
-                          onStop={handleDragStop}
+                          onStop={(_, data) => handleDragStop(activity, data)}
+                          bounds={{
+                            left: 0, // Minimum position (6:00 AM)
+                            right: (CHART_END_HOUR - CHART_START_HOUR) * PIXELS_PER_HOUR // Maximum position (00:00)
+                          }}
                         >
                           <div
                             className={cn(
-                              `absolute top-2 h-10 rounded-md border ${color} ${textColor} text-xs flex items-center overflow-hidden group shadow-sm hover:shadow-md transition-shadow`,
-                              selectedActivityId === activity.id && "ring-2 ring-purple-500"
+                              `absolute top-2 h-10 rounded-md border ${color} ${textColor} text-xs flex items-center overflow-hidden group shadow-sm hover:shadow-md transition-all`,
+                              selectedActivityId === activity.id && "ring-2 ring-purple-500",
+                              isDragging && dragFeedback.activityId === activity.id && !dragFeedback.isValidPosition && "opacity-50 border-red-500 ring-1 ring-red-500",
+                              isDragging && dragFeedback.activityId === activity.id && dragFeedback.isValidPosition && "ring-1 ring-green-500"
                             )}
                             style={{
                               width: `${width}px`,
+                              zIndex: 10, // Ensure activities appear above grid lines
                             }}
                             title={`${activity.time} - ${activity.title}`}
                             onClick={(e) => handleSelectActivity(activity, e)}
@@ -1000,7 +1583,11 @@ export function InteractiveScheduleChart({
                             {/* Nút resize bên trái */}
                             {isEditing && (
                               <div
-                                className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize opacity-30 group-hover:opacity-100 bg-gradient-to-r from-gray-300 dark:from-gray-700 to-transparent"
+                                className={cn(
+                                  "absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize opacity-30 group-hover:opacity-100 bg-gradient-to-r from-gray-300 dark:from-gray-700 to-transparent",
+                                  isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'start' && !dragFeedback.isValidPosition && "from-red-300 dark:from-red-700",
+                                  isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'start' && dragFeedback.isValidPosition && "from-green-300 dark:from-green-700"
+                                )}
                                 onMouseDown={(e) => {
                                   e.stopPropagation(); // Ngăn sự kiện lan truyền
                                   handleResizeStart(activity, 'start', e);
@@ -1012,7 +1599,11 @@ export function InteractiveScheduleChart({
                             {/* Nút resize bên phải */}
                             {isEditing && (
                               <div
-                                className="absolute right-0 top-0 bottom-0 w-4 cursor-ew-resize opacity-50 group-hover:opacity-100 z-10 bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-700"
+                                className={cn(
+                                  "absolute right-0 top-0 bottom-0 w-4 cursor-ew-resize opacity-50 group-hover:opacity-100 z-10 bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-700",
+                                  isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'end' && !dragFeedback.isValidPosition && "to-red-300 dark:to-red-700",
+                                  isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'end' && dragFeedback.isValidPosition && "to-green-300 dark:to-green-700"
+                                )}
                                 onMouseDown={(e) => {
                                   e.stopPropagation(); // Ngăn sự kiện lan truyền
                                   handleResizeStart(activity, 'end', e);
@@ -1022,11 +1613,17 @@ export function InteractiveScheduleChart({
                             )}
 
                             {/* Hiển thị biểu tượng kéo thả khi được chọn */}
-                            {selectedActivityId === activity.id && !selectedActivityForPopup && (
+                            {selectedActivityId === activity.id && !selectedActivityForPopup && !isDragging && (
                               <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-3 bg-purple-500 rounded-full p-0.5">
                                 <Move className="h-3 w-3 text-white" />
                               </div>
                             )}
+
+                            {/* Time indicator */}
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700 opacity-30">
+                              <div className="absolute top-0 left-0 h-full bg-current opacity-50" style={{ width: '2px' }}></div>
+                              <div className="absolute top-0 right-0 h-full bg-current opacity-50" style={{ width: '2px' }}></div>
+                            </div>
                           </div>
                         </Draggable>
                       );
@@ -1069,10 +1666,14 @@ export function InteractiveScheduleChart({
         {/* Thanh cuộn ngang ở dưới cùng */}
         <div className="border-t">
           <div className="flex">
-            <div className="min-w-[180px] border-r"></div>
+            <div className={cn(
+              "border-r transition-all duration-200",
+              isLocationColumnVisible ? "w-[200px] flex-shrink-0" : "w-[40px] flex-shrink-0"
+            )}></div>
             <div
               className="flex-1 overflow-x-auto"
               onScroll={(e) => {
+                // Đồng bộ cả header và nội dung theo thanh cuộn duy nhất này
                 if (timelineRef.current) {
                   timelineRef.current.scrollLeft = e.currentTarget.scrollLeft;
                 }
@@ -1081,11 +1682,36 @@ export function InteractiveScheduleChart({
                 }
               }}
             >
-              <div className="flex" style={{ width: `${(hours.length) * 80}px`, height: '12px' }}></div>
+              <div className="flex" style={{ width: `${hours.length * PIXELS_PER_HOUR}px`, height: '12px' }}></div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Visual feedback for drag operations */}
+      {isDragging && dragFeedback.position && (
+        <div
+          className="fixed z-50 pointer-events-none"
+          style={{
+            left: `${dragFeedback.position.x}px`,
+            top: `${dragFeedback.position.y - 40}px`, // Position above cursor
+            transform: 'translateX(-50%)',
+          }}
+        >
+          <div className={`px-2 py-1 rounded-md text-xs font-medium shadow-md ${
+            dragFeedback.isValidPosition
+              ? 'bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+              : 'bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+          }`}>
+            {dragFeedback.currentTime}
+            {!dragFeedback.isValidPosition && (
+              <span className="ml-1 inline-flex items-center">
+                <AlertCircle className="h-3 w-3 ml-0.5" />
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Popup khi chọn hoạt động */}
       {selectedActivityForPopup && popupPosition && (
