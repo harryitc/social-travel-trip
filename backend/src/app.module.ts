@@ -1,29 +1,27 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-
-import { ClerkClientProvider } from 'src/providers/clerk-client.provider';
-import { AuthModule } from './auth/auth.module';
-
 import { APP_GUARD } from '@nestjs/core';
-import { ClerkAuthGuard } from './auth/clerk-auth.guard';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ClerkAuthGuard } from './auth/clerk-auth.guard';
+import { ClerkClientProvider } from './providers/clerk-client.provider';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    UsersModule,
     AuthModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     ClerkClientProvider,
     {
       provide: APP_GUARD,
       useClass: ClerkAuthGuard,
     },
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

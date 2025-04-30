@@ -2,9 +2,10 @@ import { type ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from 'src/decorators/public.decorator';
+import { PROVIDE_CLERK } from './config';
 
 @Injectable()
-export class ClerkAuthGuard extends AuthGuard('clerk') {
+export class ClerkAuthGuard extends AuthGuard(PROVIDE_CLERK) {
   constructor(private reflector: Reflector) {
     super();
   }

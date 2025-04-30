@@ -1,24 +1,31 @@
 import { User, verifyToken } from '@clerk/backend';
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-custom';
-// import { UsersService } from 'src/users/users.service';
+import { UsersService } from 'src/users/users.service';
 import { Request } from 'express';
-import { ClerkClient } from '@clerk/backend';
+import { PROVIDE_CLERK } from './config';
 
 @Injectable()
-export class ClerkStrategy extends PassportStrategy(Strategy, 'clerk') {
+export class ClerkStrategy extends PassportStrategy(Strategy, PROVIDE_CLERK) {
   constructor(
-    @Inject('ClerkClient')
-    private readonly clerkClient: ClerkClient,
+    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {
     super();
   }
 
   async validate(req: Request): Promise<User> {
-    const token = req.headers.authorization?.split(' ').pop();
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
+    }
+
+    const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
       throw new UnauthorizedException('No token provided');
@@ -29,7 +36,7 @@ export class ClerkStrategy extends PassportStrategy(Strategy, 'clerk') {
         secretKey: this.configService.get('CLERK_SECRET_KEY'),
       });
 
-      const user = await this.clerkClient.users.getUser(tokenPayload.sub);
+      const user = await this.usersService.getUser(tokenPayload.sub);
 
       return user;
     } catch (error) {

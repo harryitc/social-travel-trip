@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 export function SearchTrips() {
   const [date, setDate] = useState<Date>();
-  
+
   return (
     <div className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border border-purple-100 dark:border-purple-900 p-4 rounded-lg shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

@@ -1,14 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, Req } from '@nestjs/common';
 import { Public } from './decorators/public.decorator';
+import { CurrentUser } from './decorators/current-user.decorator';
+import { User } from '@clerk/backend';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor() {}
 
-  @Public()
+  // @Public()
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  getHello(@CurrentUser() user: User): any {
+    console.log('req = ', user);
+    return {
+      user: user,
+      data: 'app ne',
+    };
   }
 }
