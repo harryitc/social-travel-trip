@@ -14,8 +14,7 @@ import {
   BookText,
   Settings,
   Menu,
-  X,
-  MessagesSquare
+  X
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -38,11 +37,6 @@ const sidebarItems: SidebarItem[] = [
     name: 'Chuyến đi',
     path: '/trips',
     icon: <MessageSquare className="h-5 w-5" />,
-  },
-  {
-    name: 'Trò chuyện',
-    path: '/chat',
-    icon: <MessagesSquare className="h-5 w-5" />,
   },
   {
     name: 'Lập kế hoạch',

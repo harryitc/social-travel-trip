@@ -48,6 +48,7 @@ export const MOCK_TRIP_GROUPS: TripGroup[] = [
     hashtags: ['DaLat', 'DuLich', 'NhomDuLich'],
     isPrivate: false,
     hasPlan: true,
+    planDays: 4
   },
   {
     id: '2',
@@ -63,11 +64,12 @@ export const MOCK_TRIP_GROUPS: TripGroup[] = [
       list: [
         { id: '1', name: 'Nguyễn Minh', avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'member' },
         { id: '4', name: 'Ngọc Mai', avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'admin' },
+        { id: '2', name: 'Trần Hà', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'member' },
       ],
     },
     hashtags: ['NhaTrang', 'Bien', 'DuLich'],
     isPrivate: false,
-    hasPlan: true,
+    hasPlan: true
   },
   {
     id: '3',
@@ -87,7 +89,49 @@ export const MOCK_TRIP_GROUPS: TripGroup[] = [
     },
     hashtags: ['Sapa', 'MuaDong', 'Fansipan'],
     isPrivate: false,
+    hasPlan: true
+  },
+  {
+    id: '4',
+    title: 'Khám phá Hội An',
+    image: 'https://images.pexels.com/photos/5191371/pexels-photo-5191371.jpeg?auto=compress&cs=tinysrgb&w=600',
+    description: 'Tham quan phố cổ Hội An, trải nghiệm văn hóa và ẩm thực đặc sắc của miền Trung.',
+    location: 'Hội An, Quảng Nam',
+    date: '10/08/2025 - 13/08/2025',
+    duration: '4 ngày 3 đêm',
+    members: {
+      count: 4,
+      max: 8,
+      list: [
+        { id: '1', name: 'Nguyễn Minh', avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'member' },
+        { id: '5', name: 'Phạm Tuấn', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'admin' },
+      ],
+    },
+    hashtags: ['HoiAn', 'PhoCoHoiAn', 'DuLich'],
+    isPrivate: true,
+    hasPlan: false
+  },
+  {
+    id: '5',
+    title: 'Vịnh Hạ Long',
+    image: 'https://images.pexels.com/photos/2132180/pexels-photo-2132180.jpeg?auto=compress&cs=tinysrgb&w=600',
+    description: 'Khám phá kỳ quan thiên nhiên thế giới với tour du thuyền ngắm cảnh và khám phá các hang động.',
+    location: 'Hạ Long, Quảng Ninh',
+    date: '05/09/2025 - 07/09/2025',
+    duration: '3 ngày 2 đêm',
+    members: {
+      count: 10,
+      max: 20,
+      list: [
+        { id: '2', name: 'Trần Hà', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'admin' },
+        { id: '3', name: 'Lê Hoàng', avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'member' },
+        { id: '4', name: 'Ngọc Mai', avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1', role: 'member' },
+      ],
+    },
+    hashtags: ['HaLong', 'VinhHaLong', 'DiSan'],
+    isPrivate: false,
     hasPlan: true,
+    planDays: 3
   }
 ];
 
