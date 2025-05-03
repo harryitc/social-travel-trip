@@ -23,7 +23,7 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
   }
 
   return (
-    <Card className="mb-4 border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 shadow-sm">
+    <Card className="sticky top-0 z-10 mb-4 border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 shadow-sm">
       <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-medium flex items-center">
           <Pin className="h-4 w-4 mr-2 text-purple-600" />

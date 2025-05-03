@@ -3,22 +3,32 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TravelPlanTemplate, Activity } from './mock-data';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Calendar, MapPin, Star, Users, ArrowLeft, Edit, Save, Plus, Trash2, Share, Heart, Clock } from 'lucide-react';
+import {
+  ArrowLeft, Edit, Save, Plus, MapPin, Calendar,
+  Users, Share, Heart, Clock, Star, Trash2, Lock, Globe
+} from 'lucide-react';
+import TripPlanEditor from '../trips/TripPlanEditor';
+import { templateToTripPlan, tripPlanToTemplate } from './utils/template-trip-converter';
+import { TripPlan } from '../trips/types';
+import { toast } from 'sonner';
+import { TemplateProvider, useTemplate } from './context/TemplateContext';
+import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { InteractiveScheduleChart } from './InteractiveScheduleChart';
 import { SelectTripGroup } from './select-trip-group';
 import { TripGroup } from './trip-groups-data';
-// @ts-ignore
-import { TemplateProvider, useTemplate } from './context/TemplateContext';
-// @ts-ignore
-import { AutoSaveIndicator } from './AutoSaveIndicator';
-import { toast } from 'sonner';
+import {
+  Card, CardContent, CardHeader, CardTitle
+} from '@/components/ui/card';
+import {
+  Tabs, TabsContent, TabsList, TabsTrigger
+} from '@/components/ui/tabs';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 
 interface EditableTemplateDetailsPageProps {
   template: TravelPlanTemplate;
