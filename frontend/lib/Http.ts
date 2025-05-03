@@ -1,6 +1,5 @@
 // lib/Http.ts
-import { useAuth } from '@clerk/nextjs';
-import axios from 'axios';
+import axios from "axios";
 
 const Http = axios.create({
   timeout: 10000,
@@ -8,14 +7,6 @@ const Http = axios.create({
 
 // Intercept request
 Http.interceptors.request.use(async (config) => {
-  
-  const { getToken } = await useAuth();
-
-  const token = await getToken(); // TODO: WRONG
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
   return config;
 });
 
@@ -23,9 +14,19 @@ Http.interceptors.request.use(async (config) => {
 Http.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API error:', error.response?.data || error.message);
+    console.log(error);
     return Promise.reject(error);
   }
 );
+
+export const attachToken = (config: any, token: string | null) => {
+  return {
+    ...config,
+    headers: {
+      ...config.headers,
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+  };
+};
 
 export default Http;
