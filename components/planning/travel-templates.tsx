@@ -15,7 +15,7 @@ import { TRAVEL_PLAN_TEMPLATES, TravelPlanTemplate } from './mock-data';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SelectTripGroup } from './select-trip-group';
 import { TripGroup } from './trip-groups-data';
-import EditableTemplateDetailsPage from './EditableTemplateDetailsPage';
+import EditableTemplateDetailsPageNew from './EditableTemplateDetailsPageNew';
 import { CreatePlanPage } from './CreatePlanPage';
 import * as mockDB from './mock-database';
 
@@ -155,7 +155,7 @@ export function TravelTemplates() {
   // Nếu đã chọn một mẫu, hiển thị trang chi tiết
   if (selectedTemplate && !showApplyDialog && !showSelectGroupDialog) {
     return (
-      <EditableTemplateDetailsPage
+      <EditableTemplateDetailsPageNew
         template={selectedTemplate}
         onBack={() => setSelectedTemplate(null)}
       />

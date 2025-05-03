@@ -12,6 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TRAVEL_PLAN_TEMPLATES } from '../planning/mock-data';
 import { MemberListDialog } from './member-list-dialog';
+import TripPlanEditor from './TripPlanEditor';
+import { TripPlan } from './types';
+import { getTripPlanByGroupId, updateTripPlan } from './mock-trip-plans';
 
 type GroupChatDetailsProps = {
   group: TripGroup;
@@ -23,6 +26,12 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
   const [showPlanDetails, setShowPlanDetails] = useState(false);
   const [showMemberList, setShowMemberList] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showTripPlanEditor, setShowTripPlanEditor] = useState(false);
+
+  // Get trip plan from mock data
+  const [tripPlan, setTripPlan] = useState<TripPlan | undefined>(
+    getTripPlanByGroupId(group.id)
+  );
 
   // Find a matching template for this group (in a real app, this would come from the database)
   const matchingTemplate = TRAVEL_PLAN_TEMPLATES.find(
@@ -37,6 +46,19 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
   const handleOpenInviteDialog = () => {
     setShowInviteDialog(true);
     setShowMemberList(false);
+  };
+
+  // Xử lý khi lưu kế hoạch chuyến đi
+  const handleSaveTripPlan = async (updatedPlan: TripPlan) => {
+    try {
+      // Trong thực tế, đây là nơi bạn sẽ gọi API để lưu kế hoạch
+      const savedPlan = updateTripPlan(updatedPlan);
+      setTripPlan(savedPlan);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Lỗi khi lưu kế hoạch:', error);
+      return Promise.reject(error);
+    }
   };
 
   return (
@@ -171,39 +193,50 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
       </div>
 
       {/* Plan section */}
-      {matchingTemplate && (
+      {(tripPlan || matchingTemplate) && (
         <div className="p-3 flex-1 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-sm">Kế hoạch chuyến đi</h3>
               <Badge variant="outline" className="text-[9px] h-4 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">Đã áp dụng</Badge>
             </div>
+            {tripPlan && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs gap-1 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+                onClick={() => setShowTripPlanEditor(true)}
+              >
+                <Pencil className="h-3.5 w-3.5 text-purple-500" />
+                <span>Chỉnh sửa</span>
+              </Button>
+            )}
           </div>
 
           <Button
             variant="outline"
             className="w-full flex items-center gap-2 h-auto p-2 justify-start hover:bg-purple-50 dark:hover:bg-purple-900/20 group rounded-lg"
-            onClick={() => setShowPlanDetails(true)}
+            onClick={() => tripPlan ? setShowTripPlanEditor(true) : setShowPlanDetails(true)}
           >
             <div className="h-14 w-14 rounded-md overflow-hidden flex-shrink-0 border border-purple-100 dark:border-purple-800 shadow-sm">
               {/* eslint-disable-next-line */}
               <img
-                src={matchingTemplate.image}
-                alt={matchingTemplate.name}
+                src={(tripPlan || matchingTemplate)?.image}
+                alt={(tripPlan || matchingTemplate)?.name}
                 className="h-full w-full object-cover transition-transform group-hover:scale-105"
               />
             </div>
             <div className="text-left ml-1">
-              <div className="font-medium text-sm">{matchingTemplate.name}</div>
+              <div className="font-medium text-sm">{(tripPlan || matchingTemplate)?.name}</div>
               <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                 <Clock className="h-3 w-3 text-purple-500" />
-                <span>{matchingTemplate.duration} ngày</span>
+                <span>{(tripPlan || matchingTemplate)?.duration} ngày</span>
                 <span className="mx-1">•</span>
                 <MapPin className="h-3 w-3 text-purple-500" />
-                <span>{matchingTemplate.destination.split(',')[0]}</span>
+                <span>{(tripPlan || matchingTemplate)?.destination.split(',')[0]}</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Nhấn để xem chi tiết lịch trình
+                Nhấn để {tripPlan ? 'chỉnh sửa' : 'xem chi tiết'} lịch trình
               </div>
             </div>
           </Button>
@@ -476,6 +509,16 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {/* TripPlanEditor */}
+      {tripPlan && (
+        <TripPlanEditor
+          plan={tripPlan}
+          isOpen={showTripPlanEditor}
+          onClose={() => setShowTripPlanEditor(false)}
+          onSave={handleSaveTripPlan}
+        />
       )}
     </div>
   );
