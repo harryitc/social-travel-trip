@@ -69,7 +69,8 @@ export const TRIP_GROUPS: TripGroup[] = [
     },
     hashtags: ['NhaTrang', 'Bien', 'DuLich'],
     isPrivate: false,
-    hasPlan: false
+    hasPlan: true,
+    planDays: 5
   },
   {
     id: '3',
@@ -89,7 +90,8 @@ export const TRIP_GROUPS: TripGroup[] = [
     },
     hashtags: ['Sapa', 'MuaDong', 'Fansipan'],
     isPrivate: false,
-    hasPlan: false
+    hasPlan: true,
+    planDays: 5
   },
   {
     id: '4',
