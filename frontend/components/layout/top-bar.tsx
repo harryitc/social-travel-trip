@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserButton } from '@clerk/nextjs';
+import { SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
 
 export function TopbarNav() {
@@ -78,6 +78,9 @@ export function TopbarNav() {
         </DropdownMenu>
         
         <UserButton afterSignOutUrl="/" />
+        <SignedOut>
+          <SignInButton></SignInButton>
+        </SignedOut>
       </div>
     </header>
   );
