@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { GroupChatList } from './GroupChatList';
 import { TripChat } from './trip-chat';
 import { GroupChatDetails } from './GroupChatDetails';
@@ -17,10 +17,11 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
     MOCK_TRIP_GROUPS.find(group => group.id === initialTripId) || null
   );
 
-  // Filter groups to only show those the current user is a member of
-  const userGroups = MOCK_TRIP_GROUPS.filter(group =>
-    group.members.list.some(member => member.id === user?.id || member.id === '1')
-  );
+  // Hiển thị tất cả các nhóm có trong hệ thống, không lọc theo người dùng
+  const allGroups = useMemo(() => {
+    // Trả về tất cả các nhóm từ mock data
+    return MOCK_TRIP_GROUPS;
+  }, []);
 
   const handleSelectGroup = (group: TripGroup) => {
     setSelectedGroup(group);
@@ -31,7 +32,7 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
       {/* Left column - Group list */}
       <div className="w-[260px] border-r border-purple-100 dark:border-purple-900">
         <GroupChatList
-          groups={userGroups}
+          groups={allGroups}
           selectedGroupId={selectedGroup?.id || ''}
           onSelectGroup={handleSelectGroup}
         />

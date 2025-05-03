@@ -1,6 +1,6 @@
 import React, { useState, ChangeEvent } from 'react';
 import { TravelPlanTemplate, TRAVEL_PLAN_TEMPLATES } from './mock-data';
-import EditableTemplateDetailsPage from './EditableTemplateDetailsPage';
+import EditableTemplateDetailsPageNew from './EditableTemplateDetailsPageNew';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -104,7 +104,7 @@ const TemplatesList: React.FC = () => {
   if (selectedTemplate) {
     return (
       <div>
-        <EditableTemplateDetailsPage
+        <EditableTemplateDetailsPageNew
           template={selectedTemplate}
           onBack={() => setSelectedTemplate(null)}
         />

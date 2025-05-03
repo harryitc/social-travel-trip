@@ -27,9 +27,10 @@ import {
   Coffee,
   ShoppingBag,
   Church,
-  Building
+  Building,
+  Loader2
 } from 'lucide-react';
-import { PopularLocation, searchLocations, getAllCities, getLocationsByCity, suggestLocationsByDestination, POPULAR_LOCATIONS } from './popular-locations';
+import { PopularLocation, searchLocations as searchLocalLocations, getAllCities, getLocationsByCity, suggestLocationsByDestination, POPULAR_LOCATIONS } from './popular-locations';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,99 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { debounce } from '@/lib/debounce';
 import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+import { Icon } from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Dynamically import Leaflet components to avoid SSR issues
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Marker),
+  { ssr: false }
+);
+
+// Import useMap and useMapEvents directly
+import { useMap, useMapEvents } from 'react-leaflet';
+
+// Component to fly to a location on the map
+function FlyToLocation({ center }: { center: [number, number] }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (center) {
+      map.flyTo(center, 12, {
+        animate: true,
+        duration: 1.5,
+      });
+    }
+  }, [center, map]);
+
+  return null;
+}
+
+// Location picker component
+function LocationPicker({ onLocationSelect, selectedLocation }: {
+  onLocationSelect: (location: { lat: number, lng: number }) => void,
+  selectedLocation: { lat: number, lng: number } | null
+}) {
+  const customIcon = new Icon({
+    iconUrl: "/marker-icon.png",
+    iconSize: [30, 41],
+    iconAnchor: [15, 41],
+    popupAnchor: [0, -41],
+  });
+
+  const MapClickHandler = () => {
+    useMapEvents({
+      click: (e) => {
+        onLocationSelect({
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+        });
+      },
+    });
+    return null;
+  };
+
+  // State to check if component is mounted
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Mark component as mounted
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  return (
+    <div className="h-[200px] w-full rounded-md overflow-hidden border">
+      {isMounted ? (
+        <MapContainer center={[16.0, 108.0]} zoom={5} style={{ height: "100%", width: "100%" }} className="z-0">
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapClickHandler />
+          {selectedLocation && (
+            <>
+              <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={customIcon} />
+              <FlyToLocation center={[selectedLocation.lat, selectedLocation.lng]} />
+            </>
+          )}
+        </MapContainer>
+      ) : (
+        <div className="h-full w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 
 // Định nghĩa các loại hoạt động và màu sắc tương ứng
@@ -237,6 +331,16 @@ const getEndTimeFromDescription = (description: string): string | null => {
 };
 
 /**
+ * Extracts user description from activity description
+ * @param description Activity description text
+ * @returns User description string or empty string if not found
+ */
+const getUserDescriptionFromDescription = (description: string): string => {
+  const match = description.match(/USER_DESCRIPTION:([^;]*);/);
+  return match ? match[1] : '';
+};
+
+/**
  * Calculates the end time of an activity based on the next activity or default duration
  * @param activities List of activities
  * @param index Index of the current activity
@@ -318,7 +422,7 @@ export function InteractiveScheduleChart({
   const [newActivity, setNewActivity] = useState<Partial<Activity>>({
     time: '12:00',
     title: '',
-    description: '',
+    description: 'END_TIME:13:00;',
     location: '',
     type: 'Khác'
   });
@@ -337,11 +441,24 @@ export function InteractiveScheduleChart({
   const [newLocation, setNewLocation] = useState<string>('');
   const [suggestedLocations, setSuggestedLocations] = useState<PopularLocation[]>([]);
 
+  // State cho bản đồ và tìm kiếm địa điểm
+  const [selectedMapLocation, setSelectedMapLocation] = useState<{ lat: number, lng: number, displayName?: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // State cho thời gian và loại hoạt động khi thêm địa điểm mới
+  const [newActivityStartTime, setNewActivityStartTime] = useState<string>('12:00');
+  const [newActivityEndTime, setNewActivityEndTime] = useState<string>('13:00');
+  const [newActivityType, setNewActivityType] = useState<ActivityType>('Tham quan');
+  const [newActivityDescription, setNewActivityDescription] = useState<string>('');
+
   // State cho việc chỉnh sửa timeline trong popup
   const [editingTimelineColor, setEditingTimelineColor] = useState<string>('');
   const [editingTimelineTitle, setEditingTimelineTitle] = useState<string>('');
   const [editingTimelineTime, setEditingTimelineTime] = useState<string>('');
   const [editingTimelineEndTime, setEditingTimelineEndTime] = useState<string>('');
+  const [editingTimelineDescription, setEditingTimelineDescription] = useState<string>('');
 
   // State cho lịch sử thay đổi (undo)
   const [activityHistory, setActivityHistory] = useState<Activity[][]>([]);
@@ -946,11 +1063,15 @@ export function InteractiveScheduleChart({
     const endTimeStr = getEndTimeFromDescription(activity.description) ||
       minutesToTime(activity.startMinutes + 60); // Mặc định 1 giờ nếu không có
 
+    // Lấy mô tả người dùng từ description
+    const userDescription = getUserDescriptionFromDescription(activity.description);
+
     // Cập nhật state cho việc chỉnh sửa timeline
     setEditingTimelineTitle(activity.title);
     setEditingTimelineTime(activity.time);
     setEditingTimelineEndTime(endTimeStr);
     setEditingTimelineColor(activity.type);
+    setEditingTimelineDescription(userDescription);
 
     // Hiển thị popup ngay lập tức
     setPopupPosition({ x: adjustedX, y });
@@ -1017,14 +1138,24 @@ export function InteractiveScheduleChart({
     const updatedActivities = days[selectedDay].activities.map(act => {
       if (act.id === selectedActivityForPopup.id) {
         // Tạo bản sao của hoạt động với thông tin mới
+        let updatedDescription = act.description;
+
+        // Cập nhật END_TIME
+        updatedDescription = updatedDescription.includes('END_TIME:')
+          ? updatedDescription.replace(/END_TIME:[^;]*;/, `END_TIME:${editingTimelineEndTime};`)
+          : `${updatedDescription} END_TIME:${editingTimelineEndTime};`;
+
+        // Cập nhật USER_DESCRIPTION
+        updatedDescription = updatedDescription.includes('USER_DESCRIPTION:')
+          ? updatedDescription.replace(/USER_DESCRIPTION:[^;]*;/, `USER_DESCRIPTION:${editingTimelineDescription};`)
+          : `${updatedDescription} USER_DESCRIPTION:${editingTimelineDescription};`;
+
         const updatedActivity = {
           ...act,
           title: editingTimelineTitle,
           time: editingTimelineTime,
           type: editingTimelineColor as ActivityType,
-          description: act.description.includes('END_TIME:')
-            ? act.description.replace(/END_TIME:[^;]*;/, `END_TIME:${editingTimelineEndTime};`)
-            : `${act.description} END_TIME:${editingTimelineEndTime};`
+          description: updatedDescription
         };
 
         return updatedActivity;
@@ -1042,6 +1173,15 @@ export function InteractiveScheduleChart({
   // Xử lý khi chỉnh sửa hoạt động
   const handleEditActivity = (activity: ChartActivity) => {
     setEditingActivity(activity);
+
+    // Lấy thời gian kết thúc từ mô tả
+    const endTimeStr = getEndTimeFromDescription(activity.description);
+    setNewActivityEndTime(endTimeStr || '13:00');
+
+    // Lấy mô tả người dùng từ description
+    const userDescription = getUserDescriptionFromDescription(activity.description);
+    setNewActivityDescription(userDescription);
+
     setNewActivity({
       time: activity.time,
       title: activity.title,
@@ -1054,10 +1194,12 @@ export function InteractiveScheduleChart({
   // Xử lý khi thêm hoạt động mới
   const handleAddActivity = (location: string) => {
     setIsAddingActivity(true);
+    setNewActivityEndTime('13:00');
+    setNewActivityDescription('');
     setNewActivity({
       time: '12:00',
       title: '',
-      description: '',
+      description: 'END_TIME:13:00;',
       location: location,
       type: 'Khác'
     });
@@ -1069,6 +1211,15 @@ export function InteractiveScheduleChart({
     setSelectedCity('');
     setNewLocation('');
     setSearchLocationKeyword('');
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedMapLocation(null);
+
+    // Đặt giá trị mặc định cho thời gian và loại hoạt động
+    setNewActivityStartTime('12:00');
+    setNewActivityEndTime('13:00');
+    setNewActivityType('Tham quan');
+    setNewActivityDescription('');
 
     // Lấy thông tin địa điểm từ các hoạt động hiện tại
     const locations = days[selectedDay].activities.map(act => act.location.split(',')[0].trim());
@@ -1095,6 +1246,51 @@ export function InteractiveScheduleChart({
     }
   };
 
+  // Tìm kiếm địa điểm sử dụng Nominatim API
+  const searchLocations = async () => {
+    if (!searchQuery.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`,
+      );
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error("Error searching for locations:", error);
+      toast.error("Không thể tìm kiếm địa điểm. Vui lòng thử lại sau.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Chọn địa điểm từ kết quả tìm kiếm
+  const selectLocationFromSearch = (result: any) => {
+    const location = {
+      lat: Number.parseFloat(result.lat),
+      lng: Number.parseFloat(result.lon),
+      displayName: result.display_name,
+    };
+    setSelectedMapLocation(location);
+    setSearchResults([]);
+    setSearchQuery(result.display_name);
+
+    // Cập nhật tên địa điểm
+    const locationName = result.display_name.split(',')[0].trim();
+    setNewLocation(locationName);
+  };
+
+  // Xử lý khi chọn địa điểm trên bản đồ
+  const handleMapLocationSelect = (location: { lat: number, lng: number }) => {
+    setSelectedMapLocation(location);
+
+    // Nếu đã có tên địa điểm, giữ nguyên
+    if (!newLocation) {
+      setNewLocation(`Địa điểm (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`);
+    }
+  };
+
   // Xử lý khi thêm địa điểm mới
   const handleAddLocation = () => {
     if (!newLocation || !onUpdateActivities) return;
@@ -1105,15 +1301,31 @@ export function InteractiveScheduleChart({
 
     // Thêm địa điểm mới vào danh sách địa điểm
     if (!activeLocations.includes(newLocation)) {
+      // Lấy thời gian bắt đầu và kết thúc từ state
+      const startTime = newActivityStartTime || '12:00';
+      const endTime = newActivityEndTime || '13:00';
+
+      // Tạo mô tả với thông tin tọa độ nếu có
+      let description = `END_TIME:${endTime};`;
+
+      // Thêm mô tả người dùng nếu có
+      if (newActivityDescription.trim()) {
+        description += ` USER_DESCRIPTION:${newActivityDescription};`;
+      }
+
+      if (selectedMapLocation) {
+        description += ` COORDINATES:${selectedMapLocation.lat},${selectedMapLocation.lng};`;
+      }
+
       // Tạo hoạt động mới với địa điểm mới
       const newActivityObj: Activity = {
         id: `activity-${Date.now()}`,
-        title: `Tham quan ${newLocation}`,
-        time: '12:00',
-        description: 'END_TIME:13:00;',
+        title: `${newActivityType === 'Tham quan' ? 'Tham quan' : ''} ${newLocation}`,
+        time: startTime,
+        description: description,
         location: newLocation,
         mainLocation: newLocation,
-        type: 'Tham quan'
+        type: newActivityType || 'Tham quan'
       };
 
       // Thêm hoạt động mới vào danh sách
@@ -1133,7 +1345,7 @@ export function InteractiveScheduleChart({
     setSearchLocationKeyword(keyword);
 
     if (keyword.length > 1) {
-      const results = searchLocations(keyword);
+      const results = searchLocalLocations(keyword);
       setSuggestedLocations(results.slice(0, 5));
       if (results.length > 0) {
         setNewLocation(results[0].name);
@@ -1161,15 +1373,29 @@ export function InteractiveScheduleChart({
 
     let updatedActivities: Activity[];
 
+    // Tạo mô tả với thời gian kết thúc và mô tả người dùng
+    let description = `END_TIME:${newActivityEndTime};`;
+
+    // Thêm mô tả người dùng nếu có
+    if (newActivityDescription.trim()) {
+      description += ` USER_DESCRIPTION:${newActivityDescription};`;
+    }
+
     if (editingActivity) {
       // Cập nhật hoạt động hiện có
       updatedActivities = days[selectedDay].activities.map(act => {
         if (act.id === editingActivity.id) {
+          // Giữ lại thông tin tọa độ nếu có
+          const coordinates = act.description.match(/COORDINATES:[^;]*;/);
+          const newDescription = coordinates
+            ? `${description} ${coordinates[0]}`
+            : description;
+
           return {
             ...act,
             time: newActivity.time!,
             title: newActivity.title!,
-            description: newActivity.description || '',
+            description: newDescription,
             location: newActivity.location!,
             type: newActivity.type as ActivityType
           };
@@ -1182,7 +1408,7 @@ export function InteractiveScheduleChart({
         id: `activity-${Date.now()}`,
         time: newActivity.time!,
         title: newActivity.title!,
-        description: newActivity.description || '',
+        description: description,
         location: newActivity.location!,
         mainLocation: newActivity.location!, // Set mainLocation to the same as location
         type: newActivity.type as ActivityType
@@ -1201,7 +1427,7 @@ export function InteractiveScheduleChart({
   };
 
   return (
-    <div className="w-full overflow-hidden">
+    <div className="w-full overflow-hidden h-full chart-container">
       {/* Tabs cho các ngày */}
       <div className="flex mb-4 border-b">
         {days.map((day, index) => (
@@ -1231,7 +1457,7 @@ export function InteractiveScheduleChart({
       </div>
 
       {/* Biểu đồ */}
-      <div className="border rounded-md shadow-sm flex flex-col">
+      <div className="border rounded-md shadow-sm flex flex-col flex-1 min-h-[400px]">
         {/* Header với các giờ */}
         <div className="flex border-b sticky top-0 bg-background z-10 shadow-sm">
           <div
@@ -1304,24 +1530,6 @@ export function InteractiveScheduleChart({
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
-                        onClick={() => handleAddActivity('')}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" className="text-xs">
-                      Thêm hoạt động mới
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-800"
                         onClick={handleUndo}
                         disabled={!canUndo}
                       >
@@ -1381,7 +1589,7 @@ export function InteractiveScheduleChart({
 
         {/* Nội dung biểu đồ - không có thanh cuộn ngang */}
         <div
-          className="overflow-x-hidden"
+          className="overflow-x-hidden flex-1"
           ref={timelineRef}
         >
           {activeLocations.length > 0 ? (
@@ -1716,11 +1924,15 @@ export function InteractiveScheduleChart({
       {/* Popup khi chọn hoạt động */}
       {selectedActivityForPopup && popupPosition && (
         <div
-          className="fixed bg-white dark:bg-gray-900 rounded-md shadow-xl border border-gray-200 dark:border-gray-800 z-50 w-64 animate-in fade-in duration-200"
+          className="fixed bg-white dark:bg-gray-900 rounded-md shadow-xl border border-gray-200 dark:border-gray-800 z-50 w-72 animate-in fade-in duration-200"
           style={{
             left: `${popupPosition.x}px`,
             top: `${popupPosition.y}px`,
-            transform: 'translate(-50%, -110%)', // Đặt popup phía trên timeline với khoảng cách
+            transform: isEditing
+              ? 'translate(0, -50%)' // Khi ở chế độ chỉnh sửa, hiển thị bên phải và căn giữa theo chiều dọc
+              : popupPosition.y < 200
+                ? 'translate(-50%, 10px)' // Nếu ở gần đỉnh trang, hiển thị phía dưới
+                : 'translate(-50%, -110%)', // Mặc định hiển thị phía trên
           }}
         >
           <div className="p-3 relative">
@@ -1789,6 +2001,17 @@ export function InteractiveScheduleChart({
                   </Select>
                 </div>
 
+                <div className="space-y-1">
+                  <Label htmlFor="popup-description" className="text-xs">Mô tả</Label>
+                  <Textarea
+                    id="popup-description"
+                    value={editingTimelineDescription}
+                    onChange={(e) => setEditingTimelineDescription(e.target.value)}
+                    className="h-20 text-xs resize-none"
+                    placeholder="Nhập mô tả cho hoạt động này..."
+                  />
+                </div>
+
                 <div className="flex justify-between gap-1 pt-2">
                   <div className="flex gap-1">
                     <Button
@@ -1835,10 +2058,17 @@ export function InteractiveScheduleChart({
                   </span>
                 </div>
 
-                <div className="flex items-center text-xs text-muted-foreground mb-3">
+                <div className="flex items-center text-xs text-muted-foreground mb-2">
                   <MapPin className="h-3 w-3 mr-1" />
                   <span>{selectedActivityForPopup.location}</span>
                 </div>
+
+                {/* Display user description if available */}
+                {getUserDescriptionFromDescription(selectedActivityForPopup.description) && (
+                  <div className="text-xs text-muted-foreground mb-3 border-t pt-2">
+                    <p className="whitespace-pre-wrap">{getUserDescriptionFromDescription(selectedActivityForPopup.description)}</p>
+                  </div>
+                )}
 
                 {isEditing && (
                   <div className="flex justify-end gap-1 border-t pt-2">
@@ -1901,15 +2131,28 @@ export function InteractiveScheduleChart({
           </DialogHeader>
 
           <div className="space-y-3 py-2">
-            <div className="space-y-1">
-              <Label htmlFor="activity-time" className="text-xs">Thời gian</Label>
-              <Input
-                id="activity-time"
-                type="time"
-                value={newActivity.time}
-                onChange={(e) => setNewActivity({ ...newActivity, time: e.target.value })}
-                className="h-8 text-sm"
-              />
+            {/* Thời gian bắt đầu và kết thúc */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="activity-time" className="text-xs">Thời gian bắt đầu</Label>
+                <Input
+                  id="activity-time"
+                  type="time"
+                  value={newActivity.time}
+                  onChange={(e) => setNewActivity({ ...newActivity, time: e.target.value })}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="activity-end-time" className="text-xs">Thời gian kết thúc</Label>
+                <Input
+                  id="activity-end-time"
+                  type="time"
+                  value={newActivityEndTime}
+                  onChange={(e) => setNewActivityEndTime(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -1960,10 +2203,10 @@ export function InteractiveScheduleChart({
               <Label htmlFor="activity-description" className="text-xs">Mô tả</Label>
               <Textarea
                 id="activity-description"
-                value={newActivity.description}
-                onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
-                placeholder="Nhập mô tả hoạt động"
-                className="text-sm min-h-[60px]"
+                value={newActivityDescription}
+                onChange={(e) => setNewActivityDescription(e.target.value)}
+                placeholder="Nhập mô tả cho hoạt động này..."
+                className="h-20 text-sm resize-none"
               />
             </div>
           </div>
@@ -2006,6 +2249,76 @@ export function InteractiveScheduleChart({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* Tìm kiếm địa điểm với Nominatim API */}
+            <div className="space-y-1">
+              <Label htmlFor="nominatim-search" className="text-xs">Tìm kiếm trên bản đồ</Label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    id="nominatim-search"
+                    type="text"
+                    placeholder="Tìm kiếm địa điểm..."
+                    className="pl-8 h-8 text-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        searchLocations();
+                      }
+                    }}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={searchLocations}
+                  disabled={isSearching || !searchQuery.trim()}
+                  size="sm"
+                  className="h-8"
+                >
+                  {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Tìm"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Kết quả tìm kiếm */}
+            {searchResults.length > 0 && (
+              <div className="border rounded-md p-2 max-h-40 overflow-auto">
+                <p className="text-xs text-muted-foreground mb-2">Kết quả tìm kiếm:</p>
+                <div className="space-y-1">
+                  {searchResults.map((result, index) => (
+                    <div
+                      key={index}
+                      className="text-xs p-1.5 hover:bg-muted rounded cursor-pointer"
+                      onClick={() => selectLocationFromSearch(result)}
+                    >
+                      <div className="font-medium">{result.display_name.split(',')[0]}</div>
+                      <div className="text-muted-foreground text-[10px]">{result.display_name}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bản đồ */}
+            <div className="space-y-1">
+              <Label className="text-xs">Bản đồ</Label>
+              <LocationPicker
+                onLocationSelect={handleMapLocationSelect}
+                selectedLocation={selectedMapLocation}
+              />
+              {selectedMapLocation && (
+                <div className="mt-2 text-xs text-muted-foreground flex items-center">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span>
+                    Vị trí đã chọn: {selectedMapLocation.lat.toFixed(4)}, {selectedMapLocation.lng.toFixed(4)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Chọn thành phố từ danh sách có sẵn */}
             <div className="space-y-1">
               <Label htmlFor="location-city" className="text-xs">Thành phố</Label>
               <Select value={selectedCity} onValueChange={handleSelectCity}>
@@ -2020,20 +2333,7 @@ export function InteractiveScheduleChart({
               </Select>
             </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="location-search" className="text-xs">Tìm kiếm địa điểm</Label>
-              <div className="relative">
-                <Input
-                  id="location-search"
-                  value={searchLocationKeyword}
-                  onChange={(e) => handleSearchLocation(e.target.value)}
-                  placeholder="Nhập tên địa điểm"
-                  className="h-8 text-sm pl-8"
-                />
-                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
-
+            {/* Tên địa điểm */}
             <div className="space-y-1">
               <Label htmlFor="location-name" className="text-xs">Tên địa điểm</Label>
               <Input
@@ -2045,6 +2345,54 @@ export function InteractiveScheduleChart({
               />
             </div>
 
+            {/* Thời gian bắt đầu và kết thúc */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="start-time" className="text-xs">Thời gian bắt đầu</Label>
+                <Input
+                  id="start-time"
+                  type="time"
+                  value={newActivityStartTime}
+                  onChange={(e) => setNewActivityStartTime(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="end-time" className="text-xs">Thời gian kết thúc</Label>
+                <Input
+                  id="end-time"
+                  type="time"
+                  value={newActivityEndTime}
+                  onChange={(e) => setNewActivityEndTime(e.target.value)}
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Loại hoạt động (màu sắc) */}
+            <div className="space-y-1">
+              <Label htmlFor="activity-type" className="text-xs">Loại hoạt động</Label>
+              <Select
+                value={newActivityType}
+                onValueChange={(value) => setNewActivityType(value as ActivityType)}
+              >
+                <SelectTrigger id="activity-type" className="h-8 text-sm">
+                  <SelectValue placeholder="Chọn loại hoạt động" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(ACTIVITY_TYPES).map(([type, { color }]) => (
+                    <SelectItem key={type} value={type} className="flex items-center">
+                      <div className="flex items-center">
+                        <div className={`w-3 h-3 rounded-sm mr-2 ${color}`}></div>
+                        <span>{type}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Gợi ý địa điểm từ danh sách có sẵn */}
             {suggestedLocations.length > 0 && (
               <div className="border rounded-md p-2 max-h-40 overflow-auto">
                 <p className="text-xs text-muted-foreground mb-2">Gợi ý địa điểm:</p>
