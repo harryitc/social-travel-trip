@@ -1,3 +1,4 @@
+
 import { PageHeader } from '@/components/ui/page-header';
 import { TripsList } from '@/components/trips/trips-list';
 import { CreateTripButton } from '@/components/trips/create-trip-button';

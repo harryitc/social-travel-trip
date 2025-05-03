@@ -94,7 +94,7 @@ export const MOCK_CHAT_MESSAGES: Record<string, Message[]> = {
       },
     },
   ],
-  
+
   // Nha Trang group messages
   '2': [
     {
@@ -144,7 +144,7 @@ export const MOCK_CHAT_MESSAGES: Record<string, Message[]> = {
       ],
     },
   ],
-  
+
   // Sapa group messages
   '3': [
     {
@@ -184,6 +184,106 @@ export const MOCK_CHAT_MESSAGES: Record<string, Message[]> = {
         avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
       },
       timestamp: '14:30',
+    },
+  ],
+
+  // Hội An group messages
+  '4': [
+    {
+      id: '1',
+      content: 'Chào mọi người, chúng ta sẽ khám phá phố cổ Hội An vào ngày đầu tiên nhé!',
+      sender: {
+        id: '5',
+        name: 'Phạm Tuấn',
+        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+      },
+      timestamp: '15:10',
+      pinned: true,
+      attachments: [
+        {
+          type: 'image',
+          url: 'https://images.pexels.com/photos/5191371/pexels-photo-5191371.jpeg?auto=compress&cs=tinysrgb&w=600',
+          name: 'hoian-old-town.jpg',
+        },
+      ],
+    },
+    {
+      id: '2',
+      content: 'Tuyệt vời! Mình rất thích ẩm thực Hội An.',
+      sender: {
+        id: '1',
+        name: 'Nguyễn Minh',
+        avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+      },
+      timestamp: '15:15',
+    },
+    {
+      id: '3',
+      content: 'Mình đã đặt lịch học nấu ăn tại Hội An vào ngày thứ 2 rồi đó.',
+      sender: {
+        id: '5',
+        name: 'Phạm Tuấn',
+        avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+      },
+      timestamp: '15:30',
+      attachments: [
+        {
+          type: 'file',
+          url: '#',
+          name: 'cooking-class-schedule.pdf',
+          size: 1536,
+        },
+      ],
+    },
+  ],
+
+  // Hạ Long group messages
+  '5': [
+    {
+      id: '1',
+      content: 'Mình đã đặt tour du thuyền 2 ngày 1 đêm trên vịnh Hạ Long rồi nhé!',
+      sender: {
+        id: '2',
+        name: 'Trần Hà',
+        avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+      },
+      timestamp: '11:05',
+      pinned: true,
+      attachments: [
+        {
+          type: 'image',
+          url: 'https://images.pexels.com/photos/2132180/pexels-photo-2132180.jpeg?auto=compress&cs=tinysrgb&w=600',
+          name: 'halong-cruise.jpg',
+        },
+      ],
+    },
+    {
+      id: '2',
+      content: 'Tuyệt vời! Mình sẽ mang theo máy ảnh để chụp cảnh đẹp.',
+      sender: {
+        id: '4',
+        name: 'Ngọc Mai',
+        avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+      },
+      timestamp: '11:10',
+    },
+    {
+      id: '3',
+      content: 'Mình đã chuẩn bị danh sách các hang động đẹp nhất để khám phá.',
+      sender: {
+        id: '3',
+        name: 'Lê Hoàng',
+        avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+      },
+      timestamp: '11:20',
+      attachments: [
+        {
+          type: 'file',
+          url: '#',
+          name: 'halong-caves-list.pdf',
+          size: 1024,
+        },
+      ],
     },
   ],
 };

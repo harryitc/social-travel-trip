@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter
@@ -28,6 +28,9 @@ type InviteMembersDialogProps = {
   currentMembers: Member[];
   maxMembers: number;
   onInvite: (newMembers: Member[]) => void;
+  children?: React.ReactNode; // Add support for custom trigger button
+  open?: boolean; // For controlled mode
+  onOpenChange?: (open: boolean) => void; // For controlled mode
 };
 
 // Mock user data for search
@@ -39,46 +42,79 @@ const mockUsers = [
   { id: '8', name: 'Vũ Minh', avatar: 'https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
 ];
 
-export function InviteMembersDialog({ tripId, currentMembers, maxMembers, onInvite }: InviteMembersDialogProps) {
+export function InviteMembersDialog({
+  tripId,
+  currentMembers,
+  maxMembers,
+  onInvite,
+  children,
+  open,
+  onOpenChange
+}: InviteMembersDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<Member[]>([]);
-  
+
+  // Determine if we're in controlled or uncontrolled mode
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  const isDialogOpen = isControlled ? open : isOpen;
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (isControlled) {
+      onOpenChange(newOpen);
+    } else {
+      setIsOpen(newOpen);
+    }
+  };
+
   const currentMemberIds = currentMembers.map(member => member.id);
   const availableSlots = maxMembers - currentMembers.length;
-  
+
   // Filter users who are not already members and match search query
-  const filteredUsers = mockUsers.filter(user => 
-    !currentMemberIds.includes(user.id) && 
+  const filteredUsers = mockUsers.filter(user =>
+    !currentMemberIds.includes(user.id) &&
     user.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   const handleSelectUser = (user: Member) => {
     if (selectedUsers.length < availableSlots) {
       setSelectedUsers([...selectedUsers, user]);
     }
   };
-  
+
   const handleRemoveUser = (userId: string) => {
     setSelectedUsers(selectedUsers.filter(user => user.id !== userId));
   };
-  
+
   const handleInvite = () => {
     if (selectedUsers.length > 0) {
       onInvite(selectedUsers);
       setSelectedUsers([]);
-      setIsOpen(false);
+
+      // Đóng dialog
+      if (isControlled) {
+        onOpenChange(false);
+      } else {
+        setIsOpen(false);
+      }
     }
   };
-  
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-          <Users className="h-4 w-4 mr-2" />
-          Mời thêm thành viên
-        </Button>
-      </DialogTrigger>
+    <Dialog
+      open={isControlled ? open : isOpen}
+      onOpenChange={isControlled ? onOpenChange : setIsOpen}
+    >
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {children || (
+            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+              <Users className="h-4 w-4 mr-2" />
+              Mời thêm thành viên
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Mời thành viên</DialogTitle>
@@ -86,7 +122,7 @@ export function InviteMembersDialog({ tripId, currentMembers, maxMembers, onInvi
             Mời bạn bè tham gia chuyến đi của bạn. Còn {availableSlots} vị trí trống.
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-4 py-4">
           <div className="flex items-center space-x-2">
             <div className="relative flex-1">
@@ -99,7 +135,7 @@ export function InviteMembersDialog({ tripId, currentMembers, maxMembers, onInvi
               />
             </div>
           </div>
-          
+
           {selectedUsers.length > 0 && (
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">
@@ -107,7 +143,7 @@ export function InviteMembersDialog({ tripId, currentMembers, maxMembers, onInvi
               </Label>
               <div className="flex flex-wrap gap-2">
                 {selectedUsers.map(user => (
-                  <div 
+                  <div
                     key={user.id}
                     className="flex items-center gap-1 bg-secondary rounded-full pl-1 pr-2 py-1"
                   >
@@ -129,7 +165,7 @@ export function InviteMembersDialog({ tripId, currentMembers, maxMembers, onInvi
               </div>
             </div>
           )}
-          
+
           <div>
             <Label className="text-sm text-muted-foreground mb-2 block">
               Kết quả tìm kiếm
@@ -157,7 +193,7 @@ export function InviteMembersDialog({ tripId, currentMembers, maxMembers, onInvi
                             <p className="text-xs text-muted-foreground">ID: {user.id}</p>
                           </div>
                         </div>
-                        
+
                         <Button
                           variant={isSelected ? "secondary" : "ghost"}
                           size="sm"
@@ -178,15 +214,21 @@ export function InviteMembersDialog({ tripId, currentMembers, maxMembers, onInvi
             </ScrollArea>
           </div>
         </div>
-        
+
         <DialogFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsOpen(false)}
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (isControlled) {
+                onOpenChange(false);
+              } else {
+                setIsOpen(false);
+              }
+            }}
           >
             Hủy
           </Button>
-          <Button 
+          <Button
             onClick={handleInvite}
             disabled={selectedUsers.length === 0}
             className="bg-purple-600 hover:bg-purple-700 text-white"

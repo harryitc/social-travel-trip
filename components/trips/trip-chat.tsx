@@ -35,9 +35,11 @@ type TripChatProps = {
 
 export function TripChat({ tripId }: TripChatProps) {
   const { user } = useUser();
-  const [messages, setMessages] = useState<Message[]>(
-    MOCK_CHAT_MESSAGES[tripId] || []
-  );
+  // Get messages for the specific trip group
+  const [messages, setMessages] = useState<Message[]>(() => {
+    // If messages exist for this trip, use them, otherwise return an empty array
+    return MOCK_CHAT_MESSAGES[tripId] || [];
+  });
 
   const [newMessage, setNewMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
@@ -48,6 +50,12 @@ export function TripChat({ tripId }: TripChatProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
 
+  // Update messages when tripId changes
+  useEffect(() => {
+    setMessages(MOCK_CHAT_MESSAGES[tripId] || []);
+  }, [tripId]);
+
+  // Scroll to bottom when messages change
   useEffect(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -124,7 +132,7 @@ export function TripChat({ tripId }: TripChatProps) {
   };
 
   const handleSendMessage = async () => {
-    if ((!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0) || !user) return;
+    if ((!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0)) return;
 
     // Create attachments from selected images and files
     let attachments = [];
@@ -155,13 +163,18 @@ export function TripChat({ tripId }: TripChatProps) {
       attachments.push(...fileAttachments);
     }
 
+    // Sử dụng ID mặc định '1' nếu user chưa đăng nhập
+    const userId = user?.id || '1';
+    const userName = user?.fullName || 'Đức Anh'; // Tên mặc định nếu không có user
+    const userAvatar = user?.imageUrl || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1'; // Avatar mặc định
+
     const message: Message = {
       id: Date.now().toString(),
       content: newMessage,
       sender: {
-        id: user.id,
-        name: user.fullName || 'Người dùng',
-        avatar: user.imageUrl,
+        id: userId,
+        name: userName,
+        avatar: userAvatar,
       },
       timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
       attachments,
@@ -207,7 +220,7 @@ export function TripChat({ tripId }: TripChatProps) {
               id={`message-${message.id}`}
               key={message.id}
               className={`flex gap-3 transition-colors duration-300 ${
-                message.sender.id === user?.id ? 'flex-row-reverse' : ''
+                message.sender.id === (user?.id || '1') ? 'flex-row-reverse' : ''
               }`}
             >
               <Avatar className="h-9 w-9 flex-shrink-0 border-2 border-white shadow-sm">
@@ -216,7 +229,7 @@ export function TripChat({ tripId }: TripChatProps) {
               </Avatar>
 
               <div className={`flex flex-col gap-1 max-w-[75%] ${
-                message.sender.id === user?.id ? 'items-end' : ''
+                message.sender.id === (user?.id || '1') ? 'items-end' : ''
               }`}>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{message.sender.name}</span>
@@ -228,13 +241,13 @@ export function TripChat({ tripId }: TripChatProps) {
                 </div>
 
                 <div className={`relative rounded-lg p-3 group ${
-                  message.sender.id === user?.id
+                  message.sender.id === (user?.id || '1')
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'bg-secondary shadow-sm'
                 }`}>
                   {message.replyTo && (
                     <div className={`mb-2 p-2 rounded text-xs flex items-start gap-1 ${
-                      message.sender.id === user?.id
+                      message.sender.id === (user?.id || '1')
                         ? 'bg-purple-700/50'
                         : 'bg-secondary-foreground/10'
                     }`}>
@@ -287,14 +300,14 @@ export function TripChat({ tripId }: TripChatProps) {
                     </div>
                   )}
 
-                  <div className={`absolute ${message.sender.id === user?.id ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === user?.id ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
+                  <div className={`absolute ${message.sender.id === (user?.id || '1') ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === (user?.id || '1') ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-sm">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align={message.sender.id === user?.id ? "end" : "start"}>
+                      <DropdownMenuContent align={message.sender.id === (user?.id || '1') ? "end" : "start"}>
                         <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
                           <Reply className="h-4 w-4 mr-2" />
                           Phản hồi
