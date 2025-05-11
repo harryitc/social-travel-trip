@@ -8,10 +8,9 @@ import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { PageHeader } from "@/components/ui/page-header";
 import { getHello } from "@/features/home/abc.service";
-import { App } from "antd";
+import { notification } from "antd";
 
 export default function Home() {
-  const { notification } = App.useApp();
   const searchParams = useSearchParams();
   const { getToken } = useAuth();
 

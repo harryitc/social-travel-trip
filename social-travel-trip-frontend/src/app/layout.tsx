@@ -25,6 +25,7 @@ import { App, ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
+import AntdProviderLayout from "@/lib/providers/antd.provider";
 
 export default function RootLayout({
   children,
@@ -35,22 +36,27 @@ export default function RootLayout({
     <html lang="vi" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 min-h-screen`}>
         <ClerkProviders>
-          <ConfigProvider locale={viVN}>
-            <App>
-              <div className="flex min-h-screen">
-                <div className="fixed inset-y-0 z-50 w-64 hidden lg:block">
-                  <SidebarNav />
-                </div>
-                <div className="flex-1 lg:pl-64">
-                  <TopbarNav />
-                  <main className="px-4 sm:px-6 md:px-8 py-6">
-                    {children}
-                  </main>
-                </div>
+          <AntdProviderLayout>
+            <div className="flex min-h-screen">
+              <div className="fixed inset-y-0 z-50 w-64 hidden lg:block">
+                <SidebarNav />
               </div>
+              <div className="flex-1 lg:pl-64">
+                <TopbarNav />
+                <main className="px-4 sm:px-6 md:px-8 py-6">
+                  {children}
+                </main>
+              </div>
+            </div>
+          </AntdProviderLayout>
+          {/* <ConfigProvider theme={{
+            inherit: true,
+          }} locale={viVN}>
+            <App >
+              
             </App>
             <Toaster />
-          </ConfigProvider>
+          </ConfigProvider> */}
           <Toaster />
         </ClerkProviders>
       </body>
