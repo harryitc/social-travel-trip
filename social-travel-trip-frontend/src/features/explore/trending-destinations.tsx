@@ -28,7 +28,7 @@ const trendingDestinations = [
 
 export function TrendingDestinations() {
   return (
-    <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200">
+    <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs hover:shadow-md transition-all duration-200">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-bold text-purple-800 dark:text-purple-400">
           Địa điểm thịnh hành

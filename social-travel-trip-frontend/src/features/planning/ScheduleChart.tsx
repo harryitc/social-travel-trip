@@ -139,7 +139,7 @@ export function ScheduleChart({ days }: ScheduleChartProps) {
             {hours.map(hour => (
               <div 
                 key={hour} 
-                className="w-[60px] flex-shrink-0 p-2 text-center text-xs border-r last:border-r-0"
+                className="w-[60px] shrink-0 p-2 text-center text-xs border-r last:border-r-0"
               >
                 {hour}:00
               </div>
@@ -158,7 +158,7 @@ export function ScheduleChart({ days }: ScheduleChartProps) {
                 {hours.map(hour => (
                   <div 
                     key={hour} 
-                    className="w-[60px] flex-shrink-0 border-r last:border-r-0"
+                    className="w-[60px] shrink-0 border-r last:border-r-0"
                   ></div>
                 ))}
                 

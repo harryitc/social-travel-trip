@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/radix-ui/card"
+import { Badge } from "@/components/ui/radix-ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatDate, getYearFromDate } from "@/lib/utils"
 import { travelData } from "@/lib/travel-data"

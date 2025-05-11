@@ -9,7 +9,7 @@ export default function LoadingOverlay({ isLoading, children }: TProps) {
   return (
     <div className="relative">
       {/* Nội dung được blur khi loading */}
-      <div className={isLoading ? 'filter blur-sm' : ''}>{children}</div>
+      <div className={isLoading ? 'filter blur-xs' : ''}>{children}</div>
       {/* Overlay loading */}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">

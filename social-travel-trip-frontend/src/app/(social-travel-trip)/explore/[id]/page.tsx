@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Heart, MapPin, Users, Calendar, Star, Share2, Bookmark, Camera } from 'lucide-react';
-import { Map as MapGL, Marker } from 'react-map-gl';
+// import { Map as MapGL, Marker } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
+import { useParams } from 'next/navigation';
 
 type Review = {
   id: string;
@@ -23,7 +24,10 @@ type Review = {
   images?: string[];
 };
 
-export default function DestinationPage({ params }: { params: { id: string } }) {
+export default function DestinationPage() {
+
+  const params = useParams();
+
   const [destination] = useState({
     id: params.id,
     name: 'Phú Quốc',
@@ -102,13 +106,13 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+          <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
             <div className="grid grid-cols-2 gap-2 p-2">
               {destination.images.map((image, index) => (
                 <div 
                   key={index} 
                   className={`relative rounded-lg overflow-hidden ${
-                    index === 0 ? 'col-span-2 aspect-[2/1]' : 'aspect-square'
+                    index === 0 ? 'col-span-2 aspect-2/1' : 'aspect-square'
                   }`}
                 >
                   {/* eslint-disable-next-line */}
@@ -130,7 +134,7 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
             </TabsList>
 
             <TabsContent value="overview" className="mt-6">
-              <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+              <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
                 <CardContent className="p-6">
                   <div className="prose dark:prose-invert max-w-none">
                     <p className="whitespace-pre-line">{destination.description}</p>
@@ -148,7 +152,7 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
 
             <TabsContent value="reviews" className="mt-6 space-y-4">
               {reviews.map((review) => (
-                <Card key={review.id} className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+                <Card key={review.id} className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-4">
@@ -178,7 +182,7 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
                     {review.images && (
                       <div className="mt-4 grid grid-cols-2 gap-2">
                         {review.images.map((image, index) => (
-                          <div key={index} className="relative aspect-[4/3] rounded-lg overflow-hidden">
+                          <div key={index} className="relative aspect-4/3 rounded-lg overflow-hidden">
                             {/* eslint-disable-next-line */}
                             <img
                               src={image}
@@ -195,9 +199,10 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
             </TabsContent>
 
             <TabsContent value="map" className="mt-6">
-              <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm overflow-hidden">
+              <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs overflow-hidden">
                 <div className="h-[400px]">
-                  <MapGL
+                  map view ne
+                  {/* <MapGL
                     initialViewState={{
                       longitude: destination.coordinates[0],
                       latitude: destination.coordinates[1],
@@ -213,7 +218,7 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
                     >
                       <MapPin className="h-6 w-6 text-purple-600" />
                     </Marker>
-                  </MapGL>
+                  </MapGL> */}
                 </div>
               </Card>
             </TabsContent>
@@ -221,7 +226,7 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
         </div>
 
         <div className="space-y-6">
-          <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+          <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
             <CardContent className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
@@ -285,12 +290,12 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
             </CardContent>
           </Card>
 
-          <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+          <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
             <CardContent className="p-6">
               <h3 className="font-medium mb-4">Địa điểm lân cận</h3>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
-                  <div className="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="h-16 w-16 rounded-lg overflow-hidden shrink-0">
                     {/* eslint-disable-next-line */}
                     <img
                       src="https://images.pexels.com/photos/1450353/pexels-photo-1450353.jpeg?auto=compress&cs=tinysrgb&w=300"
@@ -307,7 +312,7 @@ Thời điểm lý tưởng để đến Phú Quốc là từ tháng 11 đến t
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="h-16 w-16 rounded-lg overflow-hidden shrink-0">
                     {/* eslint-disable-next-line */}
                     <img
                       src="https://images.pexels.com/photos/1591373/pexels-photo-1591373.jpeg?auto=compress&cs=tinysrgb&w=300"

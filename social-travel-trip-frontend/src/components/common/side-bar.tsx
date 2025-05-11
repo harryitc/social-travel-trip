@@ -89,10 +89,10 @@ export function SidebarNav() {
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-purple-100 dark:border-purple-900">
           <Link href="/" className="flex items-center">
-            <div className="relative h-8 w-8 mr-2 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
+            <div className="relative h-8 w-8 mr-2 rounded-full bg-linear-to-r from-purple-500 to-indigo-500 flex items-center justify-center">
               <span className="text-white font-bold">TT</span>
             </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-500">
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-indigo-500">
               TripTribe
             </span>
           </Link>

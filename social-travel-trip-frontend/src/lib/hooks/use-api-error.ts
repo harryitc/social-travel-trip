@@ -1,14 +1,16 @@
 import { useCallback } from 'react';
 import { ApiErrorModel } from '@/models/error.model';
-import { notification } from 'antd';
 import { useRouter } from 'next/navigation';
+import { App } from 'antd';
 
 /**
  * Hook để xử lý lỗi API trong component React
  * @returns Các hàm xử lý lỗi API
  */
 export const useApiError = () => {
+  const { notification } = App.useApp();
   const router = useRouter();
+
 
   /**
    * Xử lý lỗi API

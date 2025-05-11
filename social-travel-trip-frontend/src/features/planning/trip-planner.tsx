@@ -149,7 +149,7 @@ export function TripPlanner() {
   
   return (
     <div className="space-y-6">
-      <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+      <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
         <CardHeader>
           <CardTitle>Lập kế hoạch cho chuyến đi</CardTitle>
           <CardDescription>
@@ -239,7 +239,7 @@ export function TripPlanner() {
             
             {days.map((day, dayIndex) => (
               <TabsContent key={day.id} value={day.id} className="space-y-4">
-                <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+                <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
                   <CardHeader className="pb-3 flex flex-row items-center justify-between">
                     <div>
                       <CardTitle className="text-lg">

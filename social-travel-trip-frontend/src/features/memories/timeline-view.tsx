@@ -71,12 +71,12 @@ export function TimelineView() {
           <h3 className="text-lg font-semibold mb-4">Tháng {month}</h3>
           <div className="space-y-6">
             {monthMemories.map((memory) => (
-              <Card key={memory.id} className="relative overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+              <Card key={memory.id} className="relative overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
                 <div className="absolute top-4 left-0 w-4 h-4 rounded-full bg-purple-600 -translate-x-1/2"></div>
                 <div className="absolute top-6 left-0 w-0.5 h-full bg-purple-200 dark:bg-purple-800 -translate-x-1/2"></div>
                 <CardContent className="p-4 pl-8">
                   <div className="flex items-start gap-6">
-                    <div className="aspect-video w-64 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="aspect-video w-64 rounded-lg overflow-hidden shrink-0">
                       {/* eslint-disable-next-line */}
                       <img
                         src={memory.image}

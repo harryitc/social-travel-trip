@@ -121,7 +121,7 @@ export function ForumPost({ post, onHidePost }: ForumPostProps) {
   };
 
   return (
-    <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200">
+    <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs hover:shadow-md transition-all duration-200">
       <CardHeader className="px-4 py-3 flex flex-row items-start justify-between">
         <div className="flex items-center space-x-3">
           <Avatar>

@@ -133,7 +133,7 @@ export function PostComment() {
   const renderComment = (item: CommentType, isReply = false) => {
     return (
       <div key={item.id} className={`flex space-x-3 ${isReply ? 'ml-8 mt-3' : ''}`}>
-        <Avatar className="h-8 w-8 flex-shrink-0">
+        <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage src={item.author.avatar} alt={item.author.name} />
           <AvatarFallback>{item.author.name[0]}</AvatarFallback>
         </Avatar>

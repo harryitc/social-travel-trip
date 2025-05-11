@@ -55,7 +55,7 @@ export default function DebugToast() {
           type="info"
           showIcon
           closable
-          className="bg-white/90 backdrop-blur"
+          className="bg-white/90 backdrop-blur-sm"
         />
       ))}
     </div>

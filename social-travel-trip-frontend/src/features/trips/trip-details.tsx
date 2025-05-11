@@ -41,7 +41,7 @@ export function TripDetails({ trip }: TripDetailsProps) {
   };
   return (
     <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
-      <Card className="lg:col-span-2 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+      <Card className="lg:col-span-2 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
         <CardHeader>
           <CardTitle>Thông tin chuyến đi</CardTitle>
         </CardHeader>
@@ -107,7 +107,7 @@ export function TripDetails({ trip }: TripDetailsProps) {
         </CardContent>
       </Card>
 
-      <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+      <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
         <CardHeader>
           <CardTitle>Thành viên</CardTitle>
         </CardHeader>

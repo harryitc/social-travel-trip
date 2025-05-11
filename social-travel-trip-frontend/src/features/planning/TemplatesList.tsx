@@ -267,14 +267,14 @@ const TemplatesList: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "absolute top-2 right-2 rounded-full bg-white/80 backdrop-blur-sm h-7 w-7",
+                    "absolute top-2 right-2 rounded-full bg-white/80 backdrop-blur-xs h-7 w-7",
                     favorites.includes(template.id) ? "text-red-500" : "text-gray-600"
                   )}
                   onClick={(e) => toggleFavorite(template.id, e)}
                 >
                   <Heart className={cn("h-4 w-4", favorites.includes(template.id) && "fill-current")} />
                 </Button>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-3">
+                <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent flex flex-col justify-end p-3">
                   <h3 className="text-white font-semibold text-sm line-clamp-1">{template.name}</h3>
                   <div className="flex items-center text-white/90 text-xs">
                     <MapPin className="h-3 w-3 mr-1" />

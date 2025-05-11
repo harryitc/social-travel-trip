@@ -292,7 +292,7 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
         </div>
       </div>
 
-      <Card className="shadow-sm">
+      <Card className="shadow-xs">
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-base">Thông tin kế hoạch</CardTitle>
         </CardHeader>
@@ -429,7 +429,7 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm">
+      <Card className="shadow-xs">
         <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
           <CardTitle className="text-base">Lịch trình chi tiết</CardTitle>
         </CardHeader>
@@ -467,7 +467,7 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
                     {day.activities.map((activity) => (
                       <div
                         key={activity.id}
-                        className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-sm"
+                        className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-xs"
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-2">
@@ -650,7 +650,7 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
                     }`}
                     onClick={() => setSelectedGroupId(group.id)}
                   >
-                    <div className="h-12 w-12 rounded-md overflow-hidden flex-shrink-0">
+                    <div className="h-12 w-12 rounded-md overflow-hidden shrink-0">
                       {/* eslint-disable-next-line */}
                       <img
                         src={group.image}

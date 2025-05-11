@@ -5,14 +5,12 @@ import { GroupChatList } from './GroupChatList';
 import { TripChat } from './trip-chat';
 import { GroupChatDetails } from './GroupChatDetails';
 import { MOCK_TRIP_GROUPS, TripGroup } from './mock-trip-groups';
-import { useUser } from '@clerk/nextjs';
 
 type TripChatLayoutProps = {
   initialTripId: string;
 };
 
 export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
-  const { user } = useUser();
   const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(
     MOCK_TRIP_GROUPS.find(group => group.id === initialTripId) || null
   );
@@ -28,7 +26,7 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
   };
 
   return (
-    <div className="flex h-full overflow-hidden rounded-lg border border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm shadow-md">
+    <div className="flex h-full overflow-hidden rounded-lg border border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs shadow-md">
       {/* Left column - Group list */}
       <div className="w-[260px] border-r border-purple-100 dark:border-purple-900">
         <GroupChatList

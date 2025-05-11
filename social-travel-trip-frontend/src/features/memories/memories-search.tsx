@@ -18,7 +18,7 @@ export function MemoriesSearch() {
   const [privacy, setPrivacy] = useState('');
 
   return (
-    <div className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border border-purple-100 dark:border-purple-900 p-4 rounded-lg shadow-sm">
+    <div className="bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border border-purple-100 dark:border-purple-900 p-4 rounded-lg shadow-xs">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

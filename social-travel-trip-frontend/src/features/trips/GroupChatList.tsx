@@ -69,7 +69,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
               }`}
               onClick={() => onSelectGroup(group)}
             >
-              <Avatar className="h-10 w-10 flex-shrink-0 border border-purple-100 dark:border-purple-800 shadow-sm">
+              <Avatar className="h-10 w-10 shrink-0 border border-purple-100 dark:border-purple-800 shadow-xs">
                 <AvatarImage src={group.image} alt={group.title} />
                 <AvatarFallback>{group.title[0]}</AvatarFallback>
               </Avatar>

@@ -16,9 +16,14 @@ import { TripPlan } from '../trips/types';
 import { toast } from 'sonner';
 import { TemplateProvider, useTemplate } from './context/TemplateContext';
 import { TripPlanProvider, useTripPlan } from '../trips/context/TripPlanContext';
-import { InteractiveScheduleChart } from './InteractiveScheduleChart';
 import { SelectTripGroup } from './select-trip-group';
 import { TripGroup } from './trip-groups-data';
+import dynamic from 'next/dynamic';
+
+const InteractiveScheduleChart = dynamic(
+  () => import('./InteractiveScheduleChart').then((mod) => mod.InteractiveScheduleChart),
+  { ssr: false }
+);
 
 interface EditableTemplateDetailsPageProps {
   template: TravelPlanTemplate;
@@ -202,7 +207,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
 
           {/* Tab 1: Thông tin chuyến đi */}
           <TabsContent value="info" className="space-y-4 pt-3">
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4">
                 <CardTitle className="text-base">Mô tả</CardTitle>
               </CardHeader>
@@ -219,7 +224,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4">
                 <CardTitle className="text-base">Thẻ</CardTitle>
               </CardHeader>
@@ -242,7 +247,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
 
           {/* Tab 2: Lịch trình chi tiết */}
           <TabsContent value="schedule" className="pt-3">
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Lịch trình chi tiết</CardTitle>
               </CardHeader>
@@ -262,7 +267,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
                         {day.activities.map((activity: Activity) => (
                           <div
                             key={activity.id}
-                            className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-sm"
+                            className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-xs"
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex items-center gap-2">
@@ -291,7 +296,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
 
           {/* Tab 3: Biểu đồ */}
           <TabsContent value="chart" className="pt-3">
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4">
                 <CardTitle className="text-base">Biểu đồ lịch trình</CardTitle>
               </CardHeader>
@@ -366,7 +371,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
       {/* Basic info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="md:col-span-2">
-          <div className="aspect-video rounded-lg overflow-hidden border shadow-sm">
+          <div className="aspect-video rounded-lg overflow-hidden border shadow-xs">
             {/* eslint-disable-next-line */}
             <img
               src={template.image}

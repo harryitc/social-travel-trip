@@ -45,7 +45,7 @@ export function SettingsTabs() {
       </TabsList>
       
       <TabsContent value="profile" className="mt-6">
-        <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+        <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
           <CardHeader>
             <CardTitle>Hồ sơ</CardTitle>
             <CardDescription>
@@ -120,7 +120,7 @@ export function SettingsTabs() {
       </TabsContent>
       
       <TabsContent value="account" className="mt-6">
-        <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+        <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
           <CardHeader>
             <CardTitle>Tài khoản</CardTitle>
             <CardDescription>
@@ -165,7 +165,7 @@ export function SettingsTabs() {
       </TabsContent>
       
       <TabsContent value="notifications" className="mt-6">
-        <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+        <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
           <CardHeader>
             <CardTitle>Thông báo</CardTitle>
             <CardDescription>

@@ -11,10 +11,15 @@ import { Badge } from '@/components/ui/radix-ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/radix-ui/dialog';
 import { Label } from '@/components/ui/radix-ui/label';
 import { Calendar, MapPin, Star, Users, ArrowLeft, Edit, Save, Plus, Trash2, Share, Heart, Clock } from 'lucide-react';
-import { InteractiveScheduleChart } from '../planning/InteractiveScheduleChart';
 import { TripPlanProvider, useTripPlan } from './context/TripPlanContext';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
 import { toast } from 'sonner';
+import dynamic from 'next/dynamic';
+
+const InteractiveScheduleChart = dynamic(
+  () => import('../planning/InteractiveScheduleChart').then((mod) => mod.InteractiveScheduleChart),
+  { ssr: false }
+);
 
 interface TripPlanEditorProps {
   plan: TripPlan;
@@ -328,7 +333,7 @@ function TripPlanEditorContent({ onClose }: { onClose: () => void }) {
 
           {/* Tab 1: Thông tin chuyến đi */}
           <TabsContent value="info" className="space-y-4 pt-3">
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4">
                 <CardTitle className="text-base">Mô tả</CardTitle>
               </CardHeader>
@@ -345,7 +350,7 @@ function TripPlanEditorContent({ onClose }: { onClose: () => void }) {
               </CardContent>
             </Card>
 
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4">
                 <CardTitle className="text-base">Thẻ</CardTitle>
               </CardHeader>
@@ -368,7 +373,7 @@ function TripPlanEditorContent({ onClose }: { onClose: () => void }) {
 
           {/* Tab 2: Lịch trình chi tiết */}
           <TabsContent value="schedule" className="pt-3">
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Lịch trình chi tiết</CardTitle>
                 {isEditing && (
@@ -399,7 +404,7 @@ function TripPlanEditorContent({ onClose }: { onClose: () => void }) {
                         {day.activities.map((activity: Activity) => (
                           <div
                             key={activity.id}
-                            className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-sm"
+                            className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-xs"
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex items-center gap-2">
@@ -448,7 +453,7 @@ function TripPlanEditorContent({ onClose }: { onClose: () => void }) {
 
           {/* Tab 3: Biểu đồ */}
           <TabsContent value="chart" className="pt-3">
-            <Card className="shadow-sm">
+            <Card className="shadow-xs">
               <CardHeader className="py-3 px-4">
                 <CardTitle className="text-base">Biểu đồ lịch trình</CardTitle>
               </CardHeader>
@@ -469,7 +474,7 @@ function TripPlanEditorContent({ onClose }: { onClose: () => void }) {
                         lastSaved={lastSaved}
                         error={saveError}
                         onRetry={savePlan}
-                        className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1"
+                        className="bg-white dark:bg-gray-800 shadow-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1"
                       />
                     </div>
                   )}

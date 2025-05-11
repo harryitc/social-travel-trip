@@ -22,7 +22,7 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
   
   return (
     <div className="sticky top-0 z-10 mb-4">
-      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-md shadow-sm overflow-hidden">
+      <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-md shadow-xs overflow-hidden">
         <div className="flex items-center justify-between p-2 bg-purple-100/50 dark:bg-purple-900/30 border-b border-purple-100 dark:border-purple-800">
           <div className="flex items-center gap-1.5">
             <Pin className="h-3.5 w-3.5 text-purple-600" />
@@ -64,7 +64,7 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-5 w-5 p-0 hover:bg-purple-100 dark:hover:bg-purple-900/20 flex-shrink-0"
+                  className="h-5 w-5 p-0 hover:bg-purple-100 dark:hover:bg-purple-900/20 shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     onUnpin(message.id);

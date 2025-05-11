@@ -182,7 +182,7 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
   };
 
   return (
-    <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+    <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
       <CardContent className="p-4 space-y-4">
         <div className="flex gap-3">
           <Avatar>

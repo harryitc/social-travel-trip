@@ -1,5 +1,5 @@
 import { environment } from '@/config/environment';
-import { getAuthorizationHeader } from '@/features/auth/services/auth.service';
+// import { getAuthorizationHeader } from '@/features/auth/services/auth.service';
 import axios, { AxiosError } from 'axios';
 import { isWindow } from './utils/windows.util';
 import { ApiErrorModel } from '@/models/error.model';
@@ -32,27 +32,29 @@ Http.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    if (error.response?.data) {
-      const apiError = ApiErrorModel.fromResponse(error.response.data);
+    console.log(error);
+    return Promise.reject(error);
+    // if (error.response?.data) {
+    //   const apiError = ApiErrorModel.fromResponse(error.response.data);
 
-      // Xử lý lỗi API thông qua error handler
-      handleApiError(apiError);
+    //   // Xử lý lỗi API thông qua error handler
+    //   handleApiError(apiError);
 
-      return Promise.reject(apiError);
-    }
+    //   return Promise.reject(apiError);
+    // }
 
-    // Xử lý lỗi không có response (network error, timeout, etc.)
-    const genericError = new ApiErrorModel({
-      error: {
-        type: 'NETWORK_ERROR',
-        httpStatus: 0,
-        info: { apiPath: error.config?.url || 'unknown' }
-      },
-      message: error.message || 'Network error occurred'
-    });
+    // // Xử lý lỗi không có response (network error, timeout, etc.)
+    // const genericError = new ApiErrorModel({
+    //   error: {
+    //     type: 'NETWORK_ERROR',
+    //     httpStatus: 0,
+    //     info: { apiPath: error.config?.url || 'unknown' }
+    //   },
+    //   message: error.message || 'Network error occurred'
+    // });
 
-    handleApiError(genericError);
-    return Promise.reject(genericError);
+    // handleApiError(genericError);
+    // return Promise.reject(genericError);
   }
 );
 

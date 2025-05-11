@@ -160,8 +160,8 @@ export function BlogFeed() {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {posts.map((post) => (
               <Link href={`/blog/${post.id}`} key={post.id}>
-                <Card className="h-full overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200">
-                  <div className="relative aspect-[16/9] overflow-hidden aspect-video relative">
+                <Card className="h-full overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs hover:shadow-md transition-all duration-200">
+                  <div className="relative aspect-video overflow-hidden aspect-video relative">
                     {/* eslint-disable-next-line */}
                     <Image
                       src={post.coverImage}
@@ -286,7 +286,7 @@ export function BlogFeed() {
                 .filter((post) => savedPosts.includes(post.id))
                 .map((post) => (
                   <Link href={`/blog/${post.id}`} key={post.id}>
-                    <Card className="h-full overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200">
+                    <Card className="h-full overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs hover:shadow-md transition-all duration-200">
                       <div className="aspect-video relative">
                         {/* eslint-disable-next-line */}
                         <img

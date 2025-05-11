@@ -1,6 +1,6 @@
 import { ApiErrorModel } from '@/models/error.model';
 import { ERROR_KEY } from '@/error.config';
-import { notification } from 'antd';
+import { notification as Notification } from 'antd';
 import { isWindow } from './utils/windows.util';
 import { isDevMode } from './utils/development-mode.utils';
 
@@ -20,6 +20,8 @@ export const setCustomErrorHandler = (handler: (error: ApiErrorModel) => void) =
  * @param error Đối tượng lỗi API
  */
 export const handleApiError = (error: ApiErrorModel): void => {
+  const [notification] = Notification.useNotification();
+
   // Gọi handler tùy chỉnh nếu có
   if (customErrorHandler) {
     customErrorHandler(error);
@@ -62,8 +64,9 @@ export const useApiErrorHandler = (
     onAuthError?: () => void;
     onSystemError?: () => void;
     onOtherError?: (error: ApiErrorModel) => void;
-  }
+  },
 ) => {
+  const [notification] = Notification.useNotification();
   if (!error) return;
 
   // Xử lý lỗi xác thực

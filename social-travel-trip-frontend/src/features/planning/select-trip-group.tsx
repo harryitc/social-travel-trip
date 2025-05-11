@@ -96,7 +96,7 @@ export function SelectTripGroup({ open, onOpenChange, onSelectGroup, onCreateNew
                     <div className="flex items-start gap-2.5">
                       <RadioGroupItem value={group.id} id={`group-${group.id}`} className="mt-1" />
 
-                      <div className="h-10 w-10 rounded-md overflow-hidden flex-shrink-0">
+                      <div className="h-10 w-10 rounded-md overflow-hidden shrink-0">
                         {/* eslint-disable-next-line */}
                         <img
                           src={group.image}
@@ -192,7 +192,7 @@ export function SelectTripGroup({ open, onOpenChange, onSelectGroup, onCreateNew
               }
             }}
           >
-            <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 dark:text-purple-300 flex-shrink-0">
+            <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 dark:text-purple-300 shrink-0">
               <UserPlus className="h-5 w-5" />
             </div>
             <div className="flex-1">

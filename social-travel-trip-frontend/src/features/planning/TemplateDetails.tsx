@@ -42,7 +42,7 @@ const TemplateDetails: React.FC<TemplateDetailsProps> = ({ template }) => {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent" />
           <div className="absolute bottom-4 left-4 text-white">
             <h2 className="text-2xl font-bold text-white">{template.name}</h2>
             <div className="flex items-center gap-2 mt-2">

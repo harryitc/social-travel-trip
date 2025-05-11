@@ -1,14 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { PageHeader } from '@/components/ui/page-header';
-import { TripChatLayout } from '@/components/trips/TripChatLayout';
-import { TripDetails } from '@/components/trips/trip-details';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TripChatLayout } from '@/features/trips/TripChatLayout';
+import { useParams } from 'next/navigation';
 
-export default function TripPage({ params }: { params: { id: string } }) {
+export default function TripPage() {
+
+  const params = useParams();
+
   const [trip] = useState({
-    id: params.id,
+    id: params.id as string,
     title: 'Khám phá Đà Lạt',
     description: 'Cùng nhau khám phá thành phố sương mù với những địa điểm nổi tiếng và ẩm thực đặc sắc.',
     location: 'Đà Lạt, Lâm Đồng',

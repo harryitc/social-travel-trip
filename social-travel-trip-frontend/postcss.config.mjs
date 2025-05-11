@@ -11,7 +11,6 @@ const config = {
   //     // cssVariables: true,
   //     // prefix: "",
   //   },
-  //   // autoprefixer: {},
   // },
 };
 

@@ -13,7 +13,6 @@ import { TripPlan } from '../trips/types';
 import { toast } from 'sonner';
 import { TemplateProvider, useTemplate } from './context/TemplateContext';
 import { AutoSaveIndicator } from './AutoSaveIndicator';
-import { InteractiveScheduleChart } from './InteractiveScheduleChart';
 import { SelectTripGroup } from './select-trip-group';
 import { TripGroup } from './trip-groups-data';
 import {
@@ -29,6 +28,12 @@ import { Label } from '@/components/ui/radix-ui/label';
 import { Input } from '@/components/ui/radix-ui/input';
 import { Textarea } from '@/components/ui/radix-ui/textarea';
 import { Badge } from '@/components/ui/radix-ui/badge';
+import dynamic from 'next/dynamic';
+
+const InteractiveScheduleChart = dynamic(
+  () => import('./InteractiveScheduleChart').then((mod) => mod.InteractiveScheduleChart),
+  { ssr: false }
+);
 
 interface EditableTemplateDetailsPageProps {
   template: TravelPlanTemplate;
@@ -300,7 +305,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
             className="w-full h-full object-cover"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
           {isEditing ? (
             <Input
               value={template.name}
@@ -375,7 +380,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
         </TabsList>
 
         <TabsContent value="info" className="space-y-4 pt-3">
-          <Card className="shadow-sm">
+          <Card className="shadow-xs">
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-base">Mô tả</CardTitle>
             </CardHeader>
@@ -392,7 +397,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
+          <Card className="shadow-xs">
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-base">Thông tin</CardTitle>
             </CardHeader>
@@ -456,7 +461,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
+          <Card className="shadow-xs">
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-base">Thẻ</CardTitle>
             </CardHeader>
@@ -478,7 +483,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
         </TabsContent>
 
         <TabsContent value="schedule" className="pt-3">
-          <Card className="shadow-sm">
+          <Card className="shadow-xs">
             <CardHeader className="py-3 px-4 flex flex-row items-center justify-between">
               <CardTitle className="text-base">Lịch trình chi tiết</CardTitle>
               {isEditing && (
@@ -509,7 +514,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
                       {day.activities.map((activity: Activity) => (
                         <div
                           key={activity.id}
-                          className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-sm"
+                          className="border border-purple-100 dark:border-purple-900 rounded-md p-3 space-y-2 shadow-xs"
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex items-center gap-2">
@@ -581,7 +586,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
         </TabsContent>
 
         <TabsContent value="chart" className="pt-3">
-          <Card className="shadow-sm">
+          <Card className="shadow-xs">
             <CardHeader className="py-3 px-4">
               <CardTitle className="text-base">Biểu đồ lịch trình</CardTitle>
             </CardHeader>
@@ -607,7 +612,7 @@ function EditableTemplateDetailsContent({ onBack }: { onBack: () => void }) {
                       lastSaved={lastSaved}
                       error={saveError}
                       onRetry={saveTemplate}
-                      className="bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1"
+                      className="bg-white dark:bg-gray-800 shadow-xs border border-gray-200 dark:border-gray-700 rounded-md px-2 py-1"
                     />
                   </div>
                 )}

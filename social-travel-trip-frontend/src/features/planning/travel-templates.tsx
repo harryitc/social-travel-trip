@@ -164,7 +164,7 @@ export function TravelTemplates() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+      <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
         <CardHeader>
           <CardTitle>Mẫu kế hoạch du lịch</CardTitle>
           <CardDescription>
@@ -173,7 +173,7 @@ export function TravelTemplates() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4 justify-between">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 grow">
               <div className="relative">
                 <Input
                   type="search"
@@ -225,7 +225,7 @@ export function TravelTemplates() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredTemplates.map((template) => (
-          <Card key={template.id} className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+          <Card key={template.id} className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs overflow-hidden shadow-xs hover:shadow-md transition-shadow group">
             <div className="relative h-40">
               {/* eslint-disable-next-line */}
               <img
@@ -246,7 +246,7 @@ export function TravelTemplates() {
                   </Badge>
                 )}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-3">
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 to-transparent flex flex-col justify-end p-3">
                 <h3 className="text-white font-semibold text-sm line-clamp-1">{template.name}</h3>
                 <div className="flex items-center text-white/90 text-xs">
                   <MapPin className="h-3 w-3 mr-1" />
@@ -405,7 +405,7 @@ export function TravelTemplates() {
                                     </div>
                                     <div className="text-sm text-muted-foreground">
                                       <div className="flex items-start gap-2 mb-1">
-                                        <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                        <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
                                         <span>{activity.location}</span>
                                       </div>
                                       <p className="pl-6">{activity.description}</p>
@@ -497,7 +497,7 @@ export function TravelTemplates() {
               {applyMethod === 'existing' && selectedGroup ? (
                 <div className="space-y-4">
                   <div className="flex items-start gap-4 p-4 border rounded-lg">
-                    <div className="h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
+                    <div className="h-16 w-16 rounded-md overflow-hidden shrink-0">
                       {/* eslint-disable-next-line */}
                       <img
                         src={selectedGroup.image}

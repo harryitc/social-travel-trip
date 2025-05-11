@@ -90,7 +90,7 @@ export function DestinationGrid() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {destinations.map((destination) => (
         <Link href={`/explore/${destination.id}`} key={destination.id}>
-          <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200 h-full group">
+          <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs hover:shadow-md transition-all duration-200 h-full group">
             <div className="relative h-48 overflow-hidden">
               {/* eslint-disable-next-line */}
               <img

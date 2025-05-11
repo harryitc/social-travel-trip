@@ -6,28 +6,29 @@ import { UpcomingTrips } from "@/features/trips/upcoming-trips";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { notification } from "antd";
 import { PageHeader } from "@/components/ui/page-header";
 import { getHello } from "@/features/home/abc.service";
+import { App } from "antd";
 
 export default function Home() {
+  const { notification } = App.useApp();
   const searchParams = useSearchParams();
   const { getToken } = useAuth();
 
   const getUser = async () => {
     try {
       const token = await getToken();
-      if(!token) {
+      if (!token) {
         notification.warning({
           message: `Cảnh báo: Không có token`,
           description: `Chưa đăng nhập!`,
         });
-      }else {
+      } else {
         await getHello({}, token);
       }
     } catch (err: any) {
       notification.error({
-        message: `Lỗi: ${err.status}: ${err.code}`,
+        message: `Lỗi ${err.status}: ${err.code}`,
         description: `${err.message}`,
       });
     }
@@ -38,21 +39,23 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="container mx-auto">
-      <PageHeader
-        title="Diễn đàn"
-        description="Khám phá và chia sẻ trải nghiệm du lịch của bạn"
-      />
+    <>
+      <div className="container mx-auto">
+        <PageHeader
+          title="Diễn đàn"
+          description="Khám phá và chia sẻ trải nghiệm du lịch của bạn"
+        />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ForumFeed />
-        </div>
-        <div className="space-y-6">
-          <UpcomingTrips />
-          <TrendingDestinations />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <ForumFeed />
+          </div>
+          <div className="space-y-6">
+            <UpcomingTrips />
+            <TrendingDestinations />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

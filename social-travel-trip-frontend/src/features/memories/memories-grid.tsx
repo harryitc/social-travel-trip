@@ -131,7 +131,7 @@ export function MemoriesGrid({ filterType = 'all' }: MemoriesGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {filteredMemories.map((memory) => (
-        <Card key={memory.id} className="group overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200">
+        <Card key={memory.id} className="group overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs hover:shadow-md transition-all duration-200">
           <div className="relative aspect-square">
             {/* eslint-disable-next-line */}
             <img
@@ -139,7 +139,7 @@ export function MemoriesGrid({ filterType = 'all' }: MemoriesGridProps) {
               alt={memory.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <h3 className="font-medium text-lg mb-1">{memory.title}</h3>
               <div className="flex items-center text-sm space-x-2">

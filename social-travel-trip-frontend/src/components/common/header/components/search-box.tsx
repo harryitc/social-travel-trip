@@ -36,7 +36,7 @@ export default function SearchBox() {
     // />
     // <div className="flex items-center w-full max-w-md">
     <Input
-      className="flex-grow"
+      className="grow"
       prefix={<SearchOutlined />}
       placeholder="Tìm tên truyện..."
       defaultValue={searchMemo}

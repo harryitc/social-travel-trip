@@ -10,7 +10,7 @@ import {
   useMap,
 } from "react-leaflet";
 import { Icon, divIcon } from "leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
+import MarkerClusterGroup from "react-leaflet-markercluster";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -253,7 +253,7 @@ export default function TravelMap() {
                           alt={location.title}
                           className="object-cover w-full h-full"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                        <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent p-3">
                           <h3 className="text-white font-bold text-lg">
                             {location.title}
                           </h3>

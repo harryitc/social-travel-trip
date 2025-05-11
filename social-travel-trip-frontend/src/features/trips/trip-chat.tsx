@@ -223,7 +223,7 @@ export function TripChat({ tripId }: TripChatProps) {
                 message.sender.id === (user?.id || '1') ? 'flex-row-reverse' : ''
               }`}
             >
-              <Avatar className="h-9 w-9 flex-shrink-0 border-2 border-white shadow-sm">
+              <Avatar className="h-9 w-9 shrink-0 border-2 border-white shadow-xs">
                 <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
                 <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
               </Avatar>
@@ -242,8 +242,8 @@ export function TripChat({ tripId }: TripChatProps) {
 
                 <div className={`relative rounded-lg p-3 group ${
                   message.sender.id === (user?.id || '1')
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'bg-secondary shadow-sm'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-secondary shadow-xs'
                 }`}>
                   {message.replyTo && (
                     <div className={`mb-2 p-2 rounded text-xs flex items-start gap-1 ${
@@ -251,7 +251,7 @@ export function TripChat({ tripId }: TripChatProps) {
                         ? 'bg-purple-700/50'
                         : 'bg-secondary-foreground/10'
                     }`}>
-                      <MessageSquareQuote className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                      <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
                       <div>
                         <div className="font-medium">{message.replyTo.sender.name}</div>
                         <div className="truncate">{message.replyTo.content}</div>
@@ -303,7 +303,7 @@ export function TripChat({ tripId }: TripChatProps) {
                   <div className={`absolute ${message.sender.id === (user?.id || '1') ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === (user?.id || '1') ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm shadow-sm">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-xs shadow-xs">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>

@@ -23,7 +23,7 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
   }
 
   return (
-    <Card className="sticky top-0 z-10 mb-4 border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 shadow-sm">
+    <Card className="sticky top-0 z-10 mb-4 border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 shadow-xs">
       <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-medium flex items-center">
           <Pin className="h-4 w-4 mr-2 text-purple-600" />
@@ -46,7 +46,7 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
               {pinnedMessages.map((message) => (
                 <div
                   key={message.id}
-                  className="flex items-start gap-2 p-2 rounded-md bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer transition-colors shadow-sm"
+                  className="flex items-start gap-2 p-2 rounded-md bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer transition-colors shadow-xs"
                   onClick={() => onScrollToMessage(message.id)}
                 >
                   <Avatar className="h-7 w-7 border border-purple-100 dark:border-purple-800">

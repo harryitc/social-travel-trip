@@ -108,7 +108,7 @@ export function TripsList({ filterType }: TripsListProps) {
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4">
       {filteredTrips.map((trip) => (
         <Link href={`/trips/${trip.id}`} key={trip.id}>
-          <Card className="h-full overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200">
+          <Card className="h-full overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs hover:shadow-md transition-all duration-200">
             <div className="aspect-video relative">
               {/* eslint-disable-next-line */}
               <img

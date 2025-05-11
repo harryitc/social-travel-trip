@@ -66,7 +66,7 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
       {/* Group info header */}
       <div className="p-3 border-b border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10">
         <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-12 w-12 border border-purple-100 dark:border-purple-800 shadow-sm">
+          <Avatar className="h-12 w-12 border border-purple-100 dark:border-purple-800 shadow-xs">
             <AvatarImage src={group.image} alt={group.title} />
             <AvatarFallback>{group.title[0]}</AvatarFallback>
           </Avatar>
@@ -218,7 +218,7 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
             className="w-full flex items-center gap-2 h-auto p-2 justify-start hover:bg-purple-50 dark:hover:bg-purple-900/20 group rounded-lg"
             onClick={() => tripPlan ? setShowTripPlanEditor(true) : setShowPlanDetails(true)}
           >
-            <div className="h-14 w-14 rounded-md overflow-hidden flex-shrink-0 border border-purple-100 dark:border-purple-800 shadow-sm">
+            <div className="h-14 w-14 rounded-md overflow-hidden shrink-0 border border-purple-100 dark:border-purple-800 shadow-xs">
               {/* eslint-disable-next-line */}
               <img
                 src={(tripPlan || matchingTemplate)?.image}
@@ -403,7 +403,7 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
                         <div className="flex border-b bg-muted/30 overflow-hidden">
                           <div className="flex min-w-[1440px]"> {/* 18 hours * 80px */}
                             {Array.from({ length: 19 }).map((_, i) => (
-                              <div key={i} className="w-[80px] flex-shrink-0 text-center text-xs text-muted-foreground py-2 border-r last:border-r-0">
+                              <div key={i} className="w-[80px] shrink-0 text-center text-xs text-muted-foreground py-2 border-r last:border-r-0">
                                 {(i + 6) % 24}:00
                               </div>
                             ))}
@@ -475,7 +475,7 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
                               return (
                                 <div key={activity.id} className="h-12 border-b last:border-b-0 relative">
                                   <div
-                                    className={`absolute h-8 top-2 rounded-md border ${bgColor} ${textColor} flex items-center px-2 text-xs shadow-sm overflow-hidden group cursor-pointer hover:ring-2 hover:ring-purple-400 dark:hover:ring-purple-600 hover:z-10`}
+                                    className={`absolute h-8 top-2 rounded-md border ${bgColor} ${textColor} flex items-center px-2 text-xs shadow-xs overflow-hidden group cursor-pointer hover:ring-2 hover:ring-purple-400 dark:hover:ring-purple-600 hover:z-10`}
                                     style={{
                                       left: `${startPosition}px`,
                                       width: `${width}px`,

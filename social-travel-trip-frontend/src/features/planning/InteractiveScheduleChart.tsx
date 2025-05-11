@@ -427,6 +427,7 @@ export function InteractiveScheduleChart({
     type: 'Khác'
   });
   const timelineRef = useRef<HTMLDivElement>(null);
+  const nodeRef = useRef<any>(null);
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [isCtrlPressed, setIsCtrlPressed] = useState<boolean>(false);
@@ -1457,13 +1458,13 @@ export function InteractiveScheduleChart({
       </div>
 
       {/* Biểu đồ */}
-      <div className="border rounded-md shadow-sm flex flex-col flex-1 min-h-[400px]">
+      <div className="border rounded-md shadow-xs flex flex-col flex-1 min-h-[400px]">
         {/* Header với các giờ */}
-        <div className="flex border-b sticky top-0 bg-background z-10 shadow-sm">
+        <div className="flex border-b sticky top-0 bg-background z-10 shadow-xs">
           <div
             className={cn(
               "p-2 border-r font-medium text-sm flex justify-between items-center bg-gray-50 dark:bg-gray-900 transition-all duration-200",
-              isLocationColumnVisible ? "w-[200px] flex-shrink-0" : "w-[40px] flex-shrink-0"
+              isLocationColumnVisible ? "w-[200px] shrink-0" : "w-[40px] shrink-0"
             )}
           >
             <div className="flex items-center">
@@ -1579,7 +1580,7 @@ export function InteractiveScheduleChart({
             {hours.map(hour => (
               <div
                 key={hour}
-                className="w-[80px] flex-shrink-0 p-2 text-center text-xs text-gray-500 dark:text-gray-400 relative z-10"
+                className="w-[80px] shrink-0 p-2 text-center text-xs text-gray-500 dark:text-gray-400 relative z-10"
               >
                 {hour === 24 ? '00:00' : `${hour}:00`}
               </div>
@@ -1601,14 +1602,14 @@ export function InteractiveScheduleChart({
                       <div
                         className={cn(
                           "py-2 px-3 border-r text-sm flex justify-between items-center transition-all duration-200 cursor-default",
-                          isLocationColumnVisible ? "w-[200px] flex-shrink-0" : "w-[40px] flex-shrink-0"
+                          isLocationColumnVisible ? "w-[200px] shrink-0" : "w-[40px] shrink-0"
                         )}
                       >
                         <div className={cn(
                           "flex items-center min-w-0",
                           isLocationColumnVisible ? "max-w-full" : "hidden"
                         )}>
-                          <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-2 flex-shrink-0 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+                          <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mr-2 shrink-0 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
                             {locationIcons[location]}
                           </div>
                           <div className="flex flex-col min-w-0">
@@ -1619,7 +1620,7 @@ export function InteractiveScheduleChart({
                           </div>
                         </div>
                         {!isLocationColumnVisible && (
-                          <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
+                          <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
                             {locationIcons[location]}
                           </div>
                         )}
@@ -1627,7 +1628,7 @@ export function InteractiveScheduleChart({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 flex-shrink-0 ml-1"
+                            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 shrink-0 ml-1"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleAddActivity(location);
@@ -1641,7 +1642,7 @@ export function InteractiveScheduleChart({
                     <TooltipContent side="right" className="p-3 max-w-xs">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-gray-400">
+                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 text-gray-500 dark:text-gray-400">
                             {locationIcons[`${location}-large`]}
                           </div>
                           <div>
@@ -1755,6 +1756,7 @@ export function InteractiveScheduleChart({
 
                       return (
                         <Draggable
+                          nodeRef={nodeRef}
                           key={activity.id}
                           axis="x" // Chỉ cho phép kéo theo chiều ngang
                           disabled={!isEditing}
@@ -1770,8 +1772,9 @@ export function InteractiveScheduleChart({
                           }}
                         >
                           <div
+                            ref={nodeRef}
                             className={cn(
-                              `absolute top-2 h-10 rounded-md border ${color} ${textColor} text-xs flex items-center overflow-hidden group shadow-sm hover:shadow-md transition-all`,
+                              `absolute top-2 h-10 rounded-md border ${color} ${textColor} text-xs flex items-center overflow-hidden group shadow-xs hover:shadow-md transition-all`,
                               selectedActivityId === activity.id && "ring-2 ring-purple-500",
                               isDragging && dragFeedback.activityId === activity.id && !dragFeedback.isValidPosition && "opacity-50 border-red-500 ring-1 ring-red-500",
                               isDragging && dragFeedback.activityId === activity.id && dragFeedback.isValidPosition && "ring-1 ring-green-500"
@@ -1792,7 +1795,7 @@ export function InteractiveScheduleChart({
                             {isEditing && (
                               <div
                                 className={cn(
-                                  "absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize opacity-30 group-hover:opacity-100 bg-gradient-to-r from-gray-300 dark:from-gray-700 to-transparent",
+                                  "absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize opacity-30 group-hover:opacity-100 bg-linear-to-r from-gray-300 dark:from-gray-700 to-transparent",
                                   isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'start' && !dragFeedback.isValidPosition && "from-red-300 dark:from-red-700",
                                   isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'start' && dragFeedback.isValidPosition && "from-green-300 dark:from-green-700"
                                 )}
@@ -1808,7 +1811,7 @@ export function InteractiveScheduleChart({
                             {isEditing && (
                               <div
                                 className={cn(
-                                  "absolute right-0 top-0 bottom-0 w-4 cursor-ew-resize opacity-50 group-hover:opacity-100 z-10 bg-gradient-to-r from-transparent to-gray-300 dark:to-gray-700",
+                                  "absolute right-0 top-0 bottom-0 w-4 cursor-ew-resize opacity-50 group-hover:opacity-100 z-10 bg-linear-to-r from-transparent to-gray-300 dark:to-gray-700",
                                   isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'end' && !dragFeedback.isValidPosition && "to-red-300 dark:to-red-700",
                                   isDragging && dragFeedback.activityId === activity.id && dragFeedback.edge === 'end' && dragFeedback.isValidPosition && "to-green-300 dark:to-green-700"
                                 )}
@@ -1876,7 +1879,7 @@ export function InteractiveScheduleChart({
           <div className="flex">
             <div className={cn(
               "border-r transition-all duration-200",
-              isLocationColumnVisible ? "w-[200px] flex-shrink-0" : "w-[40px] flex-shrink-0"
+              isLocationColumnVisible ? "w-[200px] shrink-0" : "w-[40px] shrink-0"
             )}></div>
             <div
               className="flex-1 overflow-x-auto"
@@ -1906,11 +1909,10 @@ export function InteractiveScheduleChart({
             transform: 'translateX(-50%)',
           }}
         >
-          <div className={`px-2 py-1 rounded-md text-xs font-medium shadow-md ${
-            dragFeedback.isValidPosition
-              ? 'bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
-              : 'bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
-          }`}>
+          <div className={`px-2 py-1 rounded-md text-xs font-medium shadow-md ${dragFeedback.isValidPosition
+            ? 'bg-green-100 text-green-800 border border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800'
+            : 'bg-red-100 text-red-800 border border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800'
+            }`}>
             {dragFeedback.currentTime}
             {!dragFeedback.isValidPosition && (
               <span className="ml-1 inline-flex items-center">

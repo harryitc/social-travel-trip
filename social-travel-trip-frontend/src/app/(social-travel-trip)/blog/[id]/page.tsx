@@ -20,9 +20,13 @@ import { EmotionBadge } from "@/features/blog/EmotionBadge";
 import { Separator } from "@/components/ui/radix-ui/separator";
 import { Textarea } from "@/components/ui/radix-ui/textarea";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import CustomImage from "@/components/ui/custom-image";
 
-export default function BlogDetailPage({ params }: { params: { id: string } }) {
+export default function BlogDetailPage() {
+
+  const params = useParams();
+
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -124,9 +128,9 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm animate-scale-in">
+        <Card className="lg:col-span-2 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs animate-scale-in">
           <div className="relative aspect-video overflow-hidden">
-            <Image
+            <CustomImage
               width={100}
               height={100}
               src={post.images[currentImageIndex]}
@@ -316,12 +320,12 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
         </Card>
 
         <div className="space-y-6">
-          <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm">
+          <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
             <CardContent className="p-6">
               <h3 className="font-medium mb-4">Bài viết liên quan</h3>
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
-                  <div className="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="h-16 w-16 rounded-lg overflow-hidden shrink-0">
                     {/* eslint-disable-next-line */}
                     <img
                       src="https://images.pexels.com/photos/5746242/pexels-photo-5746242.jpeg?auto=compress&cs=tinysrgb&w=300"
@@ -339,7 +343,7 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
-                  <div className="h-16 w-16 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="h-16 w-16 rounded-lg overflow-hidden shrink-0">
                     {/* eslint-disable-next-line */}
                     <img
                       src="https://images.pexels.com/photos/5746250/pexels-photo-5746250.jpeg?auto=compress&cs=tinysrgb&w=300"
