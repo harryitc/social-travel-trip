@@ -21,9 +21,6 @@ export const metadata: Metadata = {
   description: 'Kết nối những người đam mê du lịch',
 };
 
-import { App, ConfigProvider } from 'antd';
-import viVN from 'antd/locale/vi_VN';
-import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import AntdProviderLayout from "@/lib/providers/antd.provider";
 
