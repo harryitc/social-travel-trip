@@ -1,17 +1,16 @@
-import Http, { attachToken } from "@/lib/Http";
+import { Http } from '@/lib/custom-http';
+import { attachToken } from '@/features/auth/auth.service';
+import { catchError, map, throwError } from 'rxjs';
 
-export const getHello = async (_params: any, token: string | null) => {
-  console.log("fetching API...");
-  const url = "http://localhost:3000/api/";
+export const getHello = (_params: any, token: string | null) => {
+  console.log('fetching API...');
+  const url = 'http://localhost:3000/api/';
 
   const params = attachToken(_params, token);
 
-  // try {
-    const res = await Http.get(url, params);
-    console.log("Data = ", res);
-    return res;
-  // } catch (err: any) {
-  //   console.log("loi roi ne: ", err);
-  //   throw err;
-  // }
+  const response = Http.get(url, params).pipe(
+    map((res) => res),
+    catchError((err) => throwError(() => err)),
+  );
+  return response;
 };
