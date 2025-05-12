@@ -1,0 +1,37 @@
+
+
+######## BUILD
+FROM node:20.9.0 AS build
+
+# Thiết lập thư mục làm việc
+WORKDIR /app
+
+COPY package*.json ./
+
+COPY . .
+
+COPY ./env/server-test.env .env
+
+RUN yarn install --ignore-engines
+
+RUN yarn build
+
+
+######## EXPORT
+FROM node:20.9.0 AS runtime
+
+WORKDIR /app_build
+
+# Cài đặt lại các thư viện chrome cần thiết trong runtime
+
+COPY --from=build /app /app_build
+COPY --from=build /app/.env /app_build/.env
+
+RUN mv dist crm-v2_main-api
+
+ARG NODE_ENV=server-test
+ENV NODE_ENV $NODE_ENV
+
+EXPOSE 3000
+
+CMD ["node", "crm-v2_main-api/main"]

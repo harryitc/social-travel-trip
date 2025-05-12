@@ -1,0 +1,8 @@
+health
+cak/file-v2/get-list
+cak/file-v2/upload
+cak/file-v2/download
+cak/file-v2/get-list/response
+cak/file-v2/delete
+log/get-list
+log/clear

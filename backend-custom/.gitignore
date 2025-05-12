@@ -1,0 +1,51 @@
+# compiled output
+/dist
+/node_modules
+/permission_v2-main-api-manage
+yarn.lock
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Temporary
+/zip
+/upload-v2-error
+
+# OS
+.DS_Store
+
+# Tests
+/coverage
+/.nyc_output
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+/documentation
+
+/upload-v2
+/zip
+
+# Check api at project and ntoion
+3th_result_api.txt
+check_sync_api.py
+swagger-spec-need-update.txt
