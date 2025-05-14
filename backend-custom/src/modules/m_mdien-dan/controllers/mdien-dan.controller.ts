@@ -12,11 +12,11 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { FilterMdienDanDTO } from '../dto/filter-mdien-dan.dto';
 
-import { CreateMdienDanDTO } from '../dto/create-mdien-dan.dto';
+import { CreateMdienDanDTO } from '../dto/create-post.dto';
 
 import { MdienDanService } from '../services/mdien-dan.service';
 
-import { UpdateMdienDanDTO } from '../dto/update-mdien-dan.dto';
+import { UpdateMdienDanDTO } from '../dto/update-post.dto';
 
 import { DeleteMdienDanDTO } from '../dto/delete-mdien-dan.dto';
 

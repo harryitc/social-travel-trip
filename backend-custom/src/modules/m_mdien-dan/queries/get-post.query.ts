@@ -1,0 +1,44 @@
+import { QueryHandler, IQueryHandler, IQuery } from '@nestjs/cqrs';
+import { NotFoundException } from '@common/exceptions';
+import { FilterMdienDanDTO } from '../dto/filter-mdien-dan.dto';
+
+import { MdienDanRepository } from '../repositories/mdien-dan.repository';
+import { Post } from '../models/mdien-dan.model';
+
+export class GetPostsQuery implements IQuery {
+  constructor(public readonly filterDTO: FilterMdienDanDTO) {}
+}
+
+@QueryHandler(GetPostsQuery)
+export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
+  constructor(private readonly repository: MdienDanRepository) {}
+
+  async execute(query: GetPostsQuery) {
+    // const { page, perPage, filters, sorts } = query.filterDTO;
+
+    // const queryObject = {
+    //   pageSize: CustomQueryHelper.extractPageSize(page, perPage), // litmit, offset
+    //   filters: CustomQueryHelper.extractFilter(filters), // { key: value123 }
+    //   sorts: CustomQueryHelper.extractSort(sorts), // [{filed: product_name: order: desc/asc}]
+
+    //   // Additional data to query...
+    //   // ownerId: query?.userId ?? 0,
+    // };
+
+    const [queryResult, count] = await Promise.all([
+      this.repository.getPosts(),
+      this.repository.getCountPosts(),
+    ]);
+
+    if (queryResult.rowCount === 0) {
+      throw new NotFoundException(`Record by filter not found`);
+    }
+
+    const result = {
+      list: queryResult.rows.map((item: any) => new Post(item)),
+      total: count.rows[0].count ?? 0,
+    };
+
+    return result;
+  }
+}

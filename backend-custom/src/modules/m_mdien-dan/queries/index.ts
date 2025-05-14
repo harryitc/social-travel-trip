@@ -1,8 +1,7 @@
-import { FilterMdienDanQueryHandler } from './filter-mdien-dan.query';
+import { GetPostsQueryHandler } from './get-post.query';
 import { FindOneMdienDanQueryHandler } from './find-one-mdien-dan.query';
 
 export const QueryHandlers = [
-  FilterMdienDanQueryHandler,
+  GetPostsQueryHandler,
   FindOneMdienDanQueryHandler,
 ];
-

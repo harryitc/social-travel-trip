@@ -1,10 +1,7 @@
- 
 import { Injectable } from '@nestjs/common';
-import { CustomQueryBuilder } from '@common/helpers/pg-query-builder';
 import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configuration';
 import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool';
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
-import { ISortingData, ILimitOffset } from '@common/helpers';
 
 @Injectable()
 export class MdienDanRepository {
@@ -13,178 +10,115 @@ export class MdienDanRepository {
     private readonly client: PgSQLConnectionPool,
   ) {}
 
+  async getPosts() {
+    const params = [];
+    const query = `
+    SELECT *
+    FROM posts p
+    ORDER BY p.created_at DESC
+  `;
+    return this.client.execute(query, params);
+  }
+  async getCountPosts() {
+    const params = [];
+    const query = `
+    SELECT COUNT(*)
+    FROM posts p
+  `;
+    return this.client.execute(query, params);
+  }
+
+  async createPost(data, userId) {
+    const { content, jsonData, place_id } = data;
+    const params = [content, jsonData, userId, place_id];
+    const query = `
+    INSERT INTO posts (content, json_data, user_id, place_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    RETURNING *
+  `;
+    return this.client.execute(query, params);
+  }
+
+  async likePost(data, userId) {
+    const { postId, reactionId } = data;
+    const params = [postId, userId, reactionId];
+    const query = `
+    INSERT INTO post_likes (post_id, user_id, reaction_id)
+    VALUES ($1, $2, $3)
+    ON CONFLICT DO NOTHING
+  `;
+    return this.client.execute(query, params);
+  }
+
   /**
-   * Truy vấn lấy danh sách - gồm các logic sắp xếp, lọc, phân trang và logic bổ xung
-   * */
-  getManyByFilter = (args: {
-    filters: any;
-    sorts: ISortingData;
-    pageSize: ILimitOffset;
-  }) => {
-    let queryString = `
-      SELECT *
-      FROM posts
-      WHERE TRUE = TRUE
-    `;
-
-    const { 
-      searchString,
-       info,  time_create,  time_update, 
-     } = args.filters;
-    const params = new Array<string>();
-    // #Region additional filter ....
-    // #EndRegion additional filter ....
-
-    // #Region Filter:
-    if (searchString && searchString?.length !== 0) {
-      queryString += ` AND `;
-      
-        queryString += ` content ilike $${params.length + 1}  `;
-      // Bạn có thẻ dùng slugify nếu search không dấu
-        // params.push(`%${slugify(content ?? '', ' ')}%`);
-        params.push(`%${searchString}%`);
-      
-    }
-    // #EndRegions Filter:
-
-    // #regions Order and limit
-    queryString += CustomQueryBuilder.toOrder(args.sorts); // ORDER BY FIELDS DESC/ASC
-    queryString += CustomQueryBuilder.toLimitOffset(args.pageSize); // LIMIT 4 OFFSET 5
-    // #endregions Order and limit
-
-    return this.client.execute(queryString, params);
-  };
-
-  countByFilter = (args: {
-    filters: any;
-    sorts: any;
-    pageSize: any;
-  }) => {
-    let queryString = `
-      SELECT COUNT(user_id)
-      FROM posts
-      WHERE TRUE = TRUE
-    `;
-  
-    const { 
-      searchString,
-       info,  time_create,  time_update, 
-     } = args.filters;
-    const params = new Array<string>();
-    // #Region additional filter ....
-    // #EndRegion additional filter ....
-
-    // #Region Filter:
-    if (searchString && searchString?.length !== 0) {
-      queryString += ` AND `;
-      
-        queryString += ` content ilike $${params.length + 1}  `;
-        // Bạn có thẻ dùng slugify nếu search không dấu
-        // params.push(`%${slugify(content ?? '', ' ')}%`);
-        params.push(`%${searchString}%`);
-      
-    }
-    // #EndRegion Filter:
-    return this.client.execute(queryString, params);
+   * Lấy danh sách bình luận theo bài viết
+   */
+  async getComments(postId: number) {
+    const query = `
+    SELECT c.*
+    FROM post_comments c
+    WHERE c.post_id = $1 AND c.parent_id IS NULL
+    ORDER BY c.created_at ASC
+  `;
+    const params = [postId];
+    return this.client.execute(query, params);
   }
 
-  
-  create = (args: {
-    
-      info: any;
-    
-      time_create: Date;
-    
-      time_update: Date;
-    
-  }) => {
+  async getCountComments(postId: number) {
     const query = `
-      INSERT INTO posts (
-      
-        info,
-        time_create,
-        time_update
-      )
-      VALUES (
-        $1,
-        $2,
-        $3)
-      RETURNING *;
-    `;
+    SELECT COUNT(c.*)
+    FROM post_comments c
+    WHERE c.post_id = $1 AND c.parent_id IS NULL
+    ORDER BY c.created_at ASC
+  `;
+    const params = [postId];
+    return this.client.execute(query, params);
+  }
+
+  /**
+   * Tạo bình luận
+   */
+  async createComment(data, userId) {
+    const { content, jsonData, postId } = data;
+    const query = `
+    INSERT INTO post_comments (content, json_data, post_id, user_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    RETURNING *
+  `;
+    return this.client.execute(query, [content, jsonData, postId, userId]);
+  }
+
+  /**
+   * Reply bình luận (bình luận con)
+   */
+  async replyComment(data, userId) {
+    const { content, jsonData, postId, parentId } = data;
+    const query = `
+    INSERT INTO post_comments (content, json_data, post_id, parent_id, user_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    RETURNING *
+  `;
     return this.client.execute(query, [
-       
-        args.info,
-        args.time_create,
-        args.time_update
-      ]);
-  }
-  
-
-  findOne = (user_id: number) => {
-    const query = `
-      SELECT 
-        user_id,
-        
-        info,
-        time_create,
-        time_update
-      FROM posts
-      WHERE user_id = $1
-      LIMIT 1;
-    `;
-    return this.client.execute(query, [user_id]);
-  };
-  
-     
-  delete = (user_id: number) =>  {
-    const query = `
-      DELETE FROM posts
-      WHERE user_id = $1;
-    `;
-    return this.client.execute(query, [user_id]);
-  }
-  
-
-     
-  deleteManyByIds = (ids: Array<number>) => {
-    const query = `
-      DELETE FROM posts
-      WHERE user_id IN (${ids.map((_, index) => `$${index + 1}`).join(', ')})
-      RETURNING *;
-    `;
-    return this.client.execute(query, ids);
-  }
-  
-
-  
-  // DOCS: https://aaronbos.dev/posts/update-json-postgresql 
-  update = (args: {
-    user_id: number;
-    
-      info: any;
-      time_create: Date;
-      time_update: Date;
-  }) => {
-    const query = `
-      UPDATE posts SET 
-      
-        info= $1,
-      
-        time_create= $2,
-      
-        time_update= $3
-       
-      WHERE user_id = $4
-    `;
-    return this.client.execute(query, [
-      
-        args.info,
-        args.time_create,
-        args.time_update,
-      args.user_id
+      content,
+      jsonData,
+      postId,
+      parentId,
+      userId,
     ]);
   }
-  
+
+  /**
+   * Like bình luận
+   */
+  async likeComment(data, userId) {
+    const { commentId, reactionId } = data;
+    const query = `
+    INSERT INTO post_comment_likes (comment_id, user_id, reaction_id)
+    VALUES ($1, $2, $3)
+    ON CONFLICT DO NOTHING
+  `;
+    return this.client.execute(query, [commentId, userId, reactionId]);
+  }
 
   /** 
     Trường họp transaction update nhiều dòng tên 1 bảng, 
@@ -224,7 +158,7 @@ export class MdienDanRepository {
 
   /**
     Trường họp transaction update dữ liệu trên 2 hay nhiều bảng
-  */  
+  */
   /**
   insertProductAndDefaultVariant(
     product: {
@@ -269,4 +203,3 @@ export class MdienDanRepository {
   }
   */
 }
-
