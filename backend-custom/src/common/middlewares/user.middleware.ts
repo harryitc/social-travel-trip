@@ -1,13 +1,18 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response, NextFunction } from 'express';
-import { UserMock } from '@configs/app/dev-mocks';
+
+import { ClerkClient, verifyToken } from '@clerk/backend';
 
 @Injectable()
 export class UserMiddleware implements NestMiddleware {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject('ClerkClient')
+    private readonly clerkClient: ClerkClient,
+  ) {}
 
-  use(req: Request, res: Response, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     const useCentralizeAuth = this.configService.get<boolean>(
       'appConfig.enableCentralizedAuthen',
     );
@@ -16,24 +21,31 @@ export class UserMiddleware implements NestMiddleware {
       next();
       return;
     }
-    const isDevMode = this.configService.get('appConfig.nodeEnv') === 'local';
 
-    req['user'] = isDevMode
-      ? UserMock
-      : {
-          NhanVienID: this.unicodeReplaceRevert(req.header('X-UserID')),
-          NhanVienGuid: req.header('X-UserGuid'),
-          app: req.header('X-APP'),
-          id: req.header('X-ContactId'),
-          crm_key: process.env.MAIN_CRM_KEY,
-        };
+    req['user'] = {};
+    // const isDevMode = this.configService.get('appConfig.nodeEnv') === 'local';
+
+    // req['user'] = isDevMode
+    //   ? UserMock
+    //   : {
+    //       user_id: this.unicodeReplaceRevert(req.header('X-UserID')),
+    //       username: req.header('X-UserGuid'),
+    //     };
     // WARNING: this logic should be map from model
-    req['user']['username'] = req['user']['NhanVienID'];
-    
+    // req['user']['username'] = req['user']['user_id'];
+
     // Set toketn user mock if they login
     if (req.headers.authorization) {
-      const [type, token] = req.headers.authorization.split(' ') ?? [];
-      req['user']['token'] = type === 'JWT' ? token : req.headers.authorization;
+      // const [type, token] = req.headers.authorization.split(' ') ?? [];
+      // req['user']['token'] = type === 'JWT' ? token : req.headers.authorization;
+      const token = req.headers.authorization.split(' ')[1];
+
+      const tokenPayload = await verifyToken(token, {
+        secretKey: this.configService.get<string>('CLERK_SECRET_KEY'),
+      });
+
+      const user = await this.clerkClient.users.getUser(tokenPayload.sub);
+      req['user'] = user;
     }
     next();
   }
@@ -44,6 +56,4 @@ export class UserMiddleware implements NestMiddleware {
     }
     return value;
   }
-
-
 }

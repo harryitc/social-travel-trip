@@ -24,4 +24,4 @@ import { IO_REDIS_PERFIX } from './config-keys';
   ],
   exports: [REDIS_MAIN_PROVIDER],
 })
-export class IoRedisConfigModule { }
+export class IoRedisConfigModule {}

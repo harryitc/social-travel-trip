@@ -12,11 +12,11 @@ import { POSTGRE_SQL_DB_CONFIG_MAIN } from './databases/postgresql/configuration
 import { ASSETS_PROVIDERS } from './assets/configuration';
 import { IoRedisMainConfig } from './cache/io-redis/configuration';
 import { AppAssetsProvider } from './assets/app-assets.provider';
-import { QueueRedisConfigModule } from './queue/redis-queue/config.module';
+// import { QueueRedisConfigModule } from './queue/redis-queue/config.module';
 import { RedisQueueEnvConfValSchema } from './queue/redis-queue/configuration';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { MssqlPersistentConfigModule } from './databases/mssql/config.module';
+// import { MssqlPersistentConfigModule } from './databases/mssql/config.module';
 
 // Điền các namespace config vào mảng này để code nhìn gọn hơn - ít đụng phần module bên dưới
 // export const APP_CONFIG = registerAs('appConfig', () => ({...});
@@ -76,7 +76,7 @@ const VALIDATION_SCHEMAS = {
     TypeORMPersistentConfigModule,
     // CacheConfigModule,
     // Config memcache,
-    QueueRedisConfigModule,
+    // QueueRedisConfigModule,
   ],
   exports: [
     TypeORMPersistentConfigModule,
@@ -84,7 +84,7 @@ const VALIDATION_SCHEMAS = {
     // MssqlPersistentConfigModule,
     ConfigModule,
     AppAssetsProvider,
-    QueueRedisConfigModule,
+    // QueueRedisConfigModule,
   ],
   providers: [AppAssetsProvider],
   controllers: [],

@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Heart, MapPin, Users, Calendar, Star, Share2, Bookmark, Camera } from 'lucide-react';
 // import { Map as MapGL, Marker } from 'react-map-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+// import 'mapbox-gl/dist/mapbox-gl.css';
 import { useParams } from 'next/navigation';
 
 type Review = {

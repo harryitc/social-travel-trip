@@ -2,10 +2,10 @@
 
 import { UserMock } from '@configs/app/dev-mocks';
 import { AppAssetsProvider } from '@configs/assets/app-assets.provider';
-import { IoRedisConfigModule } from '@configs/cache/io-redis/config.module';
+// import { IoRedisConfigModule } from '@configs/cache/io-redis/config.module';
 import { REDIS_MAIN_PROVIDER } from '@configs/cache/io-redis/configuration';
 import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configuration';
-import { QueueRedisConfigModule } from '@configs/queue/redis-queue/config.module';
+// import { QueueRedisConfigModule } from '@configs/queue/redis-queue/config.module';
 import { BULL_QUEUE_CONNECTION_KEY } from '@configs/queue/redis-queue/configuration';
 import { PostgresModule } from '@libs/persistent/postgresql/postgres.module';
 import { HttpModule } from '@nestjs/axios';
@@ -36,8 +36,8 @@ export const QUEUE_PROVIDER = BULL_QUEUE_CONNECTION_KEY;
 export const DEPENDENCIES = [
   CqrsModule,
   PostgresModule.forFeature(DATABASE_PROVIDERS),
-  IoRedisConfigModule,
-  QueueRedisConfigModule,
+  // IoRedisConfigModule,
+  // QueueRedisConfigModule,
   ConfigModule,
   HttpModule,
 ];

@@ -14,12 +14,12 @@ import { HealthcheckModule } from './healthchecks/healthcheck.module';
 import { LogModule } from '@modules/log/log.module';
 import { FileV2Module } from '@modules/sys_file-v2/file.module';
 
+import { createClerkClient } from '@clerk/backend';
+import { OtherModule } from '@modules/others/other.module';
+
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
-const FEATURES_MODULES = [
-  FileV2Module,
-  LogModule,
-];
+const FEATURES_MODULES = [FileV2Module, LogModule, OtherModule];
 
 @Module({
   imports: [GlobalConfigurationModule, ...CORE_MODULES, ...FEATURES_MODULES],
@@ -40,6 +40,16 @@ const FEATURES_MODULES = [
         conf.get('appConfig.nodeEnv') === 'local'
           ? new LoggingInterceptor()
           : null,
+      inject: [ConfigService],
+    },
+    {
+      provide: 'ClerkClient',
+      useFactory: (configService: ConfigService) => {
+        return createClerkClient({
+          publishableKey: configService.get('CLERK_PUBLISHABLE_KEY'),
+          secretKey: configService.get('CLERK_SECRET_KEY'),
+        });
+      },
       inject: [ConfigService],
     },
   ],

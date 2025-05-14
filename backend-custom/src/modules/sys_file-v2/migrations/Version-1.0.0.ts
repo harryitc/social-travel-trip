@@ -15,5 +15,4 @@ module.exports = async (client, schema) => {
     "time_update" timestamp(6),
     "resize_path" jsonb
   );`);
-
 };

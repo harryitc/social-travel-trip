@@ -11,21 +11,17 @@ export const setupApiDocs = (documentPath: string, app: INestApplication) => {
   const options = new DocumentBuilder()
     .setTitle('Danh sách api')
     .setDescription('Tiến hành "Authorize" trước khi chạy api')
-    .addBasicAuth(
+    .addBearerAuth(
       {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        in: 'header',
-        name: 'Authorization',
+        // in: 'header',
+        // name: 'Authorization',
+        description: 'Nhập token từ Clerk',
       },
       'JWT',
-    )
-    .addApiKey({
-      in: 'header',
-      name: 'api-key',
-      type: 'apiKey',
-    });
+    );
 
   const document = SwaggerModule.createDocument(app, options.build());
   fs.writeFileSync(

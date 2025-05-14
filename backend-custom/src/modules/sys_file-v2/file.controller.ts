@@ -10,7 +10,6 @@ import {
   UploadedFiles,
   Header,
   StreamableFile,
-  Param,
   Sse,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
@@ -24,12 +23,9 @@ import { FILE_UPLOAD_PREFIX } from './const';
 import { fileDestination, editFileName, fileFilter } from './utils/file';
 import { FileDeleteDto } from './dto/file-delete.dto';
 
-
 @Controller(`${FILE_UPLOAD_PREFIX}/file-v2`)
 export class FileController {
-  constructor(
-    private readonly fileService: FileService,
-  ) { }
+  constructor(private readonly fileService: FileService) {}
 
   @ApiOperation({
     summary: 'Lay list hoi nhom theo id',
@@ -38,9 +34,12 @@ export class FileController {
   @HttpCode(200)
   @Post('get-list')
   public async getListById(@Body() body: FileGetListDto, @Request() req: any) {
-    body["userId"] = req["user"].id;
+    body['userId'] = req['user'].id;
     if (body.session_id) {
-      this.fileService.fileGetListInfo(body.list_server_file_name, body.session_id);
+      this.fileService.fileGetListInfo(
+        body.list_server_file_name,
+        body.session_id,
+      );
       return;
     }
 
@@ -49,13 +48,15 @@ export class FileController {
 
   @HttpCode(200)
   @Post('upload')
-  @UseInterceptors(FilesInterceptor('files', +process.env.FILE_UPLOAD_MAX_FILE_COUNT, {
-    storage: diskStorage({
-      destination: fileDestination,
-      filename: editFileName,
+  @UseInterceptors(
+    FilesInterceptor('files', +process.env.FILE_UPLOAD_MAX_FILE_COUNT, {
+      storage: diskStorage({
+        destination: fileDestination,
+        filename: editFileName,
+      }),
+      fileFilter: fileFilter,
     }),
-    fileFilter: fileFilter
-  }))
+  )
   @ApiOperation({
     summary: '',
     description: `
@@ -63,8 +64,12 @@ export class FileController {
       - 
     `,
   })
-  async fileUpload(@UploadedFiles() files: Array<Express.Multer.File>, @Body() body: FileUploadDto, @Request() req: any) {
-    body["userId"] = req["user"].id;
+  async fileUpload(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Body() body: FileUploadDto,
+    @Request() req: any,
+  ) {
+    body['userId'] = req['user'].id;
     return this.fileService.fileUpload(body, files);
   }
 
@@ -84,7 +89,10 @@ export class FileController {
   })
   @HttpCode(200)
   @Sse('get-list/response')
-  public fileGetListResponse(@Query('session_id') session_id, @Request() request: any): Observable<MessageEvent> | any {
+  public fileGetListResponse(
+    @Query('session_id') session_id,
+    @Request() request: any,
+  ): Observable<MessageEvent> | any {
     return this.fileService.fileGetListResponse(session_id);
   }
 
@@ -102,6 +110,6 @@ export class FileController {
   @Post('delete')
   async fileDelete(@Body() body: FileDeleteDto, @Request() req: any) {
     await this.fileService.fileDelete(body);
-    return { status: true }; 
+    return { status: true };
   }
 }
