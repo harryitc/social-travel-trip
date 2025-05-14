@@ -16,10 +16,11 @@ import { FileV2Module } from '@modules/sys_file-v2/file.module';
 
 import { createClerkClient } from '@clerk/backend';
 import { OtherModule } from '@modules/others/other.module';
+import { MdienDanModule } from '@modules/m_mdien-dan/mdien_dan.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
-const FEATURES_MODULES = [FileV2Module, LogModule, OtherModule];
+const FEATURES_MODULES = [FileV2Module, LogModule, MdienDanModule, OtherModule];
 
 @Module({
   imports: [GlobalConfigurationModule, ...CORE_MODULES, ...FEATURES_MODULES],
