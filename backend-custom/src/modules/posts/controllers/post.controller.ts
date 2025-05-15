@@ -6,8 +6,9 @@ import {
   Query,
   Request,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CreatePostDTO } from '../dto/create-post.dto';
 import { LikePostDTO } from '../dto/like-post.dto';
 import { CreateCommentDTO } from '../dto/create-comment.dto';
@@ -15,7 +16,10 @@ import { PostService } from '../services/post.service';
 import { UpdatePostDTO } from '../dto/update-post.dto';
 import { LikeCommentDTO } from '../dto/like-comment.dto';
 import { GetPostDTO } from '../dto/get-post.dto';
+import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 
+@ApiBearerAuth('jwt') // ✅ Cho phép truyền JWT token
+@UseGuards(JwtAuthGuard) // ✅ Bảo vệ route
 @ApiTags('API Posts')
 @Controller('posts')
 export class PostController {

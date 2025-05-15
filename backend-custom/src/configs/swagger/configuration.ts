@@ -16,11 +16,10 @@ export const setupApiDocs = (documentPath: string, app: INestApplication) => {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
-        // in: 'header',
-        // name: 'Authorization',
-        description: 'Nhập token từ Clerk',
+        name: 'Authorization',
+        in: 'header',
       },
-      'JWT',
+      'jwt', // <- tên security, dùng sau trong @ApiBearerAuth('jwt')
     );
 
   const document = SwaggerModule.createDocument(app, options.build());

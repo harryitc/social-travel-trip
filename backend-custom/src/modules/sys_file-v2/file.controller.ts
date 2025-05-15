@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { FileDownloadDto, FileGetListDto } from './dto/file-get.dto';
 import { FileUploadDto } from './dto/file-upload.dto';
@@ -23,6 +23,7 @@ import { FILE_UPLOAD_PREFIX } from './const';
 import { fileDestination, editFileName, fileFilter } from './utils/file';
 import { FileDeleteDto } from './dto/file-delete.dto';
 
+@ApiTags('File')
 @Controller(`${FILE_UPLOAD_PREFIX}/file-v2`)
 export class FileController {
   constructor(private readonly fileService: FileService) {}

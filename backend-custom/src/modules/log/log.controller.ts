@@ -6,15 +6,14 @@ import {
   Body,
   Query,
   Get,
+  UseGuards,
 } from '@nestjs/common';
 import { ClearDto, GetListDto } from './dto/log.dto';
 import { LogService } from './log.service';
 
 @Controller('log')
 export class LogController {
-  constructor(
-    private readonly service: LogService,
-  ) { }
+  constructor(private readonly service: LogService) {}
 
   @HttpCode(200)
   @Get('get-list')

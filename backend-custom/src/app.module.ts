@@ -7,20 +7,26 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { AllErrorLoggingFilter } from '@common/exceptions';
 import { LoggingInterceptor, TimeoutInterceptor } from '@common/interceptors';
 import { AppLoggerMiddleware } from '@common/middlewares';
-import { CustomHeaderMiddleware } from '@common/middlewares/custom-header.middleware';
-import { UserMiddleware } from '@common/middlewares/user.middleware';
 import { HealthcheckModule } from './healthchecks/healthcheck.module';
 
 import { LogModule } from '@modules/log/log.module';
 import { FileV2Module } from '@modules/sys_file-v2/file.module';
 
-import { createClerkClient } from '@clerk/backend';
 import { OtherModule } from '@modules/others/other.module';
 import { PostModule } from '@modules/posts/post.module';
+import { AuthModule } from '@modules/auth/auth.module';
+import { UserModule } from '@modules/user/user.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
-const FEATURES_MODULES = [FileV2Module, LogModule, OtherModule, PostModule];
+const FEATURES_MODULES = [
+  AuthModule,
+  UserModule,
+  FileV2Module,
+  PostModule,
+  LogModule,
+  OtherModule,
+];
 
 @Module({
   imports: [GlobalConfigurationModule, ...CORE_MODULES, ...FEATURES_MODULES],
@@ -43,23 +49,27 @@ const FEATURES_MODULES = [FileV2Module, LogModule, OtherModule, PostModule];
           : null,
       inject: [ConfigService],
     },
-    {
-      provide: 'ClerkClient',
-      useFactory: (configService: ConfigService) => {
-        return createClerkClient({
-          publishableKey: configService.get('CLERK_PUBLISHABLE_KEY'),
-          secretKey: configService.get('CLERK_SECRET_KEY'),
-        });
-      },
-      inject: [ConfigService],
-    },
+    // {
+    //   provide: 'ClerkClient',
+    //   useFactory: (configService: ConfigService) => {
+    //     return createClerkClient({
+    //       publishableKey: configService.get('CLERK_PUBLISHABLE_KEY'),
+    //       secretKey: configService.get('CLERK_SECRET_KEY'),
+    //     });
+    //   },
+    //   inject: [ConfigService],
+    // },
   ],
   controllers: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(CustomHeaderMiddleware, AppLoggerMiddleware, UserMiddleware)
+      .apply(
+        // CustomHeaderMiddleware,
+        AppLoggerMiddleware,
+        // UserMiddleware
+      )
       .forRoutes('*');
   }
 }

@@ -1,11 +1,11 @@
 health
+auth/login
+auth/register
 cak/file-v2/get-list
 cak/file-v2/upload
 cak/file-v2/download
 cak/file-v2/get-list/response
 cak/file-v2/delete
-log/get-list
-log/clear
 posts/query
 posts/create
 posts/like
@@ -13,3 +13,5 @@ posts/likes
 posts/posts
 posts/comments
 posts/comment/like
+log/get-list
+log/clear
