@@ -81,37 +81,55 @@ export class PostRepository {
    */
   async getComments(postId: number) {
     const query = `
-    SELECT c.*
+    SELECT 
+      c.post_comment_id,
+      c.content,
+      c.user_id,
+      c.created_at,
+      COALESCE(
+        (
+          SELECT json_agg(json_build_object(
+            'id', r.post_comment_id,
+            'content', r.content,
+            'user_id', r.user_id,
+            'created_at', r.created_at
+          ) ORDER BY r.created_at)
+          FROM post_comments r
+          WHERE r.parent_id = c.post_comment_id
+        ), '[]'
+      ) AS replies
     FROM post_comments c
     WHERE c.post_id = $1 AND c.parent_id IS NULL
-    ORDER BY c.created_at ASC
+    ORDER BY c.created_at
   `;
     const params = [postId];
     return this.client.execute(query, params);
   }
 
-  async getCountComments(postId: number) {
-    const query = `
-    SELECT COUNT(c.*)
-    FROM post_comments c
-    WHERE c.post_id = $1 AND c.parent_id IS NULL
-    ORDER BY c.created_at ASC
-  `;
-    const params = [postId];
-    return this.client.execute(query, params);
-  }
+  // async getCountComments(postId: number) {
+  //   const query = `
+  //   SELECT COUNT(c.*)
+  //   FROM post_comments c
+  //   WHERE c.post_id = $1 AND c.parent_id IS NULL
+  // `;
+  //   const params = [postId];
+  //   return this.client.execute(query, params);
+  // }
 
   /**
    * Tạo bình luận
    */
   async createComment(data, userId) {
-    const { content, jsonData, postId } = data;
+     const { content, jsonData, postId, parentId } = data;
+
     const query = `
-    INSERT INTO post_comments (content, json_data, post_id, user_id, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    INSERT INTO post_comments (content, json_data, post_id, user_id, parent_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
     RETURNING *
   `;
-    return this.client.execute(query, [content, jsonData, postId, userId]);
+
+    const params = [content, jsonData, postId, userId, parentId ?? null];
+    return this.client.execute(query, params);
   }
 
   /**

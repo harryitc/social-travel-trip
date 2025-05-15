@@ -10,8 +10,9 @@ posts/query
 posts/create
 posts/like
 posts/likes
-posts/posts
-posts/comments
-posts/comment/like
+posts/update
+posts/insert-comment
+posts/get-list-comments
+posts/like-comment
 log/get-list
 log/clear

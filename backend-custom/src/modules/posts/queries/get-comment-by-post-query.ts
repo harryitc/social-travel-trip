@@ -26,20 +26,16 @@ export class GetCommentByPostQueryHandler
     //   // ownerId: query?.userId ?? 0,
     // };
 
-    const [queryResult, count] = await Promise.all([
-      this.repository.getComments(query.postId),
-      this.repository.getCountComments(query.postId),
-    ]);
+    // const [queryResult, count] = await Promise.all([
+    //   this.repository.getComments(query.postId),
+    //   this.repository.getCountComments(query.postId),
+    // ]);
+    const queryResult = await this.repository.getComments(query.postId);
 
     if (queryResult.rowCount === 0) {
       throw new NotFoundException(`Record by filter not found`);
     }
 
-    const result = {
-      list: queryResult.rows.map((item: any) => new Post(item)),
-      total: count.rows[0].count ?? 0,
-    };
-
-    return result;
+    return queryResult.rows;
   }
 }

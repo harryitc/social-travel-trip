@@ -205,10 +205,10 @@ module.exports = async (client, schema) => {
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_likes" (
-    "post_like_id" bigserial PRIMARY KEY,
-    "reaction_id" int8 default 1,
     "user_id" int8,
-    "post_id" int8
+    "post_id" int8,
+    "reaction_id" int default 1,
+    PRIMARY KEY (post_id, user_id)
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."posts" (

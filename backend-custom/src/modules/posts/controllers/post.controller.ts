@@ -70,7 +70,7 @@ export class PostController {
     return this.service.getLikes(+postId, userId);
   }
 
-  @Post('posts')
+  @Post('update')
   @ApiOperation({
     summary: 'Update a post',
     description: 'Cap thong noi dung bai viet',
@@ -81,7 +81,7 @@ export class PostController {
     return this.service.updatePost(updatePostDTO, userId);
   }
 
-  @Post('comments')
+  @Post('insert-comment')
   @ApiOperation({
     summary: 'Create a comment',
     description: 'Add a comment to a post or reply to another comment',
@@ -95,7 +95,7 @@ export class PostController {
     return this.service.createComment(createCommentDTO, userId);
   }
 
-  @Get('comments')
+  @Get('get-list-comments')
   @ApiOperation({
     summary: 'Get post comments',
     description: 'Get all comments for a post, optionally including replies',
@@ -105,7 +105,7 @@ export class PostController {
     return this.service.getComments(+postId, userId);
   }
 
-  @Post('comment/like')
+  @Post('like-comment')
   @ApiOperation({
     summary: 'Like a comment',
     description: 'Add a like to a comment',

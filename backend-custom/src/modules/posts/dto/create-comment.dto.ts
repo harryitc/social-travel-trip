@@ -6,6 +6,9 @@ export class CreateCommentDTO {
   @ApiProperty({ example: 'Example postId' })
   postId: string;
 
+  @ApiProperty({ example: 'Example parentId' })
+  parentId: string | null;
+
   @IsNotEmpty()
   @ApiProperty({ example: 'Example content' })
   content: string;
