@@ -4,7 +4,7 @@ import { IsNotEmpty } from 'class-validator';
 export class UpdatePostDTO {
   @IsNotEmpty()
   @ApiProperty({ example: 'Example postId' })
-  postId: string;
+  postId: number;
 
   @IsNotEmpty()
   @ApiProperty({ example: 'Example content' })

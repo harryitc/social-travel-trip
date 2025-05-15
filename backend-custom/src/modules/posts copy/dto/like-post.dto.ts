@@ -7,5 +7,5 @@ export class LikePostDTO {
   postId: string;
 
   @ApiProperty({ example: 'Example reactionId' })
-  reactionId?: string;
+  reactionId?: number;
 }

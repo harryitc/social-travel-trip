@@ -65,9 +65,8 @@ export class PostController {
     summary: 'Get post likes',
     description: 'Get all likes and reactions for a post',
   })
-  async getPostLikes(@Query('postId') postId: string, @Request() req: any) {
-    const userId = req['user']?.user_id ?? 'test';
-    return this.service.getLikes(+postId, userId);
+  async getPostLikes(@Query('postId') postId: number) {
+    return this.service.getLikes(postId);
   }
 
   @Post('posts')
@@ -100,9 +99,9 @@ export class PostController {
     summary: 'Get post comments',
     description: 'Get all comments for a post, optionally including replies',
   })
-  async getPostComments(@Query('postId') postId: string, @Request() req: any) {
+  async getPostComments(@Query('postId') postId: number, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getComments(+postId, userId);
+    return this.service.getComments(postId, userId);
   }
 
   @Post('comment/like')

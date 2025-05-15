@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
-export class LikePostDTO {
+export class LikeCommentDTO {
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example postId' })
-  postId: string;
+  @ApiProperty({ example: 'Example commentId' })
+  commentId: string;
 
   @ApiProperty({ example: 'Example reactionId' })
-  reactionId?: string;
+  reactionId?: number;
 }

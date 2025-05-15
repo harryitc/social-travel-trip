@@ -28,17 +28,6 @@ export class PostRepository {
     return this.client.execute(query, params);
   }
 
-  async getLikePost(postId) {
-    console.log('post = ', postId);
-    const query = `
-    SELECT reaction_id, COUNT(*) AS count
-    FROM post_likes
-    WHERE post_id = $1 AND reaction_id != 1
-    GROUP BY reaction_id
-  `;
-    return this.client.execute(query, [postId]);
-  }
-
   async updatePost(data) {
     const { postId, content, jsonData } = data;
     const params = [content, jsonData, postId];

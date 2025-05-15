@@ -15,5 +15,5 @@ export class ReplyPostDTO {
 
   @IsNotEmpty()
   @ApiProperty({ example: 'Example parentId' })
-  parentId: number;
+  parentId: string;
 }

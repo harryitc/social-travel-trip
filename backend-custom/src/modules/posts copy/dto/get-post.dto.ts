@@ -8,5 +8,5 @@ export class GetPostDTO {
   //   @ApiProperty({ example: 'Example jsonData' })
   //   jsonData?: any;
   //   @ApiProperty({ example: 'Example placeId' })
-  //   placeId?: string;
+  //   placeId?: number;
 }

@@ -7,5 +7,5 @@ export class LikeCommentDTO {
   commentId: string;
 
   @ApiProperty({ example: 'Example reactionId' })
-  reactionId?: number;
+  reactionId?: string;
 }

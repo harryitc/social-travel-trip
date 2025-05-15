@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
-export class UpdatePostDTO {
+export class CreateCommentDTO {
   @IsNotEmpty()
   @ApiProperty({ example: 'Example postId' })
-  postId: string;
+  postId: number;
 
   @IsNotEmpty()
   @ApiProperty({ example: 'Example content' })

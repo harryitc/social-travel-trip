@@ -8,7 +8,7 @@ module.exports = async (client, schema) => {
     "activity_setting_id" bigserial PRIMARY KEY,
     "description" varchar(255),
     "json_data" jsonb,
-    "activity_id" bigserial
+    "activity_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."catetory" (
@@ -18,7 +18,7 @@ module.exports = async (client, schema) => {
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."cities" (
     "city_id" bigserial PRIMARY KEY,
     "name" varchar(100),
-    "province_id" bigserial
+    "province_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."group_members" (
@@ -26,8 +26,8 @@ module.exports = async (client, schema) => {
     "nickname" varchar(100),
     "role" varchar(50),
     "join_at" timestamp(6),
-    "group_id" bigserial,
-    "user_id" bigserial
+    "group_id" int8,
+    "user_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."group_messages" (
@@ -35,8 +35,8 @@ module.exports = async (client, schema) => {
     "message" text,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "group_id" bigserial,
-    "user_id" bigserial
+    "group_id" int8,
+    "user_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."groups" (
@@ -48,7 +48,7 @@ module.exports = async (client, schema) => {
     "json_data" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "plan_id" bigserial
+    "plan_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."hashtags" (
@@ -59,16 +59,16 @@ module.exports = async (client, schema) => {
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_likes" (
     "message_like_id" bigserial PRIMARY KEY,
     "created_at" timestamp(6),
-    "group_message_id" bigserial,
-    "reaction_id" bigserial,
-    "user_id" bigserial
+    "group_message_id" int8,
+    "reaction_id" int8,
+    "user_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_pins" (
     "message_pin_id" bigserial PRIMARY KEY,
     "created_at" timestamp(6),
-    "group_message_id" bigserial,
-    "group_id" bigserial
+    "group_message_id" int8,
+    "group_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blog_comments" (
@@ -77,9 +77,9 @@ module.exports = async (client, schema) => {
     "json_data" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "mini_blog_id" bigserial,
-    "user_id" bigserial,
-    "parent_id" bigserial
+    "mini_blog_id" int8,
+    "user_id" int8,
+    "parent_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blog_shareable" (
@@ -90,7 +90,7 @@ module.exports = async (client, schema) => {
     "is_show_timeline" bit,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "mini_blog_id" bigserial
+    "mini_blog_id" int8
   );`);
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blogs" (
     "mini_blog_id" bigserial PRIMARY KEY,
@@ -103,7 +103,7 @@ module.exports = async (client, schema) => {
     "json_data" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "user_id" bigserial
+    "user_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."notifications" (
@@ -112,7 +112,7 @@ module.exports = async (client, schema) => {
     "type" varchar(100),
     "is_read" bit,
     "created_at" timestamp(6),
-    "user_created" bigserial
+    "user_created" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."place_reviews" (
@@ -121,14 +121,14 @@ module.exports = async (client, schema) => {
     "json_data" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "user_id" bigserial,
-    "place_id" bigserial
+    "user_id" int8,
+    "place_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."place_saved" (
     "place_saved_id" bigserial PRIMARY KEY,
-    "user_id" bigserial,
-    "place_id" bigserial
+    "user_id" int8,
+    "place_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."places" (
@@ -138,7 +138,7 @@ module.exports = async (client, schema) => {
     "json_data" jsonb,
     "region" varchar(100),
     "location" jsonb,
-    "city_id" bigserial
+    "city_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_places" (
@@ -149,7 +149,7 @@ module.exports = async (client, schema) => {
     "location" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "plan_travel_day_id" bigserial
+    "plan_travel_day_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_schedules" (
@@ -161,14 +161,14 @@ module.exports = async (client, schema) => {
     "location" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "activity_id" bigserial,
-    "plan_place_id" bigserial
+    "activity_id" int8,
+    "plan_place_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_travel_days" (
     "plan_travel_day_id" bigserial PRIMARY KEY,
     "ngay" varchar(32),
-    "plan_id" bigserial
+    "plan_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plans" (
@@ -182,45 +182,45 @@ module.exports = async (client, schema) => {
     "status" varchar(255),
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "user_id" bigserial
+    "user_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comment_likes" (
     "post_comment_like_id" bigserial PRIMARY KEY,
-    "reaction_id" bigserial,
-    "comment_id" bigserial,
-    "user_id" bigserial
+    "reaction_id" int8,
+    "comment_id" int8,
+    "user_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comments" (
     "post_comment_id" bigserial PRIMARY KEY,
     "content" varchar(255),
     "json_data" jsonb,
-    "comment_shared_id" bigserial,
+    "comment_shared_id" int8,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "parent_id" bigserial,
-    "user_id" bigserial,
-    "post_id" bigserial
+    "parent_id" int8,
+    "user_id" int8,
+    "post_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_likes" (
     "post_like_id" bigserial PRIMARY KEY,
-    "reaction_id" bigserial,
-    "user_id" bigserial,
-    "post_id" bigserial
+    "reaction_id" int8 default 1,
+    "user_id" int8,
+    "post_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."posts" (
     "post_id" bigserial PRIMARY KEY,
     "content" varchar(255),
     "json_data" jsonb,
-    "post_shared_id" bigserial,
+    "post_shared_id" int8,
     "is_hidden" bool,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "user_id" bigserial,
-    "place_id" bigserial
+    "user_id" int8,
+    "place_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."provinces" (
@@ -242,12 +242,12 @@ module.exports = async (client, schema) => {
     "location" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "activity_id" bigserial
+    "activity_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."user_rela" (
     "user_rela_id" bigserial PRIMARY KEY,
-    "user_id" bigserial,
-    "following" bigserial
+    "user_id" int8,
+    "following" int8
   );`);
 };

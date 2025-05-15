@@ -13,7 +13,7 @@ import { LikeCommentCommand } from '../commands/like-comment.command';
 import { LikeCommentDTO } from '../dto/like-comment.dto';
 import { GetPostsQuery } from '../queries/get-post.query';
 import { GetPostDTO } from '../dto/get-post.dto';
-import { GetLikesPostQuery } from '../queries/get-like-post.query';
+import { Post } from '../models/post.model';
 
 @Injectable()
 export class PostService {
@@ -42,8 +42,8 @@ export class PostService {
     return this.commandBus.execute(new LikePostCommand(likePostDTO, userId));
   }
 
-  async getLikes(postId: number, userId: number) {
-    return this.queryBus.execute(new GetLikesPostQuery(postId, userId));
+  async getLikes(postId: number) {
+    // return this.queryBus.execute(new GetLikesQuery(postId));
   }
 
   async createComment(createCommentDTO: CreateCommentDTO, userId: number) {
