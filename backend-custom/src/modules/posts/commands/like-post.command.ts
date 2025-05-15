@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
-import { MdienDanRepository } from '../repositories/mdien-dan.repository';
+import { PostRepository } from '../repositories/post.repository';
 import { LikePostDTO } from '../dto/like-post.dto';
 
 export class LikePostCommand implements ICommand {
@@ -17,7 +17,7 @@ export class LikePostCommandHandler
 {
   private readonly logger = new Logger(LikePostCommand.name);
 
-  constructor(private readonly repository: MdienDanRepository) {}
+  constructor(private readonly repository: PostRepository) {}
 
   execute = async (command: LikePostCommand): Promise<any> => {
     const insertResult = await this.repository.likePost(

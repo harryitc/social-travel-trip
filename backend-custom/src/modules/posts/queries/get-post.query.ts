@@ -1,17 +1,19 @@
 import { QueryHandler, IQueryHandler, IQuery } from '@nestjs/cqrs';
 import { NotFoundException } from '@common/exceptions';
-import { FilterMdienDanDTO } from '../dto/filter-mdien-dan.dto';
 
-import { MdienDanRepository } from '../repositories/mdien-dan.repository';
-import { Post } from '../models/mdien-dan.model';
+import { PostRepository } from '../repositories/post.repository';
+import { Post } from '../models/post.model';
 
 export class GetPostsQuery implements IQuery {
-  constructor(public readonly filterDTO: FilterMdienDanDTO) {}
+  constructor(
+    public readonly filterDTO: any,
+    public readonly userId: number,
+  ) {}
 }
 
 @QueryHandler(GetPostsQuery)
 export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
-  constructor(private readonly repository: MdienDanRepository) {}
+  constructor(private readonly repository: PostRepository) {}
 
   async execute(query: GetPostsQuery) {
     // const { page, perPage, filters, sorts } = query.filterDTO;

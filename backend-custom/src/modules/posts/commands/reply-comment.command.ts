@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
-import { MdienDanRepository } from '../repositories/mdien-dan.repository';
+import { PostRepository } from '../repositories/post.repository';
 import { ReplyCommentDTO } from '../dto/reply-comment.dto';
 
 export class ReplyCommentCommand implements ICommand {
@@ -17,7 +17,7 @@ export class ReplyCommentCommandHandler
 {
   private readonly logger = new Logger(ReplyCommentCommand.name);
 
-  constructor(private readonly repository: MdienDanRepository) {}
+  constructor(private readonly repository: PostRepository) {}
 
   execute = async (command: ReplyCommentCommand): Promise<any> => {
     const insertResult = await this.repository.replyComment(

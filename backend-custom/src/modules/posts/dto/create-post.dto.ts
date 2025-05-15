@@ -1,15 +1,14 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty } from 'class-validator';
+
 export class CreatePostDTO {
+  @IsNotEmpty()
+  @ApiProperty({ example: 'Example content' })
   content: string;
-  title?: string;
-  media_urls?: string[];
-  location?: {
-    name: string;
-    lat: number;
-    lng: number;
-  };
-  hashtags?: string[];
-  mentions?: {
-    id: string;
-    name: string;
-  }[];
+
+  @ApiProperty({ example: 'Example jsonData' })
+  jsonData?: any;
+
+  @ApiProperty({ example: 'Example placeId' })
+  placeId?: number;
 }

@@ -1,3 +1,5 @@
+import { CreatePostDTO } from '../dto/create-post.dto';
+
 export class Post {
   post_id: number;
   content: string;
@@ -19,6 +21,14 @@ export class Post {
       created_at: new Date(row.created_at),
       updated_at: new Date(row.updated_at),
     });
+  }
+
+  static create(post: CreatePostDTO): CreatePostDTO {
+    return {
+      content: post.content ?? '',
+      jsonData: post.jsonData ?? null,
+      placeId: post.placeId ?? null,
+    };
   }
 }
 

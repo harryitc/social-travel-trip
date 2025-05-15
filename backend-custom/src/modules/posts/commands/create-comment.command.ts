@@ -1,13 +1,13 @@
 import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
-import { MdienDanRepository } from '../repositories/mdien-dan.repository';
+import { PostRepository } from '../repositories/post.repository';
 import { CreateCommentDTO } from '../dto/create-comment.dto';
 
 export class CreateCommentCommand implements ICommand {
   constructor(
     public readonly data: CreateCommentDTO,
-    public readonly user_id: string,
+    public readonly user_id: number,
   ) {}
 }
 
@@ -17,7 +17,7 @@ export class CreateCommentCommandHandler
 {
   private readonly logger = new Logger(CreateCommentCommand.name);
 
-  constructor(private readonly repository: MdienDanRepository) {}
+  constructor(private readonly repository: PostRepository) {}
 
   execute = async (command: CreateCommentCommand): Promise<any> => {
     const insertResult = await this.repository.createComment(

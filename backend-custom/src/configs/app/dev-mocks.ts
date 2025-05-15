@@ -1,5 +1,5 @@
 export const UserMock = {
-  user_id: 'harryitc_id',
+  user_id: 111,
   username: 'harryitc',
   // ...
 };

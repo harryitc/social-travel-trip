@@ -1,20 +1,21 @@
 import { QueryHandler, IQueryHandler, IQuery } from '@nestjs/cqrs';
 import { NotFoundException } from '@common/exceptions';
 
-import { MdienDanRepository } from '../repositories/mdien-dan.repository';
-import { Post } from '../models/mdien-dan.model';
+import { PostRepository } from '../repositories/post.repository';
+import { Post } from '../models/post.model';
 
-export class GetCommentByPostQuery implements IQuery {
-  constructor(public readonly postId: number) {}
+export class GetLikesPostQuery implements IQuery {
+  constructor(
+    public readonly filterDTO: any,
+    public readonly userId: number,
+  ) {}
 }
 
-@QueryHandler(GetCommentByPostQuery)
-export class GetCommentByPostQueryHandler
-  implements IQueryHandler<GetCommentByPostQuery>
-{
-  constructor(private readonly repository: MdienDanRepository) {}
+@QueryHandler(GetLikesPostQuery)
+export class GetLikesPostQueryHandler implements IQueryHandler<GetLikesPostQuery> {
+  constructor(private readonly repository: PostRepository) {}
 
-  async execute(query: GetCommentByPostQuery) {
+  async execute(query: GetLikesPostQuery) {
     // const { page, perPage, filters, sorts } = query.filterDTO;
 
     // const queryObject = {
@@ -27,8 +28,8 @@ export class GetCommentByPostQueryHandler
     // };
 
     const [queryResult, count] = await Promise.all([
-      this.repository.getComments(query.postId),
-      this.repository.getCountComments(query.postId),
+      this.repository.getPosts(),
+      this.repository.getCountPosts(),
     ]);
 
     if (queryResult.rowCount === 0) {

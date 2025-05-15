@@ -2,19 +2,19 @@ import {
   Controller,
   Get,
   Post,
-  Delete,
   Body,
   Query,
-  Param,
   Request,
   HttpCode,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { FilterPostDTO } from '../dto/filter-post.dto';
 import { CreatePostDTO } from '../dto/create-post.dto';
 import { LikePostDTO } from '../dto/like-post.dto';
 import { CreateCommentDTO } from '../dto/create-comment.dto';
 import { PostService } from '../services/post.service';
+import { UpdatePostDTO } from '../dto/update-post.dto';
+import { LikeCommentDTO } from '../dto/like-comment.dto';
+import { GetPostDTO } from '../dto/get-post.dto';
 
 @ApiTags('API Posts')
 @Controller('posts')
@@ -28,9 +28,9 @@ export class PostController {
       'Get all posts or filter by user, category, search text, or followers',
   })
   @HttpCode(200)
-  async getPosts(@Body() filterDTO: FilterPostDTO, @Request() req: any) {
-    const requestUID = req['user']?.id ?? 'test';
-    return this.service.filter(filterDTO, requestUID);
+  async getPosts(@Body() getPostDTO: GetPostDTO, @Request() req: any) {
+    const requestUID = req['user']?.user_id ?? 'test';
+    return this.service.getPosts(getPostDTO, requestUID);
   }
 
   @Post('create')
@@ -41,7 +41,7 @@ export class PostController {
   })
   @HttpCode(201)
   async createPost(@Body() createPostDTO: CreatePostDTO, @Request() req: any) {
-    const userId = req['user']?.id ?? 'test';
+    const userId = req['user']?.user_id ?? 'test';
     return this.service.create(createPostDTO, userId);
   }
 
@@ -52,17 +52,28 @@ export class PostController {
   })
   @HttpCode(200)
   async likePost(@Body() likePostDTO: LikePostDTO, @Request() req: any) {
-    const userId = req['user']?.id ?? 'test';
+    const userId = req['user']?.user_id ?? 'test';
     return this.service.like(likePostDTO, userId);
   }
 
-  @Get('likes/:postId')
+  @Get('likes')
   @ApiOperation({
     summary: 'Get post likes',
     description: 'Get all likes and reactions for a post',
   })
-  async getPostLikes(@Param('postId') postId: string) {
+  async getPostLikes(@Query('postId') postId: number) {
     return this.service.getLikes(postId);
+  }
+
+  @Post('posts')
+  @ApiOperation({
+    summary: 'Update a post',
+    description: 'Cap thong noi dung bai viet',
+  })
+  @HttpCode(201)
+  async updatePost(@Body() updatePostDTO: UpdatePostDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.updatePost(updatePostDTO, userId);
   }
 
   @Post('comments')
@@ -75,46 +86,31 @@ export class PostController {
     @Body() createCommentDTO: CreateCommentDTO,
     @Request() req: any,
   ) {
-    const userId = req['user']?.id ?? 'test';
+    const userId = req['user']?.user_id ?? 'test';
     return this.service.createComment(createCommentDTO, userId);
   }
 
-  @Get('comments/:postId')
+  @Get('comments')
   @ApiOperation({
     summary: 'Get post comments',
     description: 'Get all comments for a post, optionally including replies',
   })
-  async getPostComments(
-    @Param('postId') postId: string,
-    @Query('level') level: number = 1,
-  ) {
-    return this.service.getComments(postId, level);
+  async getPostComments(@Query('postId') postId: number, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getComments(postId, userId);
   }
 
-  @Post('comments/:commentId/like')
+  @Post('comment/like')
   @ApiOperation({
     summary: 'Like a comment',
     description: 'Add a like to a comment',
   })
   @HttpCode(200)
   async likeComment(
-    @Param('commentId') commentId: string,
+    @Body() likeCommentDTO: LikeCommentDTO,
     @Request() req: any,
   ) {
-    const userId = req['user']?.id ?? 'test';
-    return this.service.likeComment(commentId, userId);
-  }
-
-  @Delete('comments/:commentId/unlike')
-  @ApiOperation({
-    summary: 'Unlike a comment',
-    description: 'Remove a like from a comment',
-  })
-  async unlikeComment(
-    @Param('commentId') commentId: string,
-    @Request() req: any,
-  ) {
-    const userId = req['user']?.id ?? 'test';
-    return this.service.unlikeComment(commentId, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.likeComment(likeCommentDTO, userId);
   }
 }

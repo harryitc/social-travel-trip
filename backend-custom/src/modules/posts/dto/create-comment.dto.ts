@@ -1,5 +1,15 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty } from 'class-validator';
+
 export class CreateCommentDTO {
-  post_id: string;
+  @IsNotEmpty()
+  @ApiProperty({ example: 'Example postId' })
+  postId: number;
+
+  @IsNotEmpty()
+  @ApiProperty({ example: 'Example content' })
   content: string;
-  parent_id?: string; // For reply comments
+
+  @ApiProperty({ example: 'Example jsonData' })
+  jsonData?: any;
 }

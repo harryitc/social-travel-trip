@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Request, Response, NextFunction } from 'express';
 
 import { ClerkClient, verifyToken } from '@clerk/backend';
+import { UserMock } from '@configs/app/dev-mocks';
 
 @Injectable()
 export class UserMiddleware implements NestMiddleware {
@@ -45,7 +46,7 @@ export class UserMiddleware implements NestMiddleware {
       });
 
       const user = await this.clerkClient.users.getUser(tokenPayload.sub);
-      req['user'] = user;
+      req['user'] = user ?? UserMock;
     }
     next();
   }

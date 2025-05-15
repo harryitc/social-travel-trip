@@ -4,7 +4,7 @@ import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 
 @Injectable()
-export class MdienDanRepository {
+export class PostRepository {
   constructor(
     @PgSQLConnection(CONNECTION_STRING_DEFAULT)
     private readonly client: PgSQLConnectionPool,
@@ -25,6 +25,20 @@ export class MdienDanRepository {
     SELECT COUNT(*)
     FROM posts p
   `;
+    return this.client.execute(query, params);
+  }
+
+  async updatePost(data) {
+    const { postId, content, jsonData } = data;
+    const params = [postId, content, jsonData];
+    const query = `UPDATE posts
+       SET content = COALESCE($1, content),
+           json_data = COALESCE($2, json_data),
+           is_hidden = COALESCE($3, is_hidden),
+           updated_at = NOW()
+       WHERE post_id = $4
+       RETURNING *`;
+
     return this.client.execute(query, params);
   }
 

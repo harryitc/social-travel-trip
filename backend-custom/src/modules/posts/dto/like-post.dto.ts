@@ -1,4 +1,11 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty } from 'class-validator';
+
 export class LikePostDTO {
-  post_id: string;
-  reaction_type?: string; // 'like' | 'love' | 'haha' | 'wow' | 'sad'
+  @IsNotEmpty()
+  @ApiProperty({ example: 'Example postId' })
+  postId: string;
+
+  @ApiProperty({ example: 'Example reactionId' })
+  reactionId?: number;
 }

@@ -90,7 +90,7 @@ const VALIDATION_SCHEMAS = {
   controllers: [],
 })
 export class GlobalConfigurationModule implements OnModuleInit {
-  constructor() {}
+  constructor() { }
 
   async onModuleInit() {
     Logger.debug(`GlobalConfigurationModule:INIT`);
