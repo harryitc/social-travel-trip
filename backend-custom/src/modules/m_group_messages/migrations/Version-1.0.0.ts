@@ -32,7 +32,7 @@ module.exports = async (client, schema) => {
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_likes" (
     "created_at" timestamp(6),
-    "reaction_id" int8,
+    "reaction_id" int default 1,
     "group_message_id" int8,
     "user_id" int8,
     PRIMARY KEY (group_message_id, user_id)

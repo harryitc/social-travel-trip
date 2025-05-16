@@ -17,16 +17,18 @@ import { PostModule } from '@modules/m_posts/post.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UserModule } from '@modules/user/user.module';
 import { CommentModule } from '@modules/m_comments/comment.module';
+import { GroupMessageModule } from '@modules/m_group_messages/group-message.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
 const FEATURES_MODULES = [
+  UserModule,
   OtherModule,
   AuthModule,
-  UserModule,
   FileV2Module,
   PostModule,
   CommentModule,
+  GroupMessageModule,
   LogModule,
 ];
 

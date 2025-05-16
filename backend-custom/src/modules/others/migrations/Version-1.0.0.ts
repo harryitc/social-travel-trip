@@ -145,7 +145,7 @@ module.exports = async (client, schema) => {
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."reactions" (
-    "reaction_id" bigserial PRIMARY KEY DEFAULT 1,
+    "reaction_id" bigserial PRIMARY KEY,
     "name" varchar(50)
   );`);
 
