@@ -107,7 +107,7 @@ export class CommentRepository {
     const query = `
     SELECT reaction_id, COUNT(*) AS count
     FROM post_comment_likes
-    WHERE comment_id = $1 AND reaction_id != 1
+    WHERE comment_id = $1 AND reaction_id > 1
     GROUP BY reaction_id
   `;
     return this.client.execute(query, [commentId]);

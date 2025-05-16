@@ -32,7 +32,7 @@ export class PostRepository {
     const query = `
     SELECT reaction_id, COUNT(*) AS count
     FROM post_likes
-    WHERE post_id = $1 AND reaction_id != 1
+    WHERE post_id = $1 AND reaction_id > 1
     GROUP BY reaction_id
   `;
     return this.client.execute(query, [postId]);
