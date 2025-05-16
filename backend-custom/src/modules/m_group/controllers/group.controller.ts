@@ -17,7 +17,9 @@ import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
-import { ToggleMessagePinDto } from '../dto/toggle-message-pin.dto';
+import { AddMessagePinDto } from '../dto/add-message-pin.dto';
+import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
+import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
 import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { GroupService } from '../services/group.service';
@@ -102,11 +104,31 @@ export class GroupController {
     return this.service.toggleLike(dto, userId);
   }
 
-  @Post('messages/pin')
-  @ApiOperation({ summary: 'Toggle pin on a message' })
-  async togglePin(@Body() dto: ToggleMessagePinDto, @Request() req: any) {
+  @Post('messages/add-pin')
+  @ApiOperation({ summary: 'Add pin to a message' })
+  async addMessagePin(@Body() dto: AddMessagePinDto, @Request() req: any) {
     const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.togglePin(dto.group_message_id, dto.group_id, userId);
+    return this.service.addMessagePin(dto, userId);
+  }
+
+  @Post('messages/remove-pin')
+  @ApiOperation({ summary: 'Remove pin from a message' })
+  async removeMessagePin(
+    @Body() dto: RemoveMessagePinDto,
+    @Request() req: any,
+  ) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.removeMessagePin(dto, userId);
+  }
+
+  @Post('messages/get-reactions')
+  @ApiOperation({ summary: 'Get reactions for a message' })
+  async getMessageReactions(
+    @Body() dto: GetMessageReactionsDto,
+    @Request() req: any,
+  ) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.getMessageReactions(dto, userId);
   }
 
   @Post('messages/get-pinned')

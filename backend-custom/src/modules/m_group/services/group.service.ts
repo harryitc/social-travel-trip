@@ -9,13 +9,16 @@ import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
 import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
-import { ToggleMessagePinDto } from '../dto/toggle-message-pin.dto';
+import { AddMessagePinDto } from '../dto/add-message-pin.dto';
+import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
+import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { CreateGroupCommand } from '../commands/create-group.command';
 import { AddGroupMemberCommand } from '../commands/add-group-member.command';
 import { SendMessageCommand } from '../commands/send-message.command';
 import { ToggleMessageLikeCommand } from '../commands/toggle-message-like.command';
-import { ToggleMessagePinCommand } from '../commands/toggle-message-pin.command';
+import { AddMessagePinCommand } from '../commands/add-message-pin.command';
+import { RemoveMessagePinCommand } from '../commands/remove-message-pin.command';
 import { UpdateGroupCommand } from '../commands/update-group.command';
 import { KickGroupMemberCommand } from '../commands/kick-group-member.command';
 import { UpdateMemberRoleCommand } from '../commands/update-member-role.command';
@@ -24,6 +27,7 @@ import { GetPinnedMessagesQuery } from '../queries/get-pinned-messages.query';
 import { GetListGroupsQuery } from '../queries/get-list-groups.query';
 import { GetGroupMembersQuery } from '../queries/get-group-members.query';
 import { GetGroupDetailsQuery } from '../queries/get-group-details.query';
+import { GetMessageReactionsQuery } from '../queries/get-message-reactions.query';
 
 @Injectable()
 export class GroupService {
@@ -79,12 +83,16 @@ export class GroupService {
     return this.commandBus.execute(new ToggleMessageLikeCommand(dto, userId));
   }
 
-  async togglePin(messageId: number, groupId: number, userId: number) {
-    const dto: ToggleMessagePinDto = {
-      group_message_id: messageId,
-      group_id: groupId,
-    };
-    return this.commandBus.execute(new ToggleMessagePinCommand(dto, userId));
+  async addMessagePin(dto: AddMessagePinDto, userId: number) {
+    return this.commandBus.execute(new AddMessagePinCommand(dto, userId));
+  }
+
+  async removeMessagePin(dto: RemoveMessagePinDto, userId: number) {
+    return this.commandBus.execute(new RemoveMessagePinCommand(dto, userId));
+  }
+
+  async getMessageReactions(dto: GetMessageReactionsDto, userId: number) {
+    return this.queryBus.execute(new GetMessageReactionsQuery(dto, userId));
   }
 
   async getPinnedMessages(groupId: number, userId: number) {

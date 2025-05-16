@@ -7,7 +7,8 @@ import { SendMessageDto } from '../dto/send-message.dto';
 import { GetMessagesDto } from '../dto/get-messages.dto';
 import { GetGroupMembersDto } from '../dto/get-group-members.dto';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
-import { ToggleMessagePinDto } from '../dto/toggle-message-pin.dto';
+import { AddMessagePinDto } from '../dto/add-message-pin.dto';
+import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
 
 @Injectable()
 export class GroupRepository {
@@ -266,55 +267,73 @@ export class GroupRepository {
     return this.client.execute(query, [messageId]);
   }
 
-  // Message pin operations
-  async toggleMessagePin(data: ToggleMessagePinDto, userId: number) {
-    const { group_message_id, group_id } = data;
+  async getMessageReactions(messageId: number) {
+    const query = `
+      SELECT reaction_id, COUNT(*) AS count
+      FROM message_likes
+      WHERE group_message_id = $1
+      GROUP BY reaction_id
+      ORDER BY reaction_id
+    `;
 
-    // Check if pin exists
-    const checkQuery = `
+    return this.client.execute(query, [messageId]);
+  }
+
+  async getMessageReactionUsers(messageId: number) {
+    const query = `
+      SELECT ml.user_id, ml.reaction_id, u.username, u.avatar_url
+      FROM message_likes ml
+      JOIN users u ON ml.user_id = u.user_id
+      WHERE ml.group_message_id = $1
+      ORDER BY ml.created_at DESC
+    `;
+
+    return this.client.execute(query, [messageId]);
+  }
+
+  // Message pin operations
+  async checkMessagePinExists(messageId: number, groupId: number) {
+    const query = `
       SELECT * FROM message_pins
       WHERE group_message_id = $1 AND group_id = $2
     `;
 
-    const existingPin = await this.client.execute(checkQuery, [
-      group_message_id,
-      group_id,
-    ]);
+    return this.client.execute(query, [messageId, groupId]);
+  }
 
-    if (existingPin.rowCount > 0) {
-      // Unpin - delete the pin
-      const deleteQuery = `
-        DELETE FROM message_pins
-        WHERE group_message_id = $1 AND group_id = $2
-        RETURNING *
-      `;
+  async checkMessageExists(messageId: number) {
+    const query = `
+      SELECT * FROM group_messages
+      WHERE group_message_id = $1
+    `;
 
-      return {
-        result: await this.client.execute(deleteQuery, [
-          group_message_id,
-          group_id,
-        ]),
-        action: 'unpinned',
-      };
-    } else {
-      // Pin - add new pin
-      const insertQuery = `
-        INSERT INTO message_pins (
-          group_message_id, group_id, user_id, created_at
-        )
-        VALUES ($1, $2, $3, NOW())
-        RETURNING *
-      `;
+    return this.client.execute(query, [messageId]);
+  }
 
-      return {
-        result: await this.client.execute(insertQuery, [
-          group_message_id,
-          group_id,
-          userId,
-        ]),
-        action: 'pinned',
-      };
-    }
+  async addMessagePin(data: AddMessagePinDto, userId: number) {
+    const { group_message_id, group_id } = data;
+
+    const query = `
+      INSERT INTO message_pins (
+        group_message_id, group_id, user_id, created_at
+      )
+      VALUES ($1, $2, $3, NOW())
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [group_message_id, group_id, userId]);
+  }
+
+  async removeMessagePin(data: RemoveMessagePinDto) {
+    const { group_message_id, group_id } = data;
+
+    const query = `
+      DELETE FROM message_pins
+      WHERE group_message_id = $1 AND group_id = $2
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [group_message_id, group_id]);
   }
 
   async getPinnedMessages(groupId: number) {

@@ -25,7 +25,9 @@ group/update-member-role
 group/send-message
 group/get-messages
 group/messages/like
-group/messages/pin
+group/messages/add-pin
+group/messages/remove-pin
+group/messages/get-reactions
 group/messages/get-pinned
 group/update
 log/get-list
