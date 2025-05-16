@@ -21,13 +21,13 @@ import { CommentModule } from '@modules/m_comments/comment.module';
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
 const FEATURES_MODULES = [
+  OtherModule,
   AuthModule,
   UserModule,
   FileV2Module,
   PostModule,
   CommentModule,
   LogModule,
-  OtherModule,
 ];
 
 @Module({

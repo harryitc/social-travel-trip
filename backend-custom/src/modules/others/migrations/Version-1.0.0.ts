@@ -1,5 +1,9 @@
 // Migration for table: activities
 module.exports = async (client, schema) => {
+  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."hashtags" (
+    "tag_id" bigserial PRIMARY KEY,
+    "name" varchar(100)
+  );`);
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."activities" (
     "activity_id" bigserial PRIMARY KEY,
     "name" varchar(255)
@@ -19,56 +23,6 @@ module.exports = async (client, schema) => {
     "city_id" bigserial PRIMARY KEY,
     "name" varchar(100),
     "province_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."group_members" (
-    "group_member_id" bigserial PRIMARY KEY,
-    "nickname" varchar(100),
-    "role" varchar(50),
-    "join_at" timestamp(6),
-    "group_id" int8,
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."group_messages" (
-    "group_message_id" bigserial PRIMARY KEY,
-    "message" text,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "group_id" int8,
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."groups" (
-    "group_id" bigserial PRIMARY KEY,
-    "name" varchar(100),
-    "description" varchar(255),
-    "cover_url" varchar(255),
-    "status" varchar(50),
-    "json_data" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "plan_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."hashtags" (
-    "tag_id" bigserial PRIMARY KEY,
-    "name" varchar(100)
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_likes" (
-    "message_like_id" bigserial PRIMARY KEY,
-    "created_at" timestamp(6),
-    "group_message_id" int8,
-    "reaction_id" int8,
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_pins" (
-    "message_pin_id" bigserial PRIMARY KEY,
-    "created_at" timestamp(6),
-    "group_message_id" int8,
-    "group_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blog_comments" (
@@ -185,51 +139,13 @@ module.exports = async (client, schema) => {
     "user_id" int8
   );`);
 
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comment_likes" (
-    "comment_id" int8,
-    "user_id" int8,
-    "reaction_id" int default 1,
-    PRIMARY KEY (comment_id, user_id)
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comments" (
-    "post_comment_id" bigserial PRIMARY KEY,
-    "content" varchar(255),
-    "json_data" jsonb,
-    "comment_shared_id" int8,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "parent_id" int8,
-    "user_id" int8,
-    "post_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_likes" (
-    "user_id" int8,
-    "post_id" int8,
-    "reaction_id" int default 1,
-    PRIMARY KEY (post_id, user_id)
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."posts" (
-    "post_id" bigserial PRIMARY KEY,
-    "content" varchar(255),
-    "json_data" jsonb,
-    "post_shared_id" int8,
-    "is_hidden" bool,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "user_id" int8,
-    "place_id" int8
-  );`);
-
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."provinces" (
     "province_id" bigserial PRIMARY KEY,
     "name" varchar(100)
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."reactions" (
-    "reaction_id" bigserial PRIMARY KEY,
+    "reaction_id" bigserial PRIMARY KEY DEFAULT 1,
     "name" varchar(50)
   );`);
 
@@ -243,11 +159,5 @@ module.exports = async (client, schema) => {
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
     "activity_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."user_rela" (
-    "user_rela_id" bigserial PRIMARY KEY,
-    "user_id" int8,
-    "following" int8
   );`);
 };
