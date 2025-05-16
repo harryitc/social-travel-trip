@@ -15,5 +15,14 @@ comments/create
 comments/get
 comments/like
 comments/get-likes
+group/get-list
+group/create
+group/add-member
+group/send-message
+group/get-messages
+group/messages/like
+group/messages/pin
+group/groups/get-list-pinned
+group/groups/create-group
 log/get-list
 log/clear

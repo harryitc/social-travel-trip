@@ -15,6 +15,7 @@ import { ToggleMessagePinCommand } from '../commands/toggle-message-pin.command'
 import { UpdateGroupCommand } from '../commands/update-group.command';
 import { GetMessagesQuery } from '../queries/get-messages.query';
 import { GetPinnedMessagesQuery } from '../queries/get-pinned-messages.query';
+import { GetListGroupsQuery } from '../queries/get-list-groups.query';
 
 @Injectable()
 export class GroupService {
@@ -22,6 +23,10 @@ export class GroupService {
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
   ) {}
+
+  async getListGroups(userId: number) {
+    return this.queryBus.execute(new GetListGroupsQuery(userId));
+  }
 
   // Group operations
   async createGroup(dto: CreateGroupDto, userId: number) {
@@ -52,7 +57,10 @@ export class GroupService {
   }
 
   async togglePin(messageId: number, groupId: number, userId: number) {
-    const dto: ToggleMessagePinDto = { group_message_id: messageId, group_id: groupId };
+    const dto: ToggleMessagePinDto = {
+      group_message_id: messageId,
+      group_id: groupId,
+    };
     return this.commandBus.execute(new ToggleMessagePinCommand(dto, userId));
   }
 

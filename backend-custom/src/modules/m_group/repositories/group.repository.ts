@@ -22,7 +22,7 @@ export class GroupRepository {
       name,
       description || null,
       cover_url || null,
-      'active', // status
+      'public', // status
       plan_id || null,
       JSON.stringify({}), // json_data
     ];
@@ -52,6 +52,18 @@ export class GroupRepository {
         updated_at = NOW()
       WHERE group_id = $5
       RETURNING *
+    `;
+
+    return this.client.execute(query, params);
+  }
+
+  async getListGroups(userId) {
+    const params = [userId];
+    const query = `
+      SELECT * FROM groups
+      WHERE group_id IN (
+        SELECT group_id FROM group_members WHERE user_id = $1
+      )
     `;
 
     return this.client.execute(query, params);
@@ -169,7 +181,10 @@ export class GroupRepository {
       WHERE group_message_id = $1 AND user_id = $2
     `;
 
-    const existingLike = await this.client.execute(checkQuery, [group_message_id, userId]);
+    const existingLike = await this.client.execute(checkQuery, [
+      group_message_id,
+      userId,
+    ]);
 
     if (existingLike.rowCount > 0) {
       // Unlike - delete the like
@@ -180,7 +195,10 @@ export class GroupRepository {
       `;
 
       return {
-        result: await this.client.execute(deleteQuery, [group_message_id, userId]),
+        result: await this.client.execute(deleteQuery, [
+          group_message_id,
+          userId,
+        ]),
         action: 'unliked',
       };
     } else {
@@ -194,7 +212,10 @@ export class GroupRepository {
       `;
 
       return {
-        result: await this.client.execute(insertQuery, [group_message_id, userId]),
+        result: await this.client.execute(insertQuery, [
+          group_message_id,
+          userId,
+        ]),
         action: 'liked',
       };
     }
@@ -219,7 +240,10 @@ export class GroupRepository {
       WHERE group_message_id = $1 AND group_id = $2
     `;
 
-    const existingPin = await this.client.execute(checkQuery, [group_message_id, group_id]);
+    const existingPin = await this.client.execute(checkQuery, [
+      group_message_id,
+      group_id,
+    ]);
 
     if (existingPin.rowCount > 0) {
       // Unpin - delete the pin
@@ -230,7 +254,10 @@ export class GroupRepository {
       `;
 
       return {
-        result: await this.client.execute(deleteQuery, [group_message_id, group_id]),
+        result: await this.client.execute(deleteQuery, [
+          group_message_id,
+          group_id,
+        ]),
         action: 'unpinned',
       };
     } else {
@@ -244,7 +271,11 @@ export class GroupRepository {
       `;
 
       return {
-        result: await this.client.execute(insertQuery, [group_message_id, group_id, userId]),
+        result: await this.client.execute(insertQuery, [
+          group_message_id,
+          group_id,
+          userId,
+        ]),
         action: 'pinned',
       };
     }

@@ -11,7 +11,9 @@ export class GetPinnedMessagesQuery implements IQuery {
 }
 
 @QueryHandler(GetPinnedMessagesQuery)
-export class GetPinnedMessagesQueryHandler implements IQueryHandler<GetPinnedMessagesQuery> {
+export class GetPinnedMessagesQueryHandler
+  implements IQueryHandler<GetPinnedMessagesQuery>
+{
   private readonly logger = new Logger(GetPinnedMessagesQuery.name);
 
   constructor(private readonly repository: GroupRepository) {}
@@ -21,7 +23,7 @@ export class GetPinnedMessagesQueryHandler implements IQueryHandler<GetPinnedMes
 
     // Verify member is in group
     const membersResult = await this.repository.getGroupMembers(groupId);
-    const member = membersResult.rows.find(m => m.user_id === userId);
+    const member = membersResult.rows.find((m) => m.user_id === userId);
 
     if (!member) {
       throw new UnauthorizedException('User is not a member of this group');
@@ -31,11 +33,13 @@ export class GetPinnedMessagesQueryHandler implements IQueryHandler<GetPinnedMes
     const result = await this.repository.getPinnedMessages(groupId);
 
     // Map to model
-    const pinnedMessages = result.rows.map(message => new GroupMessage(message));
+    const pinnedMessages = result.rows.map(
+      (message) => new GroupMessage(message),
+    );
 
     return {
       pinnedMessages,
-      total: result.rowCount
+      total: result.rowCount,
     };
   }
 }

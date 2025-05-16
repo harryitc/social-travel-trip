@@ -1,4 +1,8 @@
-import { Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  Logger,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { GetMessagesDto } from '../dto/get-messages.dto';
@@ -12,7 +16,9 @@ export class GetMessagesQuery implements IQuery {
 }
 
 @QueryHandler(GetMessagesQuery)
-export class GetMessagesQueryHandler implements IQueryHandler<GetMessagesQuery> {
+export class GetMessagesQueryHandler
+  implements IQueryHandler<GetMessagesQuery>
+{
   private readonly logger = new Logger(GetMessagesQuery.name);
 
   constructor(private readonly repository: GroupRepository) {}
@@ -22,7 +28,7 @@ export class GetMessagesQueryHandler implements IQueryHandler<GetMessagesQuery> 
 
     // Verify member is in group
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    const member = membersResult.rows.find(m => m.user_id === userId);
+    const member = membersResult.rows.find((m) => m.user_id === userId);
 
     if (!member) {
       throw new UnauthorizedException('User is not a member of this group');
@@ -40,16 +46,20 @@ export class GetMessagesQueryHandler implements IQueryHandler<GetMessagesQuery> 
     const total = parseInt(countResult.rows[0].total, 10);
 
     // Add user's like status to each message and map to model
-    const messages = messagesResult.rows.map(message => {
+    const messages = messagesResult.rows.map((message) => {
       // Check if the current user has liked this message
-      const isLikedByUser = message.like_count > 0 &&
-        this.repository.getMessageLikes(message.group_message_id)
-          .then(result => result.rows.some(like => like.user_id === userId));
+      const isLikedByUser =
+        message.like_count > 0 &&
+        this.repository
+          .getMessageLikes(message.group_message_id)
+          .then((result) =>
+            result.rows.some((like) => like.user_id === userId),
+          );
 
       const groupMessage = new GroupMessage(message);
       return {
         ...groupMessage,
-        isLikedByUser
+        isLikedByUser,
       };
     });
 
@@ -59,8 +69,8 @@ export class GetMessagesQueryHandler implements IQueryHandler<GetMessagesQuery> 
         total,
         page: dto.page || 1,
         limit: dto.limit || 10,
-        hasMore: (dto.page || 1) * (dto.limit || 10) < total
-      }
+        hasMore: (dto.page || 1) * (dto.limit || 10) < total,
+      },
     };
   }
 }
