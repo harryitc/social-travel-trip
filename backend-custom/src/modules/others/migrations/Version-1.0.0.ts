@@ -60,15 +60,6 @@ module.exports = async (client, schema) => {
     "user_id" int8
   );`);
 
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."notifications" (
-    "notify_id" bigserial PRIMARY KEY,
-    "json_data" jsonb,
-    "type" varchar(100),
-    "is_read" bit,
-    "created_at" timestamp(6),
-    "user_created" int8
-  );`);
-
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."place_reviews" (
     "place_review_id" bigserial PRIMARY KEY,
     "content" varchar(255),
@@ -95,50 +86,6 @@ module.exports = async (client, schema) => {
     "city_id" int8
   );`);
 
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_places" (
-    "plan_place_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "schedules" jsonb,
-    "location" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "plan_travel_day_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_schedules" (
-    "plan_schedule_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "start_time" timestamp(6),
-    "end_time" timestamp(6),
-    "location" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "activity_id" int8,
-    "plan_place_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_travel_days" (
-    "plan_travel_day_id" bigserial PRIMARY KEY,
-    "ngay" varchar(32),
-    "plan_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plans" (
-    "plan_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "thumbnail_url" varchar(255),
-    "day_travel" int4,
-    "json_data" jsonb,
-    "location" jsonb,
-    "status" varchar(255),
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "user_id" int8
-  );`);
-
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."provinces" (
     "province_id" bigserial PRIMARY KEY,
     "name" varchar(100)
@@ -147,17 +94,5 @@ module.exports = async (client, schema) => {
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."reactions" (
     "reaction_id" bigserial PRIMARY KEY,
     "name" varchar(50)
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."schedule_activities" (
-    "schedule_activity_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "start_time" timestamp(6),
-    "end_time" timestamp(6),
-    "location" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "activity_id" int8
   );`);
 };

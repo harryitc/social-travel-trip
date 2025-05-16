@@ -19,6 +19,7 @@ import { UserModule } from '@modules/user/user.module';
 import { CommentModule } from '@modules/m_comments/comment.module';
 import { GroupModule } from '@modules/m_group/group.module';
 import { NotifyModule } from '@modules/m_notify/notify.module';
+import { PlanModule } from '@modules/m_plan/plan.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
@@ -30,6 +31,7 @@ const FEATURES_MODULES = [
   PostModule,
   CommentModule,
   GroupModule,
+  PlanModule,
   NotifyModule,
   LogModule,
 ];

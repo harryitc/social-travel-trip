@@ -6,10 +6,11 @@ import { CommandHandlers } from './commands';
 import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
 import { UserService } from './user.service';
+import { UserController } from './user.controller';
 
 @Module({
   imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
-  controllers: [],
+  controllers: [UserController],
   providers: [
     UserService,
 

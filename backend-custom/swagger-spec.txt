@@ -1,4 +1,10 @@
 health
+user/register
+user/details
+user/update
+user/change-password
+user/search
+user/delete
 auth/login
 auth/register
 cak/file-v2/get-list
