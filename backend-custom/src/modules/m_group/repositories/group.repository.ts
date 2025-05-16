@@ -319,6 +319,10 @@ export class GroupRepository {
         group_message_id, group_id, user_id, created_at
       )
       VALUES ($1, $2, $3, NOW())
+      ON CONFLICT (group_id, group_message_id) DO UPDATE
+      SET
+        user_id = EXCLUDED.user_id,
+        created_at = EXCLUDED.created_at
       RETURNING *
     `;
 
