@@ -251,6 +251,7 @@ export class GroupRepository {
       VALUES ($1, $2, $3)
       ON CONFLICT (group_message_id, user_id)
       DO UPDATE SET reaction_id = EXCLUDED.reaction_id
+      RETURNING *
     `;
 
     return this.client.execute(query, [group_message_id, userId, reaction_id]);
@@ -271,7 +272,7 @@ export class GroupRepository {
     const query = `
       SELECT reaction_id, COUNT(*) AS count
       FROM message_likes
-      WHERE group_message_id = $1
+      WHERE group_message_id = $1 AND reaction_id > 1
       GROUP BY reaction_id
       ORDER BY reaction_id
     `;
@@ -284,7 +285,7 @@ export class GroupRepository {
       SELECT ml.user_id, ml.reaction_id, u.username, u.avatar_url
       FROM message_likes ml
       JOIN users u ON ml.user_id = u.user_id
-      WHERE ml.group_message_id = $1
+      WHERE ml.group_message_id = $1 AND reaction_id > 1
       ORDER BY ml.created_at DESC
     `;
 
@@ -343,7 +344,7 @@ export class GroupRepository {
         (
           SELECT COUNT(*)
           FROM message_likes ml
-          WHERE ml.group_message_id = gm.group_message_id
+          WHERE ml.group_message_id = gm.group_message_id AND ml.reaction_id > 1
         ) as like_count
       FROM group_messages gm
       JOIN message_pins mp ON gm.group_message_id = mp.group_message_id

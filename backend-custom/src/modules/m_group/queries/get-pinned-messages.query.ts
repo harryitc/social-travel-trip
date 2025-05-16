@@ -1,4 +1,4 @@
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { GroupMessage } from '../models/group.model';
@@ -19,7 +19,7 @@ export class GetPinnedMessagesQueryHandler
   constructor(private readonly repository: GroupRepository) {}
 
   async execute(query: GetPinnedMessagesQuery): Promise<any> {
-    const { groupId, userId } = query;
+    const { groupId } = query;
 
     // // Verify member is in group
     // const membersResult = await this.repository.getGroupMembers(groupId);
@@ -31,6 +31,10 @@ export class GetPinnedMessagesQueryHandler
 
     // Get pinned messages
     const result = await this.repository.getPinnedMessages(groupId);
+
+    if (result.rowCount == 0) {
+      throw new NotFoundException('No pinned messages found');
+    }
 
     // Map to model
     const pinnedMessages = result.rows.map(
