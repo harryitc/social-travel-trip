@@ -87,7 +87,7 @@ export class GroupController {
     return this.service.getPinnedMessages(groupId, userId);
   }
 
-  @Post('groups/create-group')
+  @Post('groups/update')
   @ApiOperation({ summary: 'Update group information' })
   async updateGroup(@Body() dto: UpdateGroupDto, @Request() req: any) {
     const userId: number = req['user']?.user_id ?? 'test';
