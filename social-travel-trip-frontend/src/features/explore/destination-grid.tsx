@@ -19,7 +19,7 @@ type Destination = {
 const DEMO_DESTINATIONS: Destination[] = [
   {
     id: '1',
-    title: 'Đảo Phú Quốc',
+    title: 'Phú Quốc',
     image: 'https://images.pexels.com/photos/1174732/pexels-photo-1174732.jpeg?auto=compress&cs=tinysrgb&w=600',
     location: 'Kiên Giang',
     tags: ['Biển', 'Đảo', 'Nghỉ dưỡng'],
@@ -28,28 +28,28 @@ const DEMO_DESTINATIONS: Destination[] = [
   },
   {
     id: '2',
-    title: 'Vịnh Hạ Long',
-    image: 'https://images.pexels.com/photos/2132180/pexels-photo-2132180.jpeg?auto=compress&cs=tinysrgb&w=600',
-    location: 'Quảng Ninh',
-    tags: ['Di sản', 'Vịnh', 'Biển'],
-    likes: 2341,
-    visitors: 12546,
+    title: 'Đà Lạt',
+    image: 'https://images.pexels.com/photos/5191371/pexels-photo-5191371.jpeg?auto=compress&cs=tinysrgb&w=600',
+    location: 'Lâm Đồng',
+    tags: ['Núi', 'Mát mẻ', 'Hoa'],
+    likes: 1876,
+    visitors: 9543,
   },
   {
     id: '3',
-    title: 'Hội An',
-    image: 'https://images.pexels.com/photos/5191371/pexels-photo-5191371.jpeg?auto=compress&cs=tinysrgb&w=600',
-    location: 'Quảng Nam',
-    tags: ['Phố cổ', 'Di sản', 'Văn hóa'],
-    likes: 1876,
-    visitors: 9872,
+    title: 'Vịnh Hạ Long',
+    image: 'https://images.pexels.com/photos/2583852/pexels-photo-2583852.jpeg?auto=compress&cs=tinysrgb&w=600',
+    location: 'Quảng Ninh',
+    tags: ['Vịnh', 'Di sản', 'Hang động'],
+    likes: 3245,
+    visitors: 15754,
   },
   {
     id: '4',
-    title: 'Đà Lạt',
+    title: 'Hội An',
     image: 'https://images.pexels.com/photos/5746250/pexels-photo-5746250.jpeg?auto=compress&cs=tinysrgb&w=600',
-    location: 'Lâm Đồng',
-    tags: ['Núi', 'Mát mẻ', 'Hoa'],
+    location: 'Quảng Nam',
+    tags: ['Phố cổ', 'Di sản', 'Văn hóa'],
     likes: 1543,
     visitors: 7652,
   },
@@ -98,10 +98,10 @@ export function DestinationGrid() {
                 alt={destination.title}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
-              <button 
+              <button
                 className={`absolute top-3 right-3 h-8 w-8 rounded-full flex items-center justify-center ${
-                  likedDestinations.includes(destination.id) 
-                    ? 'bg-purple-600 text-white' 
+                  likedDestinations.includes(destination.id)
+                    ? 'bg-purple-600 text-white'
                     : 'bg-black/30 text-white hover:bg-purple-600'
                 } transition-colors`}
                 onClick={(e) => toggleLike(destination.id, e)}
@@ -113,12 +113,12 @@ export function DestinationGrid() {
               <h3 className="font-bold text-lg mb-1 text-purple-800 dark:text-purple-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors">
                 {destination.title}
               </h3>
-              
+
               <div className="flex items-center mb-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 mr-1" />
                 <span>{destination.location}</span>
               </div>
-              
+
               <div className="flex flex-wrap gap-2 mb-3">
                 {destination.tags.map((tag) => (
                   <Badge key={tag} variant="outline" className="bg-purple-100/50 hover:bg-purple-200/50 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-800/30 dark:text-purple-300 border-purple-200 dark:border-purple-800">
@@ -126,7 +126,7 @@ export function DestinationGrid() {
                   </Badge>
                 ))}
               </div>
-              
+
               <div className="flex justify-between text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <Heart className="h-4 w-4 mr-1" />
