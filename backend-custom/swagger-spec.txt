@@ -23,6 +23,6 @@ group/get-messages
 group/messages/like
 group/messages/pin
 group/groups/get-list-pinned
-group/groups/create-group
+group/groups/update
 log/get-list
 log/clear

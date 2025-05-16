@@ -21,14 +21,11 @@ export class CreateGroupCommandHandler
 
   async execute(command: CreateGroupCommand): Promise<any> {
     const { dto, userId } = command;
-    console.log("1");
 
     // Create the group
     const insertResult = await this.repository.createGroup(dto);
     const groupData = insertResult.rows[0];
     const groupCreated = new Group(groupData);
-
-    console.log("2");
 
     // Add the creator as a member with admin role
     if (groupCreated && groupCreated.group_id) {

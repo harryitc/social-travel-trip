@@ -23,9 +23,12 @@ export class AddGroupMemberCommandHandler
     const { dto, adminUserId } = command;
 
     // Verify admin permission
-    const adminMembersResult = await this.repository.getGroupMembers(dto.group_id);
+    const adminMembersResult = await this.repository.getGroupMembers(
+      dto.group_id,
+    );
+
     const adminMember = adminMembersResult.rows.find(
-      member => member.user_id === adminUserId && member.role === 'admin'
+      (member) => member.user_id === adminUserId && member.role === 'admin',
     );
 
     if (!adminMember) {
