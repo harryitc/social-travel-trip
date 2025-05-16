@@ -1,5 +1,8 @@
-import { ICommand } from '@nestjs/cqrs';
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import { GroupRepository } from '../repositories/group.repository';
 import { ToggleMessagePinDto } from '../dto/toggle-message-pin.dto';
+import { MessagePin } from '../models/group.model';
 
 export class ToggleMessagePinCommand implements ICommand {
   constructor(
@@ -8,51 +11,38 @@ export class ToggleMessagePinCommand implements ICommand {
   ) {}
 }
 
-export class ToggleMessagePinHandler {
-  constructor(
-    private readonly messagePinRepository: MessagePinRepository,
-    private readonly groupMemberRepository: GroupMemberRepository,
-  ) {}
+@CommandHandler(ToggleMessagePinCommand)
+export class ToggleMessagePinCommandHandler
+  implements ICommandHandler<ToggleMessagePinCommand>
+{
+  private readonly logger = new Logger(ToggleMessagePinCommand.name);
 
-  async execute(command: ToggleMessagePinCommand) {
+  constructor(private readonly repository: GroupRepository) {}
+
+  async execute(command: ToggleMessagePinCommand): Promise<any> {
     const { dto, userId } = command;
-    
+
     // Verify admin permission
-    const member = await this.groupMemberRepository.findOne({
-      where: {
-        group_id: dto.group_id,
-        user_id: userId,
-        role: 'admin',
-      },
-    });
+    const membersResult = await this.repository.getGroupMembers(dto.group_id);
+    const adminMember = membersResult.rows.find(
+      member => member.user_id === userId && member.role === 'admin'
+    );
 
-    if (!member) {
-      throw new Error('Only admin can pin/unpin messages');
+    if (!adminMember) {
+      throw new UnauthorizedException('Only admin can pin/unpin messages');
     }
 
-    // Check if pin exists
-    const existingPin = await this.messagePinRepository.findOne({
-      where: {
-        group_message_id: dto.group_message_id,
-        group_id: dto.group_id,
-      },
-    });
+    // Toggle pin
+    const result = await this.repository.toggleMessagePin(dto, userId);
 
-    if (existingPin) {
-      // Unpin
-      await this.messagePinRepository.delete({
-        message_pin_id: existingPin.message_pin_id,
-      });
-      return { pinned: false };
-    } else {
-      // Pin
-      await this.messagePinRepository.create({
-        group_message_id: dto.group_message_id,
-        group_id: dto.group_id,
-        user_id: userId,
-        created_at: new Date(),
-      });
-      return { pinned: true };
-    }
+    // If there's data, convert it to a model
+    const pinData = result.result.rows[0] ? new MessagePin(result.result.rows[0]) : null;
+
+    return {
+      messageId: dto.group_message_id,
+      groupId: dto.group_id,
+      action: result.action,
+      data: pinData
+    };
   }
 }

@@ -1,5 +1,8 @@
-import { ICommand } from '@nestjs/cqrs';
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import { GroupRepository } from '../repositories/group.repository';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
+import { GroupMember } from '../models/group.model';
 
 export class AddGroupMemberCommand implements ICommand {
   constructor(
@@ -8,32 +11,35 @@ export class AddGroupMemberCommand implements ICommand {
   ) {}
 }
 
-export class AddGroupMemberHandler {
-  constructor(
-    private readonly groupRepository: GroupRepository,
-    private readonly groupMemberRepository: GroupMemberRepository,
-  ) {}
+@CommandHandler(AddGroupMemberCommand)
+export class AddGroupMemberCommandHandler
+  implements ICommandHandler<AddGroupMemberCommand>
+{
+  private readonly logger = new Logger(AddGroupMemberCommand.name);
 
-  async execute(command: AddGroupMemberCommand) {
+  constructor(private readonly repository: GroupRepository) {}
+
+  async execute(command: AddGroupMemberCommand): Promise<any> {
     const { dto, adminUserId } = command;
-    
+
     // Verify admin permission
-    const adminMember = await this.groupMemberRepository.findOne({
-      where: {
-        group_id: dto.group_id,
-        user_id: adminUserId,
-        role: 'admin',
-      },
-    });
+    const adminMembersResult = await this.repository.getGroupMembers(dto.group_id);
+    const adminMember = adminMembersResult.rows.find(
+      member => member.user_id === adminUserId && member.role === 'admin'
+    );
 
     if (!adminMember) {
-      throw new Error('Only admin can add members');
+      throw new UnauthorizedException('Only admin can add members');
     }
 
     // Add new member
-    return this.groupMemberRepository.create({
-      ...dto,
-      join_at: new Date(),
+    const result = await this.repository.addGroupMember({
+      group_id: dto.group_id,
+      user_id: dto.user_id,
+      role: dto.role || 'member',
+      nickname: dto.nickname,
     });
+
+    return new GroupMember(result.rows[0]);
   }
 }

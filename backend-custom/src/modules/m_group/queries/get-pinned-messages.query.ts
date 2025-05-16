@@ -1,4 +1,7 @@
-import { IQuery } from '@nestjs/cqrs';
+import { Logger, UnauthorizedException } from '@nestjs/common';
+import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
+import { GroupRepository } from '../repositories/group.repository';
+import { GroupMessage } from '../models/group.model';
 
 export class GetPinnedMessagesQuery implements IQuery {
   constructor(
@@ -7,28 +10,32 @@ export class GetPinnedMessagesQuery implements IQuery {
   ) {}
 }
 
-export class GetPinnedMessagesHandler {
-  constructor(
-    private readonly messagePinRepository: MessagePinRepository,
-    private readonly groupMemberRepository: GroupMemberRepository,
-  ) {}
+@QueryHandler(GetPinnedMessagesQuery)
+export class GetPinnedMessagesQueryHandler implements IQueryHandler<GetPinnedMessagesQuery> {
+  private readonly logger = new Logger(GetPinnedMessagesQuery.name);
 
-  async execute(command: GetPinnedMessagesQuery) {
-    const { groupId, userId } = command;
+  constructor(private readonly repository: GroupRepository) {}
+
+  async execute(query: GetPinnedMessagesQuery): Promise<any> {
+    const { groupId, userId } = query;
 
     // Verify member is in group
-    const member = await this.groupMemberRepository.findOne({
-      where: {
-        group_id: groupId,
-        user_id: userId,
-      },
-    });
+    const membersResult = await this.repository.getGroupMembers(groupId);
+    const member = membersResult.rows.find(m => m.user_id === userId);
 
     if (!member) {
-      throw new Error('User is not a member of this group');
+      throw new UnauthorizedException('User is not a member of this group');
     }
 
     // Get pinned messages
-    return this.messagePinRepository.getPinnedMessages(groupId);
+    const result = await this.repository.getPinnedMessages(groupId);
+
+    // Map to model
+    const pinnedMessages = result.rows.map(message => new GroupMessage(message));
+
+    return {
+      pinnedMessages,
+      total: result.rowCount
+    };
   }
 }

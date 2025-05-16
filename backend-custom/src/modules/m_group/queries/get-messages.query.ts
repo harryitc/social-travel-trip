@@ -1,5 +1,8 @@
-import { IQuery } from '@nestjs/cqrs';
+import { Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
+import { GroupRepository } from '../repositories/group.repository';
 import { GetMessagesDto } from '../dto/get-messages.dto';
+import { GroupMessage } from '../models/group.model';
 
 export class GetMessagesQuery implements IQuery {
   constructor(
@@ -8,50 +11,56 @@ export class GetMessagesQuery implements IQuery {
   ) {}
 }
 
-export class GetMessagesHandler {
-  constructor(
-    private readonly groupMessageRepository: GroupMessageRepository,
-    private readonly groupMemberRepository: GroupMemberRepository,
-    private readonly messageLikeRepository: MessageLikeRepository,
-  ) {}
+@QueryHandler(GetMessagesQuery)
+export class GetMessagesQueryHandler implements IQueryHandler<GetMessagesQuery> {
+  private readonly logger = new Logger(GetMessagesQuery.name);
 
-  async execute(command: GetMessagesQuery) {
-    const { dto, userId } = command;
-    
+  constructor(private readonly repository: GroupRepository) {}
+
+  async execute(query: GetMessagesQuery): Promise<any> {
+    const { dto, userId } = query;
+
     // Verify member is in group
-    const member = await this.groupMemberRepository.findOne({
-      where: {
-        group_id: dto.group_id,
-        user_id: userId,
-      },
-    });
+    const membersResult = await this.repository.getGroupMembers(dto.group_id);
+    const member = membersResult.rows.find(m => m.user_id === userId);
 
     if (!member) {
-      throw new Error('User is not a member of this group');
+      throw new UnauthorizedException('User is not a member of this group');
     }
 
     // Get messages with pagination
-    const messages = await this.groupMessageRepository.getMessages(
-      dto.group_id,
-      dto.page,
-      dto.limit,
-    );
+    const messagesResult = await this.repository.getMessages(dto);
 
-    // Get likes for these messages
-    const messageIds = messages.map(m => m.group_message_id);
-    const likes = await this.messageLikeRepository.find({
-      where: {
-        group_message_id: { $in: messageIds },
-      },
+    if (messagesResult.rowCount === 0 && dto.page > 1) {
+      throw new NotFoundException('No more messages found');
+    }
+
+    // Get total count
+    const countResult = await this.repository.countMessages(dto.group_id);
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    // Add user's like status to each message and map to model
+    const messages = messagesResult.rows.map(message => {
+      // Check if the current user has liked this message
+      const isLikedByUser = message.like_count > 0 &&
+        this.repository.getMessageLikes(message.group_message_id)
+          .then(result => result.rows.some(like => like.user_id === userId));
+
+      const groupMessage = new GroupMessage(message);
+      return {
+        ...groupMessage,
+        isLikedByUser
+      };
     });
 
-    // Add like information to messages
-    const messagesWithLikes = messages.map(message => ({
-      ...message,
-      likes: likes.filter(l => l.group_message_id === message.group_message_id),
-      isLiked: likes.some(l => l.group_message_id === message.group_message_id && l.user_id === userId),
-    }));
-
-    return messagesWithLikes;
+    return {
+      messages,
+      pagination: {
+        total,
+        page: dto.page || 1,
+        limit: dto.limit || 10,
+        hasMore: (dto.page || 1) * (dto.limit || 10) < total
+      }
+    };
   }
 }

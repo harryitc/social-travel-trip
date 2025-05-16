@@ -1,5 +1,8 @@
-import { ICommand } from '@nestjs/cqrs';
+import { Logger } from '@nestjs/common';
+import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import { GroupRepository } from '../repositories/group.repository';
 import { CreateGroupDto } from '../dto/create-group.dto';
+import { Group } from '../models/group.model';
 
 export class CreateGroupCommand implements ICommand {
   constructor(
@@ -8,27 +11,32 @@ export class CreateGroupCommand implements ICommand {
   ) {}
 }
 
-export class CreateGroupHandler {
-  constructor(private readonly groupRepository: GroupRepository) {}
+@CommandHandler(CreateGroupCommand)
+export class CreateGroupCommandHandler
+  implements ICommandHandler<CreateGroupCommand>
+{
+  private readonly logger = new Logger(CreateGroupCommand.name);
 
-  async execute(command: CreateGroupCommand) {
+  constructor(private readonly repository: GroupRepository) {}
+
+  async execute(command: CreateGroupCommand): Promise<any> {
     const { dto, userId } = command;
-    
-    const group = await this.groupRepository.create({
-      ...dto,
-      status: 'active',
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
 
-    // Add creator as admin
-    await this.groupMemberRepository.create({
-      group_id: group.group_id,
-      user_id: userId,
-      role: 'admin',
-      join_at: new Date(),
-    });
+    // Create the group
+    const insertResult = await this.repository.createGroup(dto);
+    const groupData = insertResult.rows[0];
+    const groupCreated = new Group(groupData);
 
-    return group;
+    // Add the creator as a member with admin role
+    if (groupCreated && groupCreated.group_id) {
+      await this.repository.addGroupMember({
+        group_id: groupCreated.group_id,
+        user_id: userId,
+        role: 'admin',
+        nickname: null, // Default nickname
+      });
+    }
+
+    return groupCreated;
   }
 }
