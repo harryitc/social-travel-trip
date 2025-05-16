@@ -245,57 +245,22 @@ export class GroupRepository {
   async toggleMessageLike(data: ToggleMessageLikeDto, userId: number) {
     const { group_message_id, reaction_id } = data;
 
-    // Check if like exists
-    const checkQuery = `
-      SELECT * FROM message_likes
-      WHERE group_message_id = $1 AND user_id = $2
+    const query = `
+      INSERT INTO message_likes (group_message_id, user_id, reaction_id)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (group_message_id, user_id)
+      DO UPDATE SET reaction_id = EXCLUDED.reaction_id
     `;
 
-    const existingLike = await this.client.execute(checkQuery, [
-      group_message_id,
-      userId,
-    ]);
-
-    if (existingLike.rowCount > 0) {
-      // Unlike - delete the like
-      const deleteQuery = `
-        DELETE FROM message_likes
-        WHERE group_message_id = $1 AND user_id = $2
-        RETURNING *
-      `;
-
-      return {
-        result: await this.client.execute(deleteQuery, [
-          group_message_id,
-          userId,
-        ]),
-        action: 'unliked',
-      };
-    } else {
-      // Like - add new like
-      const insertQuery = `
-        INSERT INTO message_likes (
-          group_message_id, user_id, reaction_id, created_at
-        )
-        VALUES ($1, $2, $3, NOW())
-        RETURNING *
-      `;
-
-      return {
-        result: await this.client.execute(insertQuery, [
-          group_message_id,
-          userId,
-          reaction_id,
-        ]),
-        action: 'liked',
-      };
-    }
+    return this.client.execute(query, [group_message_id, userId, reaction_id]);
   }
 
   async getMessageLikes(messageId: number) {
     const query = `
-      SELECT * FROM message_likes
-      WHERE group_message_id = $1
+      SELECT reaction_id, COUNT(*) AS count
+      FROM message_likes
+      WHERE group_message_id = $1 AND reaction_id > 1
+      GROUP BY reaction_id
     `;
 
     return this.client.execute(query, [messageId]);

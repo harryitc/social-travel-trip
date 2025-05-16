@@ -49,17 +49,9 @@ export class GetMessagesQueryHandler
 
     // Add user's like status to each message and map to model
     const messages = messagesResult.rows.map((message) => {
-      // Check if the current user has liked this message
-      const isLikedByUser =
-        message.like_count > 0 &&
-        this.repository
-          .getMessageLikes(message.group_message_id)
-          .then((result) => result.rows.some((like) => like.user_id == userId));
-
       const groupMessage = new GroupMessage(message);
       return {
         ...groupMessage,
-        isLikedByUser,
       };
     });
 
