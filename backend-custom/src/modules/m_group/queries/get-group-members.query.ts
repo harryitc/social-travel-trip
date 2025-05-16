@@ -22,18 +22,18 @@ export class GetGroupMembersQueryHandler
   async execute(query: GetGroupMembersQuery): Promise<any> {
     const { dto, userId } = query;
 
-    // Verify member is in group
-    const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    const member = membersResult.rows.find((m) => m.user_id === userId);
+    // // Verify member is in group
+    // const membersResult = await this.repository.getGroupMembers(dto.group_id);
+    // const member = membersResult.rows.find((m) => m.user_id == userId);
 
-    if (!member) {
-      throw new UnauthorizedException('User is not a member of this group');
-    }
+    // if (!member) {
+    //   throw new UnauthorizedException('User is not a member of this group');
+    // }
 
     // Get members with pagination
     const result = await this.repository.getGroupMembersWithPagination(dto);
 
-    if (result.rowCount === 0 && dto.page > 1) {
+    if (result.rowCount == 0 && dto.page > 1) {
       throw new NotFoundException('No more members found');
     }
 

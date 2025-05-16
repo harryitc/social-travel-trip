@@ -21,7 +21,7 @@ export class GetListGroupsQueryHandler
     // Get messages with pagination
     const groupsQueryResult = await this.repository.getListGroups(userId);
 
-    if (groupsQueryResult.rowCount === 0) {
+    if (groupsQueryResult.rowCount == 0) {
       throw new NotFoundException('No groups found');
     }
 

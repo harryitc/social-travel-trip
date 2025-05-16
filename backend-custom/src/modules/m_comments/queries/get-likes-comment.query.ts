@@ -19,7 +19,7 @@ export class GetLikesCommentQueryHandler
   async execute(query: GetLikesCommentQuery) {
     const queryResult = await this.repository.getLikeComments(query.commentId);
 
-    if (queryResult.rowCount === 0) {
+    if (queryResult.rowCount == 0) {
       throw new NotFoundException(`Like Comments not found`);
     }
     // Tổng tất cả reaction

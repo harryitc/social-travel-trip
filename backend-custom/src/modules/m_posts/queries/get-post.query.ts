@@ -32,7 +32,7 @@ export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
       this.repository.getCountPosts(),
     ]);
 
-    if (queryResult.rowCount === 0) {
+    if (queryResult.rowCount == 0) {
       throw new NotFoundException(`Record by filter not found`);
     }
 

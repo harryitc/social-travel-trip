@@ -19,7 +19,7 @@ group/get-list
 group/get-details
 group/create
 group/add-member
-group/members
+group/get-members
 group/kick-member
 group/update-member-role
 group/send-message

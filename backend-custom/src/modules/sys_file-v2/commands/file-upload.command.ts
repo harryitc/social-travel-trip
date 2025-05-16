@@ -33,7 +33,7 @@ export class FileUploadCommandHandler
   ) { }
 
   async execute(command: FileUploadCommand): Promise<{ files: any[] }> {
-    if (command.files.length === 0) {
+    if (command.files.length == 0) {
       throw new ForbiddenException('FILE IS EMPTY');
     }
 

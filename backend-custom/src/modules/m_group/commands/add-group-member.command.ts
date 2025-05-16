@@ -1,4 +1,9 @@
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Logger,
+  UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
@@ -22,17 +27,37 @@ export class AddGroupMemberCommandHandler
   async execute(command: AddGroupMemberCommand): Promise<any> {
     const { dto, adminUserId } = command;
 
+    // Check if the group exists
+    const groupResult = await this.repository.getGroupById(dto.group_id);
+    if (groupResult.rowCount == 0) {
+      throw new NotFoundException(`Group with ID ${dto.group_id} not found`);
+    }
+
     // Verify admin permission
     const adminMembersResult = await this.repository.getGroupMembers(
       dto.group_id,
     );
 
     const adminMember = adminMembersResult.rows.find(
-      (member) => member.user_id === adminUserId && member.role === 'admin',
+      (member) => member.user_id == adminUserId && member.role == 'admin',
     );
 
     if (!adminMember) {
       throw new UnauthorizedException('Only admin can add members');
+    }
+
+    // Check if trying to add self
+    if (dto.user_id == adminUserId) {
+      throw new BadRequestException('You cannot add yourself to the group');
+    }
+
+    // Check if user is already a member
+    const existingMember = adminMembersResult.rows.find(
+      (member) => member.user_id == dto.user_id,
+    );
+
+    if (existingMember) {
+      throw new BadRequestException('User is already a member of this group');
     }
 
     // Add new member

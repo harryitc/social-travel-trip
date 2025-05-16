@@ -25,7 +25,7 @@ export class UpdateGroupCommandHandler
     // Verify admin permission
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
     const adminMember = membersResult.rows.find(
-      member => member.user_id === userId && member.role === 'admin'
+      member => member.user_id == userId && member.role == 'admin'
     );
 
     if (!adminMember) {

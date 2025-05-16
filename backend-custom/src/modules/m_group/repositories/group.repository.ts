@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configuration';
 import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool';
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
@@ -80,6 +80,15 @@ export class GroupRepository {
   }
 
   // Group member operations
+  async checkUserExists(userId: number) {
+    const query = `
+      SELECT user_id FROM users
+      WHERE user_id = $1
+    `;
+
+    return this.client.execute(query, [userId]);
+  }
+
   async addGroupMember(data: {
     group_id: number;
     user_id: number;
@@ -87,6 +96,13 @@ export class GroupRepository {
     nickname?: string;
   }) {
     const { group_id, user_id, role, nickname } = data;
+
+    // First check if the user exists
+    const userExists = await this.checkUserExists(user_id);
+    if (userExists.rowCount == 0) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
+
     const params = [group_id, user_id, role || 'member', nickname];
 
     const query = `

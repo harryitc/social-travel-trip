@@ -24,7 +24,7 @@ export class SendMessageCommandHandler
 
     // Verify member is in group
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    const member = membersResult.rows.find(m => m.user_id === userId);
+    const member = membersResult.rows.find(m => m.user_id == userId);
 
     if (!member) {
       throw new UnauthorizedException('User is not a member of this group');

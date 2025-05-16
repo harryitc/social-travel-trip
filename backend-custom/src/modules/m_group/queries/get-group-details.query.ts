@@ -29,7 +29,7 @@ export class GetGroupDetailsQueryHandler
     // Get group details
     const result = await this.repository.getGroupById(dto.group_id);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException('Group not found');
     }
 

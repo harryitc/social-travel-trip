@@ -34,7 +34,7 @@ export class GetCommentByPostQueryHandler
     // ]);
     const queryResult = await this.repository.getComments(query.postId);
 
-    if (queryResult.rowCount === 0) {
+    if (queryResult.rowCount == 0) {
       throw new NotFoundException(`Record by filter not found`);
     }
 

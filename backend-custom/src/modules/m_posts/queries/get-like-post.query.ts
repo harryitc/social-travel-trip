@@ -19,7 +19,7 @@ export class GetLikesPostQueryHandler
   async execute(query: GetLikesPostQuery) {
     const queryResult = await this.repository.getLikePost(query.postId);
 
-    if (queryResult.rowCount === 0) {
+    if (queryResult.rowCount == 0) {
       throw new NotFoundException(`Like Post not found`);
     }
     // Tổng tất cả reaction

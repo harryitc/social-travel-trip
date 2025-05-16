@@ -56,9 +56,9 @@ export class GroupController {
     return this.service.addMember(dto, userId);
   }
 
-  @Get('members')
+  @Post('get-members')
   @ApiOperation({ summary: 'Get members of a group with pagination' })
-  async getGroupMembers(@Query() dto: GetGroupMembersDto, @Request() req: any) {
+  async getGroupMembers(@Body() dto: GetGroupMembersDto, @Request() req: any) {
     const userId: number = req['user']?.user_id ?? 'test';
     return this.service.getGroupMembers(dto, userId);
   }
@@ -115,11 +115,11 @@ export class GroupController {
   @Get('groups/get-list-pinned')
   @ApiOperation({ summary: 'Get pinned messages from group' })
   async getPinnedMessages(
-    @Param('groupId') groupId: number,
+    @Query('groupId') groupId: string,
     @Request() req: any,
   ) {
     const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getPinnedMessages(groupId, userId);
+    return this.service.getPinnedMessages(+groupId, userId);
   }
 
   @Post('groups/update')
