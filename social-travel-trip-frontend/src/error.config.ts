@@ -1,0 +1,24 @@
+export const ERROR_KEY = {
+  // Auth errors
+  INVALID_TOKEN: 'INVALID_TOKEN',
+  NO_TOKEN: 'NO_TOKEN',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+
+  // Network errors
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  TIMEOUT_ERROR: 'TIMEOUT_ERROR',
+
+  // Server errors
+  SERVER_ERROR: 'SERVER_ERROR',
+  NOT_FOUND: 'NOT_FOUND',
+  BAD_REQUEST: 'BAD_REQUEST',
+
+  // Validation errors
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+
+  // Business logic errors
+  BUSINESS_ERROR: 'BUSINESS_ERROR',
+
+  // Unknown errors
+  UNKNOWN_ERROR: 'UNKNOWN_ERROR'
+};
