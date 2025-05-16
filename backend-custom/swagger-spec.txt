@@ -17,6 +17,7 @@ comments/like
 comments/get-likes
 group/get-list
 group/get-details
+group/update
 group/create
 group/add-member
 group/get-members
@@ -29,6 +30,5 @@ group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
 group/messages/get-pinned
-group/update
 log/get-list
 log/clear

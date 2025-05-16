@@ -45,6 +45,13 @@ export class GroupController {
     return this.service.getGroupDetails(dto, userId);
   }
 
+  @Post('update')
+  @ApiOperation({ summary: 'Update group information' })
+  async updateGroup(@Body() dto: UpdateGroupDto, @Request() req: any) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.updateGroup(dto, userId);
+  }
+
   @Post('create')
   @ApiOperation({ summary: 'Create a new group' })
   async createGroup(@Body() dto: CreateGroupDto, @Request() req: any) {
@@ -139,12 +146,5 @@ export class GroupController {
   ) {
     const userId: number = req['user']?.user_id ?? 'test';
     return this.service.getPinnedMessages(dto.group_id, userId);
-  }
-
-  @Post('update')
-  @ApiOperation({ summary: 'Update group information' })
-  async updateGroup(@Body() dto: UpdateGroupDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.updateGroup(dto, userId);
   }
 }
