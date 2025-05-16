@@ -3,7 +3,7 @@ import { IsNotEmpty } from 'class-validator';
 
 export class ReplyCommentDTO {
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example postId' })
+  @ApiProperty({ example: '1' })
   postId: string;
 
   @IsNotEmpty()
@@ -14,6 +14,6 @@ export class ReplyCommentDTO {
   jsonData?: any;
 
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example parentId' })
+  @ApiProperty({ example: '2' })
   parentId: string;
 }

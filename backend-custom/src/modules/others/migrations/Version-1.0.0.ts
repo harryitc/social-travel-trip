@@ -186,10 +186,10 @@ module.exports = async (client, schema) => {
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comment_likes" (
-    "post_comment_like_id" bigserial PRIMARY KEY,
-    "reaction_id" int8,
     "comment_id" int8,
-    "user_id" int8
+    "user_id" int8,
+    "reaction_id" int default 1,
+    PRIMARY KEY (comment_id, user_id)
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comments" (

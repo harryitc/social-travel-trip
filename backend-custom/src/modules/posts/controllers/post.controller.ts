@@ -11,10 +11,8 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CreatePostDTO } from '../dto/create-post.dto';
 import { LikePostDTO } from '../dto/like-post.dto';
-import { CreateCommentDTO } from '../dto/create-comment.dto';
 import { PostService } from '../services/post.service';
 import { UpdatePostDTO } from '../dto/update-post.dto';
-import { LikeCommentDTO } from '../dto/like-comment.dto';
 import { GetPostDTO } from '../dto/get-post.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 
@@ -60,7 +58,7 @@ export class PostController {
     return this.service.like(likePostDTO, userId);
   }
 
-  @Get('likes')
+  @Get('get-post-likes')
   @ApiOperation({
     summary: 'Get post likes',
     description: 'Get all likes and reactions for a post',
@@ -79,43 +77,5 @@ export class PostController {
   async updatePost(@Body() updatePostDTO: UpdatePostDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.updatePost(updatePostDTO, userId);
-  }
-
-  @Post('insert-comment')
-  @ApiOperation({
-    summary: 'Create a comment',
-    description: 'Add a comment to a post or reply to another comment',
-  })
-  @HttpCode(201)
-  async createComment(
-    @Body() createCommentDTO: CreateCommentDTO,
-    @Request() req: any,
-  ) {
-    const userId = req['user']?.user_id ?? 'test';
-    return this.service.createComment(createCommentDTO, userId);
-  }
-
-  @Get('get-list-comments')
-  @ApiOperation({
-    summary: 'Get post comments',
-    description: 'Get all comments for a post, optionally including replies',
-  })
-  async getPostComments(@Query('postId') postId: string, @Request() req: any) {
-    const userId = req['user']?.user_id ?? 'test';
-    return this.service.getComments(+postId, userId);
-  }
-
-  @Post('like-comment')
-  @ApiOperation({
-    summary: 'Like a comment',
-    description: 'Add a like to a comment',
-  })
-  @HttpCode(200)
-  async likeComment(
-    @Body() likeCommentDTO: LikeCommentDTO,
-    @Request() req: any,
-  ) {
-    const userId = req['user']?.user_id ?? 'test';
-    return this.service.likeComment(likeCommentDTO, userId);
   }
 }

@@ -4,77 +4,114 @@ import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 
 @Injectable()
-export class PostRepository {
+export class CommentRepository {
   constructor(
     @PgSQLConnection(CONNECTION_STRING_DEFAULT)
     private readonly client: PgSQLConnectionPool,
   ) {}
 
-  async getPosts() {
-    const params = [];
+  /**
+   * Lấy danh sách bình luận theo bài viết
+   */
+  async getComments(postId: number) {
     const query = `
-    SELECT *
-    FROM posts p
-    ORDER BY p.created_at DESC
+    SELECT 
+      c.post_comment_id AS id,
+      c.content,
+      c.user_id,
+      c.created_at,
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', r.post_comment_id,
+              'content', r.content,
+              'user_id', r.user_id,
+              'created_at', r.created_at
+            ) ORDER BY r.created_at
+          )
+          FROM post_comments r
+          WHERE r.parent_id = c.post_comment_id
+        ), '[]'
+      ) AS replies
+    FROM post_comments c
+    WHERE c.post_id = $1 AND c.parent_id IS NULL
+    ORDER BY c.created_at
   `;
-    return this.client.execute(query, params);
-  }
-  async getCountPosts() {
-    const params = [];
-    const query = `
-    SELECT COUNT(*)
-    FROM posts p
-  `;
-    return this.client.execute(query, params);
-  }
-
-  async getLikePost(postId) {
-    const query = `
-    SELECT reaction_id, COUNT(*) AS count
-    FROM post_likes
-    WHERE post_id = $1 AND reaction_id != 1
-    GROUP BY reaction_id
-  `;
-    return this.client.execute(query, [postId]);
-  }
-
-  async updatePost(data) {
-    const { postId, content, jsonData } = data;
-    const params = [content, jsonData, postId];
-    const query = `UPDATE posts
-       SET content = COALESCE($1, content),
-           json_data = COALESCE($2, json_data),
-           updated_at = NOW()
-       WHERE post_id = $3
-       RETURNING *`;
-
+    const params = [postId];
     return this.client.execute(query, params);
   }
 
-  async createPost(data, userId) {
-    const { content, jsonData, place_id } = data;
-    const params = [content, jsonData, userId, place_id];
+  // async getCountComments(postId: number) {
+  //   const query = `
+  //   SELECT COUNT(c.*)
+  //   FROM post_comments c
+  //   WHERE c.post_id = $1 AND c.parent_id IS NULL
+  // `;
+  //   const params = [postId];
+  //   return this.client.execute(query, params);
+  // }
+
+  /**
+   * Tạo bình luận
+   */
+  async createComment(data, userId) {
+    const { content, jsonData, postId, parentId } = data;
+
     const query = `
-    INSERT INTO posts (content, json_data, user_id, place_id, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    INSERT INTO post_comments (content, json_data, post_id, user_id, parent_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
     RETURNING *
   `;
+
+    const params = [content, jsonData, postId, userId, parentId ?? null];
     return this.client.execute(query, params);
   }
 
-  async likePost(data, userId) {
-    const { postId, reactionId } = data;
+  /**
+   * Reply bình luận (bình luận con)
+   */
+  async replyComment(data, userId) {
+    const { content, jsonData, postId, parentId } = data;
+    const query = `
+    INSERT INTO post_comments (content, json_data, post_id, parent_id, user_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    RETURNING *
+  `;
+    return this.client.execute(query, [
+      content,
+      jsonData,
+      postId,
+      parentId,
+      userId,
+    ]);
+  }
+
+  /**
+   * Like bình luận
+   */
+  async likeComment(data, userId) {
+    const { commentId, reactionId } = data;
 
     const query = `
-    INSERT INTO post_likes (post_id, user_id, reaction_id)
+    INSERT INTO post_comment_likes (comment_id, user_id, reaction_id)
     VALUES ($1, $2, $3)
-    ON CONFLICT (post_id, user_id)
+    ON CONFLICT (comment_id, user_id)
     DO UPDATE SET reaction_id = EXCLUDED.reaction_id
   `;
 
-    return this.client.execute(query, [postId, userId, reactionId]);
+    return this.client.execute(query, [commentId, userId, reactionId]);
   }
 
+  async getLikeComments(commentId) {
+    const query = `
+    SELECT reaction_id, COUNT(*) AS count
+    FROM post_comment_likes
+    WHERE comment_id = $1 AND reaction_id != 1
+    GROUP BY reaction_id
+  `;
+    return this.client.execute(query, [commentId]);
+  }
   /** 
     Trường họp transaction update nhiều dòng tên 1 bảng, 
     hoặc có thể dùng pg-format để insert nhiều dòng trong 1 bảng cho 1 lần query (khong dung transaction)

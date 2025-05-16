@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
-import { PostRepository } from '../repositories/post.repository';
+import { CommentRepository } from '../repositories/comment.repository';
 import { CreateCommentDTO } from '../dto/create-comment.dto';
 
 export class CreateCommentCommand implements ICommand {
@@ -17,7 +17,7 @@ export class CreateCommentCommandHandler
 {
   private readonly logger = new Logger(CreateCommentCommand.name);
 
-  constructor(private readonly repository: PostRepository) {}
+  constructor(private readonly repository: CommentRepository) {}
 
   execute = async (command: CreateCommentCommand): Promise<any> => {
     const insertResult = await this.repository.createComment(

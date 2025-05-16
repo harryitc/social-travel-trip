@@ -1,18 +1,20 @@
 import { QueryHandler, IQueryHandler, IQuery } from '@nestjs/cqrs';
 import { NotFoundException } from '@common/exceptions';
 
-import { PostRepository } from '../repositories/post.repository';
-import { Post } from '../models/post.model';
+import { CommentRepository } from '../repositories/comment.repository';
 
 export class GetCommentByPostQuery implements IQuery {
-  constructor(public readonly postId: number) {}
+  constructor(
+    public readonly postId: number,
+    public readonly userId: number,
+  ) {}
 }
 
 @QueryHandler(GetCommentByPostQuery)
 export class GetCommentByPostQueryHandler
   implements IQueryHandler<GetCommentByPostQuery>
 {
-  constructor(private readonly repository: PostRepository) {}
+  constructor(private readonly repository: CommentRepository) {}
 
   async execute(query: GetCommentByPostQuery) {
     // const { page, perPage, filters, sorts } = query.filterDTO;

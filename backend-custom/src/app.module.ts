@@ -16,6 +16,7 @@ import { OtherModule } from '@modules/others/other.module';
 import { PostModule } from '@modules/posts/post.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UserModule } from '@modules/user/user.module';
+import { CommentModule } from '@modules/comments/comment.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
@@ -24,6 +25,7 @@ const FEATURES_MODULES = [
   UserModule,
   FileV2Module,
   PostModule,
+  CommentModule,
   LogModule,
   OtherModule,
 ];
