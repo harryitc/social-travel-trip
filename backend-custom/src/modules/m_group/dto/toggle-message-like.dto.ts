@@ -7,7 +7,7 @@ export class ToggleMessageLikeDto {
   @IsNumber()
   group_message_id: number;
 
-  @ApiProperty()
+  @ApiProperty({ default: 1 })
   @IsNumber()
   reaction_id: number = 1;
 }

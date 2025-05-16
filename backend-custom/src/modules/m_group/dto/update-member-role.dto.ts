@@ -2,12 +2,12 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, IsIn } from 'class-validator';
 
 export class UpdateMemberRoleDto {
-  @ApiProperty()
+  @ApiProperty({ default: 1 })
   @IsNotEmpty()
   @IsNumber()
   group_id: number;
 
-  @ApiProperty()
+  @ApiProperty({ default: 1 })
   @IsNotEmpty()
   @IsNumber()
   user_id: number;

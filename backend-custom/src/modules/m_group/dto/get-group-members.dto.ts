@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class GetGroupMembersDto {
-  @ApiProperty()
+  @ApiProperty({ default: 1 })
   @IsNotEmpty()
   @IsNumber()
   group_id: number;

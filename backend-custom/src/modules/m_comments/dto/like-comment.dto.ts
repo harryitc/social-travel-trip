@@ -3,9 +3,9 @@ import { IsNotEmpty } from 'class-validator';
 
 export class LikeCommentDTO {
   @IsNotEmpty()
-  @ApiProperty({ example: '1' })
-  commentId: string;
+  @ApiProperty({ default: 1 })
+  commentId: number;
 
-  @ApiProperty({ example: '2' })
-  reactionId?: string;
+  @ApiProperty({ default: 2 })
+  reactionId?: number;
 }
