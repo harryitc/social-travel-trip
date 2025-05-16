@@ -1,8 +1,4 @@
-import {
-  Logger,
-  UnauthorizedException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { GetMessagesDto } from '../dto/get-messages.dto';
@@ -27,12 +23,12 @@ export class GetMessagesQueryHandler
     const { dto, userId } = query;
 
     // Verify member is in group
-    const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    const member = membersResult.rows.find((m) => m.user_id === userId);
+    // const membersResult = await this.repository.getGroupMembers(dto.group_id);
+    // const member = membersResult.rows.find((m) => m.user_id === userId);
 
-    if (!member) {
-      throw new UnauthorizedException('User is not a member of this group');
-    }
+    // if (!member) {
+    //   throw new UnauthorizedException('User is not a member of this group');
+    // }
 
     // Get messages with pagination
     const messagesResult = await this.repository.getMessages(dto);

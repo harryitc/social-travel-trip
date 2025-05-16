@@ -16,8 +16,12 @@ comments/get
 comments/like
 comments/get-likes
 group/get-list
+group/get-details
 group/create
 group/add-member
+group/members
+group/kick-member
+group/update-member-role
 group/send-message
 group/get-messages
 group/messages/like

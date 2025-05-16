@@ -5,6 +5,7 @@ import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 import { CreateGroupDto } from '../dto/create-group.dto';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { GetMessagesDto } from '../dto/get-messages.dto';
+import { GetGroupMembersDto } from '../dto/get-group-members.dto';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
 import { ToggleMessagePinDto } from '../dto/toggle-message-pin.dto';
 
@@ -57,7 +58,7 @@ export class GroupRepository {
     return this.client.execute(query, params);
   }
 
-  async getListGroups(userId) {
+  async getListGroups(userId: number) {
     const params = [userId];
     const query = `
       SELECT * FROM groups
@@ -110,6 +111,59 @@ export class GroupRepository {
     `;
 
     return this.client.execute(query, [groupId]);
+  }
+
+  async getGroupMembersWithPagination(data: GetGroupMembersDto) {
+    const { group_id, page = 1, limit = 10 } = data;
+    const offset = (page - 1) * limit;
+    const params = [group_id, limit, offset];
+
+    const query = `
+      SELECT gm.*, u.username, u.avatar_url
+      FROM group_members gm
+      LEFT JOIN users u ON gm.user_id = u.user_id
+      WHERE gm.group_id = $1
+      ORDER BY
+        CASE WHEN gm.role = 'admin' THEN 1
+             WHEN gm.role = 'moderator' THEN 2
+             ELSE 3
+        END,
+        gm.join_at ASC
+      LIMIT $2 OFFSET $3
+    `;
+
+    return this.client.execute(query, params);
+  }
+
+  async countGroupMembers(groupId: number) {
+    const query = `
+      SELECT COUNT(*) as total
+      FROM group_members
+      WHERE group_id = $1
+    `;
+
+    return this.client.execute(query, [groupId]);
+  }
+
+  async kickGroupMember(groupId: number, userId: number) {
+    const query = `
+      DELETE FROM group_members
+      WHERE group_id = $1 AND user_id = $2
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [groupId, userId]);
+  }
+
+  async updateGroupMemberRole(groupId: number, userId: number, role: string) {
+    const query = `
+      UPDATE group_members
+      SET role = $3
+      WHERE group_id = $1 AND user_id = $2
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [groupId, userId, role]);
   }
 
   // Message operations

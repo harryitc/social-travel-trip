@@ -13,6 +13,10 @@ import { CreateGroupDto } from '../dto/create-group.dto';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
 import { SendMessageDto } from '../dto/send-message.dto';
 import { GetMessagesDto } from '../dto/get-messages.dto';
+import { GetGroupMembersDto } from '../dto/get-group-members.dto';
+import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
+import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
+import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { GroupService } from '../services/group.service';
@@ -31,6 +35,13 @@ export class GroupController {
     return this.service.getListGroups(userId);
   }
 
+  @Post('get-details')
+  @ApiOperation({ summary: 'Get group details' })
+  async getGroupDetails(@Body() dto: GetGroupDetailsDto, @Request() req: any) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.getGroupDetails(dto, userId);
+  }
+
   @Post('create')
   @ApiOperation({ summary: 'Create a new group' })
   async createGroup(@Body() dto: CreateGroupDto, @Request() req: any) {
@@ -45,6 +56,30 @@ export class GroupController {
     return this.service.addMember(dto, userId);
   }
 
+  @Get('members')
+  @ApiOperation({ summary: 'Get members of a group with pagination' })
+  async getGroupMembers(@Query() dto: GetGroupMembersDto, @Request() req: any) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.getGroupMembers(dto, userId);
+  }
+
+  @Post('kick-member')
+  @ApiOperation({ summary: 'Kick a member from group' })
+  async kickMember(@Body() dto: KickGroupMemberDto, @Request() req: any) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.kickGroupMember(dto, userId);
+  }
+
+  @Post('update-member-role')
+  @ApiOperation({ summary: 'Update a member role in group' })
+  async updateMemberRole(
+    @Body() dto: UpdateMemberRoleDto,
+    @Request() req: any,
+  ) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.updateMemberRole(dto, userId);
+  }
+
   @Post('send-message')
   @ApiOperation({ summary: 'Send a message to group' })
   async sendMessage(@Body() dto: SendMessageDto, @Request() req: any) {
@@ -52,9 +87,9 @@ export class GroupController {
     return this.service.sendMessage(dto, userId);
   }
 
-  @Get('get-messages')
+  @Post('get-messages')
   @ApiOperation({ summary: 'Get messages from group with pagination' })
-  async getMessages(@Query() dto: GetMessagesDto, @Request() req: any) {
+  async getMessages(@Body() dto: GetMessagesDto, @Request() req: any) {
     const userId: number = req['user']?.user_id ?? 'test';
     return this.service.getMessages(dto, userId);
   }

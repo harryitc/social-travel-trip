@@ -4,6 +4,8 @@ import { SendMessageCommandHandler } from './send-message.command';
 import { ToggleMessageLikeCommandHandler } from './toggle-message-like.command';
 import { ToggleMessagePinCommandHandler } from './toggle-message-pin.command';
 import { UpdateGroupCommandHandler } from './update-group.command';
+import { KickGroupMemberCommandHandler } from './kick-group-member.command';
+import { UpdateMemberRoleCommandHandler } from './update-member-role.command';
 
 export const CommandHandlers = [
   CreateGroupCommandHandler,
@@ -12,4 +14,6 @@ export const CommandHandlers = [
   ToggleMessageLikeCommandHandler,
   ToggleMessagePinCommandHandler,
   UpdateGroupCommandHandler,
+  KickGroupMemberCommandHandler,
+  UpdateMemberRoleCommandHandler,
 ];
