@@ -1,0 +1,23 @@
+import { Module } from '@nestjs/common';
+import { PlanController } from './controllers/post.controller';
+import { PlanService } from './services/plan.service';
+import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configuration';
+import { PostgresModule } from '@libs/persistent/postgresql/postgres.module';
+import { CqrsModule } from '@nestjs/cqrs';
+import { CommandHandlers } from './commands';
+import { QueryHandlers } from './queries';
+import { Repositories } from './repositories';
+
+@Module({
+  imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
+  controllers: [PlanController],
+  providers: [
+    PlanService,
+
+    ...QueryHandlers,
+    ...CommandHandlers,
+
+    ...Repositories,
+  ],
+})
+export class PlanModule {}
