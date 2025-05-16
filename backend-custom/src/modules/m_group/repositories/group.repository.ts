@@ -243,7 +243,7 @@ export class GroupRepository {
 
   // Message like operations
   async toggleMessageLike(data: ToggleMessageLikeDto, userId: number) {
-    const { group_message_id } = data;
+    const { group_message_id, reaction_id } = data;
 
     // Check if like exists
     const checkQuery = `
@@ -275,9 +275,9 @@ export class GroupRepository {
       // Like - add new like
       const insertQuery = `
         INSERT INTO message_likes (
-          group_message_id, user_id, created_at
+          group_message_id, user_id, reaction_id, created_at
         )
-        VALUES ($1, $2, NOW())
+        VALUES ($1, $2, $3, NOW())
         RETURNING *
       `;
 
@@ -285,6 +285,7 @@ export class GroupRepository {
         result: await this.client.execute(insertQuery, [
           group_message_id,
           userId,
+          reaction_id,
         ]),
         action: 'liked',
       };

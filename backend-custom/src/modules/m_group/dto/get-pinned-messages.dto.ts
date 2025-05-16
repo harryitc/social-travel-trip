@@ -1,13 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class ToggleMessageLikeDto {
+export class GetPinnedMessagesDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsNumber()
-  group_message_id: number;
-
-  @ApiProperty()
-  @IsNumber()
-  reaction_id: number = 1;
+  group_id: number;
 }

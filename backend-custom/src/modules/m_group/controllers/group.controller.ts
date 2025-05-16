@@ -3,9 +3,7 @@ import {
   Post,
   Body,
   Get,
-  Query,
   UseGuards,
-  Param,
   Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -18,6 +16,9 @@ import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
 import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
+import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
+import { ToggleMessagePinDto } from '../dto/toggle-message-pin.dto';
+import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { GroupService } from '../services/group.service';
 
@@ -96,33 +97,29 @@ export class GroupController {
 
   @Post('messages/like')
   @ApiOperation({ summary: 'Toggle like on a message' })
-  async toggleLike(@Query('messageId') messageId: string, @Request() req: any) {
+  async toggleLike(@Body() dto: ToggleMessageLikeDto, @Request() req: any) {
     const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.toggleLike(+messageId, userId);
+    return this.service.toggleLike(dto, userId);
   }
 
   @Post('messages/pin')
   @ApiOperation({ summary: 'Toggle pin on a message' })
-  async togglePin(
-    @Query('messageId') messageId: string,
-    @Body('groupId') groupId: number,
-    @Request() req: any,
-  ) {
+  async togglePin(@Body() dto: ToggleMessagePinDto, @Request() req: any) {
     const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.togglePin(+messageId, groupId, userId);
+    return this.service.togglePin(dto.group_message_id, dto.group_id, userId);
   }
 
-  @Get('groups/get-list-pinned')
+  @Post('messages/get-pinned')
   @ApiOperation({ summary: 'Get pinned messages from group' })
   async getPinnedMessages(
-    @Query('groupId') groupId: string,
+    @Body() dto: GetPinnedMessagesDto,
     @Request() req: any,
   ) {
     const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getPinnedMessages(+groupId, userId);
+    return this.service.getPinnedMessages(dto.group_id, userId);
   }
 
-  @Post('groups/update')
+  @Post('update')
   @ApiOperation({ summary: 'Update group information' })
   async updateGroup(@Body() dto: UpdateGroupDto, @Request() req: any) {
     const userId: number = req['user']?.user_id ?? 'test';

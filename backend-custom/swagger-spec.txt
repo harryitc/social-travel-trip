@@ -26,7 +26,7 @@ group/send-message
 group/get-messages
 group/messages/like
 group/messages/pin
-group/groups/get-list-pinned
-group/groups/update
+group/messages/get-pinned
+group/update
 log/get-list
 log/clear

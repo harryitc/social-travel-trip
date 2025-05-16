@@ -26,12 +26,14 @@ export class ToggleMessageLikeCommandHandler
     const result = await this.repository.toggleMessageLike(dto, userId);
 
     // If there's data, convert it to a model
-    const likeData = result.result.rows[0] ? new MessageLike(result.result.rows[0]) : null;
+    const likeData = result.result.rows[0]
+      ? new MessageLike(result.result.rows[0])
+      : null;
 
     return {
       messageId: dto.group_message_id,
       action: result.action,
-      data: likeData
+      data: likeData,
     };
   }
 }

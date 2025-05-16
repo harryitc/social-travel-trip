@@ -75,8 +75,7 @@ export class GroupService {
     return this.queryBus.execute(new GetMessagesQuery(dto, userId));
   }
 
-  async toggleLike(messageId: number, userId: number) {
-    const dto: ToggleMessageLikeDto = { group_message_id: messageId };
+  async toggleLike(dto: ToggleMessageLikeDto, userId: number) {
     return this.commandBus.execute(new ToggleMessageLikeCommand(dto, userId));
   }
 
