@@ -13,10 +13,10 @@ import { LogModule } from '@modules/log/log.module';
 import { FileV2Module } from '@modules/sys_file-v2/file.module';
 
 import { OtherModule } from '@modules/others/other.module';
-import { PostModule } from '@modules/posts/post.module';
+import { PostModule } from '@modules/m_posts/post.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UserModule } from '@modules/user/user.module';
-import { CommentModule } from '@modules/comments/comment.module';
+import { CommentModule } from '@modules/m_comments/comment.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
