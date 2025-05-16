@@ -1,18 +1,18 @@
 import { Module } from '@nestjs/common';
-import { GroupMessageService } from './services/group-message.service';
+import { GroupService } from './services/group.service';
 import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configuration';
 import { PostgresModule } from '@libs/persistent/postgresql/postgres.module';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands';
 import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
-import { CommentController } from './controllers/group-message.controller';
+import { GroupController } from './controllers/group.controller';
 
 @Module({
   imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
-  controllers: [CommentController],
+  controllers: [GroupController],
   providers: [
-    GroupMessageService,
+    GroupService,
 
     ...QueryHandlers,
     ...CommandHandlers,
@@ -20,4 +20,4 @@ import { CommentController } from './controllers/group-message.controller';
     ...Repositories,
   ],
 })
-export class GroupMessageModule {}
+export class GroupModule {}
