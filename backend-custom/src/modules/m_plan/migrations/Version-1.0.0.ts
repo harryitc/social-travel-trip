@@ -1,4 +1,3 @@
-// Migration for table: activities
 module.exports = async (client, schema) => {
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_places" (
     "plan_place_id" bigserial PRIMARY KEY,
