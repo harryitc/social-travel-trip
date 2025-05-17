@@ -12,6 +12,11 @@ cak/file-v2/upload
 cak/file-v2/download
 cak/file-v2/get-list/response
 cak/file-v2/delete
+user-rela/follow
+user-rela/unfollow
+user-rela/get-followers
+user-rela/get-following
+user-rela/check-follow-status
 posts/query
 posts/create
 posts/like
