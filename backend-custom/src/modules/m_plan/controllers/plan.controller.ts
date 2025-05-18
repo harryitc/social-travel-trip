@@ -11,6 +11,9 @@ import { PlanService } from '../services/plan.service';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { CreatePlanDTO } from '../dto/create-plan.dto';
 import { UpdatePlanDTO } from '../dto/update-plan.dto';
+import { UpdatePlanBasicDTO } from '../dto/update-plan-basic.dto';
+import { UpdatePlanPlacesDTO } from '../dto/update-plan-places.dto';
+import { UpdatePlanSchedulesDTO } from '../dto/update-plan-schedules.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { GetPlanDetailsDTO } from '../dto/get-plan-details.dto';
 import { DeletePlanDTO } from '../dto/delete-plan.dto';
@@ -63,13 +66,56 @@ export class PlanController {
 
   @Post('update')
   @ApiOperation({
-    summary: 'Update a plan',
-    description: 'Update a plan with new information, day places, or schedules',
+    summary: 'Update a plan (legacy)',
+    description:
+      'Update a plan with new information, day places, or schedules (legacy method)',
   })
   @HttpCode(200)
   async updatePlan(@Body() dto: UpdatePlanDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.updatePlan(dto, userId);
+  }
+
+  @Post('update-basic')
+  @ApiOperation({
+    summary: 'Update plan basic information',
+    description:
+      'Update only the basic information of a plan (name, description, thumbnail, location, status)',
+  })
+  @HttpCode(200)
+  async updatePlanBasic(@Body() dto: UpdatePlanBasicDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.updatePlanBasic(dto, userId);
+  }
+
+  @Post('update-places')
+  @ApiOperation({
+    summary: 'Update plan day places',
+    description:
+      'Update the day places of a plan (add, update, or remove day places)',
+  })
+  @HttpCode(200)
+  async updatePlanPlaces(
+    @Body() dto: UpdatePlanPlacesDTO,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.updatePlanPlaces(dto, userId);
+  }
+
+  @Post('update-schedules')
+  @ApiOperation({
+    summary: 'Update plan schedules',
+    description:
+      'Update the schedules of a plan (add, update, or remove schedules for day places)',
+  })
+  @HttpCode(200)
+  async updatePlanSchedules(
+    @Body() dto: UpdatePlanSchedulesDTO,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.updatePlanSchedules(dto, userId);
   }
 
   @Post('delete')

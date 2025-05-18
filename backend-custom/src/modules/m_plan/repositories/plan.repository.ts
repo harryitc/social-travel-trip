@@ -5,6 +5,9 @@ import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 import { PoolClient } from 'pg';
 import { CreatePlanDTO } from '../dto/create-plan.dto';
 import { UpdatePlanDTO } from '../dto/update-plan.dto';
+import { UpdatePlanBasicDTO } from '../dto/update-plan-basic.dto';
+import { UpdatePlanPlacesDTO } from '../dto/update-plan-places.dto';
+import { UpdatePlanSchedulesDTO } from '../dto/update-plan-schedules.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { AddPlanToGroupDTO } from '../dto/add-plan-to-group.dto';
 import { removeVietnameseAccents } from '@common/utils/string-utils';
@@ -637,5 +640,208 @@ export class PlanRepository {
       WHERE plan_day_place_id = $1
     `;
     return this.client.execute(query, [dayPlaceId]);
+  }
+
+  // Update plan basic information
+  async updatePlanBasic(data: UpdatePlanBasicDTO) {
+    const { plan_id, name, description, thumbnail_url, location, status } =
+      data;
+    const params: any[] = [];
+    const updateFields: string[] = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updateFields.push(`name = $${paramIndex}`);
+      params.push(name);
+      paramIndex++;
+
+      updateFields.push(`json_data->>'name_khong_dau' = $${paramIndex}`);
+      params.push(removeVietnameseAccents(name));
+      paramIndex++;
+    }
+
+    if (description !== undefined) {
+      updateFields.push(`description = $${paramIndex}`);
+      params.push(description);
+      paramIndex++;
+    }
+
+    if (thumbnail_url !== undefined) {
+      updateFields.push(`thumbnail_url = $${paramIndex}`);
+      params.push(thumbnail_url);
+      paramIndex++;
+    }
+
+    if (location !== undefined) {
+      updateFields.push(`location = $${paramIndex}`);
+      params.push(JSON.stringify(location));
+      paramIndex++;
+    }
+
+    if (status !== undefined) {
+      updateFields.push(`status = $${paramIndex}`);
+      params.push(status);
+      paramIndex++;
+    }
+
+    updateFields.push(`updated_at = NOW()`);
+
+    // If no fields to update, return early
+    if (updateFields.length === 1) {
+      return { rowCount: 0, rows: [] };
+    }
+
+    params.push(plan_id);
+    const query = `
+      UPDATE plans
+      SET ${updateFields.join(', ')}
+      WHERE plan_id = $${paramIndex}
+      RETURNING *
+    `;
+
+    return this.client.execute(query, params);
+  }
+
+  // Update plan day places
+  async updatePlanPlaces(data: UpdatePlanPlacesDTO) {
+    return this.client.transaction(async (client: PoolClient) => {
+      const { plan_id, day_places } = data;
+
+      // Update day places if provided
+      if (day_places && day_places.length > 0) {
+        for (const dayPlace of day_places) {
+          if (dayPlace.plan_day_place_id) {
+            // Update existing day place
+            const dayPlaceParams = [
+              dayPlace.ngay,
+              JSON.stringify(dayPlace.json_data || {}),
+              JSON.stringify(dayPlace.location),
+              dayPlace.plan_day_place_id,
+            ];
+
+            const dayPlaceQuery = `
+              UPDATE plan_day_places
+              SET ngay = $1, json_data = $2, location = $3
+              WHERE plan_day_place_id = $4
+              RETURNING *
+            `;
+
+            await client.query(dayPlaceQuery, dayPlaceParams);
+          } else {
+            // Create new day place
+            const dayPlaceParams = [
+              dayPlace.ngay,
+              JSON.stringify(dayPlace.json_data || {}),
+              JSON.stringify(dayPlace.location),
+              plan_id,
+            ];
+
+            const dayPlaceQuery = `
+              INSERT INTO plan_day_places (
+                ngay, json_data, location, plan_id
+              )
+              VALUES ($1, $2, $3, $4)
+              RETURNING *
+            `;
+
+            await client.query(dayPlaceQuery, dayPlaceParams);
+          }
+        }
+      }
+
+      // Return all day places for the plan
+      const dayPlacesQuery = `
+        SELECT *
+        FROM plan_day_places
+        WHERE plan_id = $1
+        ORDER BY ngay ASC
+      `;
+      const dayPlacesResult = await client.query(dayPlacesQuery, [plan_id]);
+      return dayPlacesResult.rows;
+    });
+  }
+
+  // Update plan schedules
+  async updatePlanSchedules(data: UpdatePlanSchedulesDTO) {
+    return this.client.transaction(async (client: PoolClient) => {
+      const { plan_id, schedules } = data;
+
+      const updatedSchedules = [];
+
+      // Update schedules if provided
+      if (schedules && schedules.length > 0) {
+        for (const schedule of schedules) {
+          // Verify that the day place belongs to the plan
+          const dayPlaceQuery = `
+            SELECT *
+            FROM plan_day_places
+            WHERE plan_day_place_id = $1 AND plan_id = $2
+          `;
+          const dayPlaceResult = await client.query(dayPlaceQuery, [
+            schedule.plan_day_place_id,
+            plan_id,
+          ]);
+
+          if (dayPlaceResult.rowCount === 0) {
+            continue; // Skip if day place doesn't belong to the plan
+          }
+
+          let scheduleResult;
+
+          if (schedule.plan_schedule_id) {
+            // Update existing schedule
+            const scheduleParams = [
+              schedule.name,
+              schedule.description || null,
+              schedule.start_time || null,
+              schedule.end_time || null,
+              JSON.stringify(schedule.location),
+              JSON.stringify(schedule.json_data || {}),
+              schedule.activity_id || null,
+              schedule.plan_schedule_id,
+            ];
+
+            const scheduleQuery = `
+              UPDATE plan_schedules
+              SET name = $1, description = $2, start_time = $3, end_time = $4,
+                  location = $5, json_data = $6, activity_id = $7, updated_at = NOW()
+              WHERE plan_schedule_id = $8
+              RETURNING *
+            `;
+
+            scheduleResult = await client.query(scheduleQuery, scheduleParams);
+          } else {
+            // Create new schedule
+            const scheduleParams = [
+              schedule.name,
+              schedule.description || null,
+              schedule.start_time || null,
+              schedule.end_time || null,
+              JSON.stringify(schedule.location),
+              JSON.stringify(schedule.json_data || {}),
+              schedule.activity_id || null,
+              schedule.plan_day_place_id,
+            ];
+
+            const scheduleQuery = `
+              INSERT INTO plan_schedules (
+                name, description, start_time, end_time, location, json_data,
+                activity_id, plan_day_place_id, created_at, updated_at
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+              RETURNING *
+            `;
+
+            scheduleResult = await client.query(scheduleQuery, scheduleParams);
+          }
+
+          if (scheduleResult.rowCount > 0) {
+            updatedSchedules.push(scheduleResult.rows[0]);
+          }
+        }
+      }
+
+      return updatedSchedules;
+    });
   }
 }

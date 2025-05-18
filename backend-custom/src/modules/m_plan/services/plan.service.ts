@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { CreatePlanDTO } from '../dto/create-plan.dto';
 import { UpdatePlanDTO } from '../dto/update-plan.dto';
+import { UpdatePlanBasicDTO } from '../dto/update-plan-basic.dto';
+import { UpdatePlanPlacesDTO } from '../dto/update-plan-places.dto';
+import { UpdatePlanSchedulesDTO } from '../dto/update-plan-schedules.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { GetPlanDetailsDTO } from '../dto/get-plan-details.dto';
 import { DeletePlanDTO } from '../dto/delete-plan.dto';
@@ -12,6 +15,9 @@ import { CreateScheduleDTO } from '../dto/create-schedule.dto';
 import { GetSchedulesDTO } from '../dto/get-schedules.dto';
 import { CreatePlanCommand } from '../commands/create-plan.command';
 import { UpdatePlanCommand } from '../commands/update-plan.command';
+import { UpdatePlanBasicCommand } from '../commands/update-plan-basic.command';
+import { UpdatePlanPlacesCommand } from '../commands/update-plan-places.command';
+import { UpdatePlanSchedulesCommand } from '../commands/update-plan-schedules.command';
 import { DeletePlanCommand } from '../commands/delete-plan.command';
 import { AddPlanToGroupCommand } from '../commands/add-plan-to-group.command';
 import { CreateScheduleCommand } from '../commands/create-schedule.command';
@@ -43,9 +49,24 @@ export class PlanService {
     return this.commandBus.execute(new CreatePlanCommand(dto, userId));
   }
 
-  // Update a plan
+  // Update a plan (legacy method - kept for backward compatibility)
   async updatePlan(dto: UpdatePlanDTO, userId: number) {
     return this.commandBus.execute(new UpdatePlanCommand(dto, userId));
+  }
+
+  // Update plan basic information
+  async updatePlanBasic(dto: UpdatePlanBasicDTO, userId: number) {
+    return this.commandBus.execute(new UpdatePlanBasicCommand(dto, userId));
+  }
+
+  // Update plan day places
+  async updatePlanPlaces(dto: UpdatePlanPlacesDTO, userId: number) {
+    return this.commandBus.execute(new UpdatePlanPlacesCommand(dto, userId));
+  }
+
+  // Update plan schedules
+  async updatePlanSchedules(dto: UpdatePlanSchedulesDTO, userId: number) {
+    return this.commandBus.execute(new UpdatePlanSchedulesCommand(dto, userId));
   }
 
   // Delete a plan
