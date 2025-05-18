@@ -26,9 +26,8 @@ import { MiniBlogModule } from '@modules/m_mini_blog/mini-blog.module';
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
 const FEATURES_MODULES = [
-  UserModule,
-  OtherModule,
   AuthModule,
+  UserModule,
   FileV2Module,
   UserRelaModule,
   PostModule,
@@ -38,6 +37,7 @@ const FEATURES_MODULES = [
   MiniBlogModule,
   NotifyModule,
   LogModule,
+  OtherModule,
 ];
 
 @Module({
