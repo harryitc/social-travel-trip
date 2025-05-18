@@ -12,7 +12,9 @@ export class CheckGroupPlanQuery implements IQuery {
 }
 
 @QueryHandler(CheckGroupPlanQuery)
-export class CheckGroupPlanQueryHandler implements IQueryHandler<CheckGroupPlanQuery> {
+export class CheckGroupPlanQueryHandler
+  implements IQueryHandler<CheckGroupPlanQuery>
+{
   private readonly logger = new Logger(CheckGroupPlanQuery.name);
 
   constructor(private readonly repository: PlanRepository) {}
@@ -22,7 +24,7 @@ export class CheckGroupPlanQueryHandler implements IQueryHandler<CheckGroupPlanQ
 
     // Check if group has a plan
     const result = await this.repository.checkGroupPlan(dto.group_id);
-    
+
     if (result.rowCount === 0) {
       return {
         has_plan: false,

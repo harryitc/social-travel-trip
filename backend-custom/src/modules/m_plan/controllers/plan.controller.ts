@@ -39,7 +39,8 @@ export class PlanController {
   @Post('details')
   @ApiOperation({
     summary: 'Get plan details',
-    description: 'Get detailed information about a plan including day places and schedules',
+    description:
+      'Get detailed information about a plan including day places and schedules',
   })
   @HttpCode(200)
   async getPlanDetails(@Body() dto: GetPlanDetailsDTO, @Request() req: any) {

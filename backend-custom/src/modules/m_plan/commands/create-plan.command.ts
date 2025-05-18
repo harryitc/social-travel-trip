@@ -23,8 +23,11 @@ export class CreatePlanCommandHandler
     const { data, userId } = command;
 
     // Create plan with transaction to handle day places
-    const result = await this.repository.createPlanWithTransaction(data, userId);
-    
+    const result = await this.repository.createPlanWithTransaction(
+      data,
+      userId,
+    );
+
     return new Plan(result);
   }
 }

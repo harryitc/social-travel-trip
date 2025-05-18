@@ -26,7 +26,7 @@ export class GetPlansQueryHandler implements IQueryHandler<GetPlansQuery> {
       this.repository.getPlansCount(dto, userId),
     ]);
 
-    const plans = plansResult.rows.map(plan => new Plan(plan));
+    const plans = plansResult.rows.map((plan) => new Plan(plan));
     const total = parseInt(countResult.rows[0].count, 10);
     const page = dto.page || 1;
     const limit = dto.limit || 10;

@@ -160,11 +160,21 @@ export class PlanRepository {
 
   // Create a new plan
   async createPlan(data: CreatePlanDTO, userId: number) {
-    const { name, description, thumbnail_url, location, status = 'private', json_data = {} } = data;
+    const {
+      name,
+      description,
+      thumbnail_url,
+      location,
+      status = 'private',
+      json_data = {},
+    } = data;
 
     // Add name_khong_dau to json_data if not provided
     if (!json_data.name_khong_dau) {
-      json_data.name_khong_dau = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      json_data.name_khong_dau = name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
     }
 
     const params = [
@@ -174,7 +184,7 @@ export class PlanRepository {
       JSON.stringify(json_data),
       JSON.stringify(location),
       status,
-      userId
+      userId,
     ];
 
     const query = `
@@ -192,11 +202,22 @@ export class PlanRepository {
   async createPlanWithTransaction(data: CreatePlanDTO, userId: number) {
     return this.client.transaction(async (client: PoolClient) => {
       // Create the plan
-      const { name, description, thumbnail_url, location, status = 'private', json_data = {}, days } = data;
+      const {
+        name,
+        description,
+        thumbnail_url,
+        location,
+        status = 'private',
+        json_data = {},
+        days,
+      } = data;
 
       // Add name_khong_dau to json_data if not provided
       if (!json_data.name_khong_dau) {
-        json_data.name_khong_dau = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        json_data.name_khong_dau = name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
       }
 
       const planParams = [
@@ -206,7 +227,7 @@ export class PlanRepository {
         JSON.stringify(json_data),
         JSON.stringify(location),
         status,
-        userId
+        userId,
       ];
 
       const planQuery = `
@@ -226,7 +247,7 @@ export class PlanRepository {
           i.toString(),
           JSON.stringify({}),
           JSON.stringify(location), // Initially use the same location as the plan
-          plan.plan_id
+          plan.plan_id,
         ];
 
         const dayPlaceQuery = `
@@ -246,7 +267,8 @@ export class PlanRepository {
 
   // Update plan
   async updatePlan(data: UpdatePlanDTO) {
-    const { plan_id, name, description, thumbnail_url, location, status } = data;
+    const { plan_id, name, description, thumbnail_url, location, status } =
+      data;
     const params: any[] = [];
     const updateFields: string[] = [];
     let paramIndex = 1;
@@ -302,7 +324,16 @@ export class PlanRepository {
   // Update plan with transaction (plan, day places, schedules)
   async updatePlanWithTransaction(data: UpdatePlanDTO) {
     return this.client.transaction(async (client: PoolClient) => {
-      const { plan_id, name, description, thumbnail_url, location, status, day_places, schedules } = data;
+      const {
+        plan_id,
+        name,
+        description,
+        thumbnail_url,
+        location,
+        status,
+        day_places,
+        schedules,
+      } = data;
 
       // Update plan basic info if provided
       if (name || description || thumbnail_url || location || status) {
@@ -362,7 +393,7 @@ export class PlanRepository {
               dayPlace.ngay,
               JSON.stringify(dayPlace.json_data || {}),
               JSON.stringify(dayPlace.location),
-              dayPlace.plan_day_place_id
+              dayPlace.plan_day_place_id,
             ];
 
             const dayPlaceQuery = `
@@ -379,7 +410,7 @@ export class PlanRepository {
               dayPlace.ngay,
               JSON.stringify(dayPlace.json_data || {}),
               JSON.stringify(dayPlace.location),
-              plan_id
+              plan_id,
             ];
 
             const dayPlaceQuery = `
@@ -408,7 +439,7 @@ export class PlanRepository {
               JSON.stringify(schedule.location),
               JSON.stringify(schedule.json_data || {}),
               schedule.activity_id || null,
-              schedule.plan_schedule_id
+              schedule.plan_schedule_id,
             ];
 
             const scheduleQuery = `
@@ -430,7 +461,7 @@ export class PlanRepository {
               JSON.stringify(schedule.location),
               JSON.stringify(schedule.json_data || {}),
               schedule.activity_id || null,
-              schedule.plan_day_place_id
+              schedule.plan_day_place_id,
             ];
 
             const scheduleQuery = `

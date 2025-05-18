@@ -12,7 +12,9 @@ export class GetPlanDetailsQuery implements IQuery {
 }
 
 @QueryHandler(GetPlanDetailsQuery)
-export class GetPlanDetailsQueryHandler implements IQueryHandler<GetPlanDetailsQuery> {
+export class GetPlanDetailsQueryHandler
+  implements IQueryHandler<GetPlanDetailsQuery>
+{
   private readonly logger = new Logger(GetPlanDetailsQuery.name);
 
   constructor(private readonly repository: PlanRepository) {}
@@ -22,13 +24,13 @@ export class GetPlanDetailsQueryHandler implements IQueryHandler<GetPlanDetailsQ
 
     // Get plan details
     const planResult = await this.repository.getPlanById(dto.plan_id);
-    
+
     if (planResult.rowCount === 0) {
       throw new NotFoundException(`Plan with ID ${dto.plan_id} not found`);
     }
 
     const plan = new Plan(planResult.rows[0]);
-    
+
     // Check if user has access to this plan
     if (plan.status !== 'public' && plan.user_created !== userId) {
       throw new NotFoundException(`Plan with ID ${dto.plan_id} not found`);
@@ -36,18 +38,24 @@ export class GetPlanDetailsQueryHandler implements IQueryHandler<GetPlanDetailsQ
 
     // Get day places
     const dayPlacesResult = await this.repository.getPlanDayPlaces(dto.plan_id);
-    const dayPlaces = dayPlacesResult.rows.map(dayPlace => new PlanDayPlace(dayPlace));
+    const dayPlaces = dayPlacesResult.rows.map(
+      (dayPlace) => new PlanDayPlace(dayPlace),
+    );
 
     // Get schedules for each day place
     const dayPlacesWithSchedules = await Promise.all(
       dayPlaces.map(async (dayPlace) => {
-        const schedulesResult = await this.repository.getPlanSchedules(dayPlace.plan_day_place_id);
-        const schedules = schedulesResult.rows.map(schedule => new PlanSchedule(schedule));
+        const schedulesResult = await this.repository.getPlanSchedules(
+          dayPlace.plan_day_place_id,
+        );
+        const schedules = schedulesResult.rows.map(
+          (schedule) => new PlanSchedule(schedule),
+        );
         return {
           ...dayPlace,
           schedules,
         };
-      })
+      }),
     );
 
     return {
