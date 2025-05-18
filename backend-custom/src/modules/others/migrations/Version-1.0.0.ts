@@ -11,10 +11,10 @@ module.exports = async (client, schema) => {
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."activities" (
     "activity_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "slug" varchar(100) UNIQUE NOT NULL
+    "name" varchar(255) UNIQUE NOT NULL,
+    "slug" varchar(255) UNIQUE NOT NULL,
     "description" varchar(255),
-    "json_data" jsonb,
+    "json_data" jsonb
   );`);
   await client.query(
     `INSERT INTO ${schema}."activities" ("name", "slug") VALUES ('Ăn sáng', 'an sang'), ('Ăn trưa', 'an trua'), ('Ăn tối', 'an toi'), ('Cà phê', 'ca phe'), ('Tham quan', 'tham quan'), ('Mua sắm', 'mua sam'), ('Nghỉ ngơi', 'nghi ngoi'), ('Di chuyển', 'di chuyen'), ('Khác', 'khac');`,

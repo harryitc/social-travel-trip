@@ -49,7 +49,7 @@ module.exports = async (client, schema) => {
     "json_data" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "activity_id" int 8,
+    "activity_id" int8,
     "plan_day_place_id" int8
   );`);
 
