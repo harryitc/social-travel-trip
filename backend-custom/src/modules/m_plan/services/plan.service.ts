@@ -8,14 +8,18 @@ import { DeletePlanDTO } from '../dto/delete-plan.dto';
 import { AddPlanToGroupDTO } from '../dto/add-plan-to-group.dto';
 import { CheckGroupPlanDTO } from '../dto/check-group-plan.dto';
 import { GetDayPlacesDTO } from '../dto/get-day-places.dto';
+import { CreateScheduleDTO } from '../dto/create-schedule.dto';
+import { GetSchedulesDTO } from '../dto/get-schedules.dto';
 import { CreatePlanCommand } from '../commands/create-plan.command';
 import { UpdatePlanCommand } from '../commands/update-plan.command';
 import { DeletePlanCommand } from '../commands/delete-plan.command';
 import { AddPlanToGroupCommand } from '../commands/add-plan-to-group.command';
+import { CreateScheduleCommand } from '../commands/create-schedule.command';
 import { GetPlansQuery } from '../queries/get-plans.query';
 import { GetPlanDetailsQuery } from '../queries/get-plan-details.query';
 import { CheckGroupPlanQuery } from '../queries/check-group-plan.query';
 import { GetDayPlacesQuery } from '../queries/get-day-places.query';
+import { GetSchedulesQuery } from '../queries/get-schedules.query';
 
 @Injectable()
 export class PlanService {
@@ -62,5 +66,15 @@ export class PlanService {
   // Get day places
   async getDayPlaces(dto: GetDayPlacesDTO, userId: number) {
     return this.queryBus.execute(new GetDayPlacesQuery(dto, userId));
+  }
+
+  // Create a new schedule
+  async createSchedule(dto: CreateScheduleDTO, userId: number) {
+    return this.commandBus.execute(new CreateScheduleCommand(dto, userId));
+  }
+
+  // Get schedules for a day place
+  async getSchedules(dto: GetSchedulesDTO, userId: number) {
+    return this.queryBus.execute(new GetSchedulesQuery(dto, userId));
   }
 }

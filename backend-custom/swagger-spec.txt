@@ -48,6 +48,14 @@ group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
 group/messages/get-pinned
+plan/query
+plan/details
+plan/create
+plan/update
+plan/delete
+plan/add-to-group
+plan/check-group-plan
+plan/day-places
 log/get-list
 log/clear
 provinces/create

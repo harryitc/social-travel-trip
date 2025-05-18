@@ -565,4 +565,77 @@ export class PlanRepository {
     `;
     return this.client.execute(query, [groupId]);
   }
+
+  // Get day place by ID
+  async getDayPlaceById(dayPlaceId: number) {
+    const query = `
+      SELECT *
+      FROM plan_day_places
+      WHERE plan_day_place_id = $1
+    `;
+    return this.client.execute(query, [dayPlaceId]);
+  }
+
+  // Create a new schedule
+  async createSchedule(data: any) {
+    const {
+      name,
+      description,
+      start_time,
+      end_time,
+      location,
+      json_data = {},
+      activity_id,
+      plan_day_place_id,
+    } = data;
+
+    const params = [
+      name,
+      description || null,
+      start_time || null,
+      end_time || null,
+      JSON.stringify(location),
+      JSON.stringify(json_data),
+      activity_id || null,
+      plan_day_place_id,
+    ];
+
+    const query = `
+      INSERT INTO plan_schedules (
+        name, description, start_time, end_time, location, json_data,
+        activity_id, plan_day_place_id, created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      RETURNING *
+    `;
+
+    return this.client.execute(query, params);
+  }
+
+  // Get schedules for a day place with pagination
+  async getSchedules(dto: any) {
+    const { plan_day_place_id, page = 1, limit = 10 } = dto;
+    const offset = (page - 1) * limit;
+    const params = [plan_day_place_id, limit, offset];
+
+    const query = `
+      SELECT *
+      FROM plan_schedules
+      WHERE plan_day_place_id = $1
+      ORDER BY start_time ASC
+      LIMIT $2 OFFSET $3
+    `;
+
+    return this.client.execute(query, params);
+  }
+
+  // Get count of schedules for a day place
+  async getSchedulesCount(dayPlaceId: number) {
+    const query = `
+      SELECT COUNT(*)
+      FROM plan_schedules
+      WHERE plan_day_place_id = $1
+    `;
+    return this.client.execute(query, [dayPlaceId]);
+  }
 }

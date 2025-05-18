@@ -17,6 +17,8 @@ import { DeletePlanDTO } from '../dto/delete-plan.dto';
 import { AddPlanToGroupDTO } from '../dto/add-plan-to-group.dto';
 import { CheckGroupPlanDTO } from '../dto/check-group-plan.dto';
 import { GetDayPlacesDTO } from '../dto/get-day-places.dto';
+import { CreateScheduleDTO } from '../dto/create-schedule.dto';
+import { GetSchedulesDTO } from '../dto/get-schedules.dto';
 
 @ApiBearerAuth('jwt') // ✅ Cho phép truyền JWT token
 @UseGuards(JwtAuthGuard) // ✅ Bảo vệ route
@@ -112,5 +114,27 @@ export class PlanController {
   async getDayPlaces(@Body() dto: GetDayPlacesDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.getDayPlaces(dto, userId);
+  }
+
+  @Post('create-schedule')
+  @ApiOperation({
+    summary: 'Create a new schedule',
+    description: 'Create a new schedule for a specific day place',
+  })
+  @HttpCode(201)
+  async createSchedule(@Body() dto: CreateScheduleDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.createSchedule(dto, userId);
+  }
+
+  @Post('get-schedules')
+  @ApiOperation({
+    summary: 'Get schedules',
+    description: 'Get schedules for a specific day place',
+  })
+  @HttpCode(200)
+  async getSchedules(@Body() dto: GetSchedulesDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getSchedules(dto, userId);
   }
 }
