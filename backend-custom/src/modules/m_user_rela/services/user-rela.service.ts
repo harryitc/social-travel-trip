@@ -43,10 +43,8 @@ export class UserRelaService {
     return this.queryBus.execute(new GetFollowingQuery(dto, userId));
   }
 
-  // Get all followers of a user (for internal use by other modules)
+  // Get all followers of a user
   async getAllFollowers(userId: number) {
-    // This is for internal use by other modules
-    // It's not exposed via the controller
     return this.queryBus.execute(new GetAllFollowersQuery(userId));
   }
 
