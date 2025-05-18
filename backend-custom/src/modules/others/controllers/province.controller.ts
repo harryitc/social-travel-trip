@@ -10,7 +10,13 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { ProvinceService } from '../services/province.service';
-import { CreateProvinceDto, DeleteProvinceDto, GetProvinceDto, QueryProvinceDto, UpdateProvinceDto } from '../dto/province.dto';
+import {
+  CreateProvinceDto,
+  DeleteProvinceDto,
+  GetProvinceDto,
+  QueryProvinceDto,
+  UpdateProvinceDto,
+} from '../dto/province.dto';
 
 @ApiTags('Provinces')
 @ApiBearerAuth('jwt')

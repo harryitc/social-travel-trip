@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Body,
-  Get,
   UseGuards,
   Request,
   HttpCode,
@@ -10,7 +9,13 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { HashtagService } from '../services/hashtag.service';
-import { CreateHashtagDto, CreateIfNotExistsHashtagDto, DeleteHashtagDto, GetHashtagDto, QueryHashtagDto, UpdateHashtagDto } from '../dto/hashtag.dto';
+import {
+  CreateIfNotExistsHashtagDto,
+  DeleteHashtagDto,
+  GetHashtagDto,
+  QueryHashtagDto,
+  UpdateHashtagDto,
+} from '../dto/hashtag.dto';
 
 @ApiTags('Hashtags')
 @ApiBearerAuth('jwt')
@@ -20,15 +25,11 @@ export class HashtagController {
   constructor(private readonly service: HashtagService) {}
 
   @Post('create')
-  @ApiOperation({ summary: 'Create a new hashtag' })
-  async create(@Body() dto: CreateHashtagDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.create(dto, userId);
-  }
-
-  @Post('create-if-not-exists')
   @ApiOperation({ summary: 'Create a hashtag if it does not exist' })
-  async createIfNotExists(@Body() dto: CreateIfNotExistsHashtagDto, @Request() req: any) {
+  async createIfNotExists(
+    @Body() dto: CreateIfNotExistsHashtagDto,
+    @Request() req: any,
+  ) {
     const userId: number = req['user']?.user_id ?? 'test';
     return this.service.createIfNotExists(dto, userId);
   }
