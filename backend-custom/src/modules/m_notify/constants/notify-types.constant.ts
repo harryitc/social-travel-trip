@@ -8,4 +8,5 @@ export enum NotificationType {
   POST_COMMENT = 'post_comment',
   POST_SHARE = 'post_share',
   COMMENT_REPLY = 'comment_reply',
+  GROUP_INVITATION = 'group_invitation',
 }

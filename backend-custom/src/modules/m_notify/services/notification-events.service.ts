@@ -187,4 +187,35 @@ export class NotificationEventsService {
       new CreateNotifyCommand(notificationData, commentOwnerId),
     );
   }
+
+  /**
+   * Create a notification for a group invitation
+   * @param invitedUserId User ID who will receive the notification (invited user)
+   * @param groupId Group ID
+   * @param groupName Name of the group
+   * @param inviterId User ID who invited the user
+   * @param inviterName Name of the user who invited
+   */
+  async notifyGroupInvitation(
+    invitedUserId: number,
+    groupId: number,
+    groupName: string,
+    inviterId: number,
+    inviterName: string,
+  ) {
+    const notificationData = {
+      type: NotificationType.GROUP_INVITATION,
+      json_data: {
+        group_id: groupId,
+        group_name: groupName,
+        inviter_id: inviterId,
+        inviter_name: inviterName,
+        message: `${inviterName} invited you to join the group "${groupName}"`,
+      },
+    };
+
+    return this.commandBus.execute(
+      new CreateNotifyCommand(notificationData, invitedUserId),
+    );
+  }
 }
