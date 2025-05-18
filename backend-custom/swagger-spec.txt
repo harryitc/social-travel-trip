@@ -52,10 +52,15 @@ plan/query
 plan/details
 plan/create
 plan/update
+plan/update-basic
+plan/update-places
+plan/update-schedules
 plan/delete
 plan/add-to-group
 plan/check-group-plan
 plan/day-places
+plan/create-schedule
+plan/get-schedules
 log/get-list
 log/clear
 provinces/create
