@@ -78,5 +78,16 @@ group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
 group/messages/get-pinned
+mini-blog/create
+mini-blog/query
+mini-blog/get-by-id
+mini-blog/update
+mini-blog/delete
+mini-blog/share
+mini-blog/update-share
+mini-blog/get-shares
+mini-blog/create-share-link
+mini-blog/delete-share-link
+mini-blog/delete-with-shares
 log/get-list
 log/clear
