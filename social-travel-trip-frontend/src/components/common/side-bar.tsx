@@ -14,7 +14,8 @@ import {
   BookText,
   Settings,
   Menu,
-  X
+  X,
+  View
 } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -43,10 +44,15 @@ const sidebarItems: SidebarItem[] = [
     path: '/planning',
     icon: <Calendar className="h-5 w-5" />,
   },
+  // {
+  //   name: 'Khám phá',
+  //   path: '/explore',
+  //   icon: <Map className="h-5 w-5" />,
+  // },
   {
-    name: 'Khám phá',
-    path: '/explore',
-    icon: <Map className="h-5 w-5" />,
+    name: 'View 360°',
+    path: '/view360',
+    icon: <View className="h-5 w-5" />,
   },
   {
     name: 'Blog Mini',

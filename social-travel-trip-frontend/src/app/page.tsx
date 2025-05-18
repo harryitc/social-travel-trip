@@ -8,12 +8,13 @@ import { useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { PageHeader } from "@/components/ui/page-header";
 import { getHello } from "@/features/home/abc.service";
-import { notification } from "antd";
+import { App } from "antd";
 import { catchError, map, Observable, of, switchMap, tap } from "rxjs";
 
 export default function Home() {
   const searchParams = useSearchParams();
   const { getToken } = useAuth();
+  const { notification } = App.useApp();
 
   useEffect(() => {
     const subscription = of(null).pipe(
