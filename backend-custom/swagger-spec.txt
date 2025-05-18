@@ -36,5 +36,11 @@ group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
 group/messages/get-pinned
+notify/create
+notify/update
+notify/delete
+notify/mark-read
+notify/get
+notify/query
 log/get-list
 log/clear
