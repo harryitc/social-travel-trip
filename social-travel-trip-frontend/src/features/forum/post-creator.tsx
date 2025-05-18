@@ -336,7 +336,8 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
                     <CommandInput placeholder="Tìm địa điểm..." />
                     <CommandList>
                       <CommandEmpty>Không tìm thấy địa điểm</CommandEmpty>
-                      <CommandGroup heading="Địa điểm phổ biến">
+                      {/* Xóa hoặc comment phần CommandGroup địa điểm phổ biến */}
+                      {/* <CommandGroup heading="Địa điểm phổ biến">
                         {POPULAR_LOCATIONS.map((loc) => (
                           <CommandItem
                             key={loc.id}
@@ -349,7 +350,7 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
                             {loc.name}
                           </CommandItem>
                         ))}
-                      </CommandGroup>
+                      </CommandGroup> */}
                     </CommandList>
                   </Command>
                 </PopoverContent>

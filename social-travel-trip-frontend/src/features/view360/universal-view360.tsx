@@ -5,9 +5,9 @@ import { View360, PanoramaScene } from './view360';
 import { GoogleMapsView } from './google-maps-view';
 
 // Định nghĩa các loại nguồn dữ liệu 360 độ
-export type View360Source = 
+export type View360Source =
   | { type: 'panorama'; scenes: PanoramaScene[]; initialSceneId?: string }
-  | { type: 'google-maps'; url: string; title?: string; description?: string };
+  | { type: 'google-maps'; url: string; title?: string };
 
 interface UniversalView360Props {
   source: View360Source;
@@ -15,20 +15,22 @@ interface UniversalView360Props {
   height?: string;
   width?: string;
   fullscreenButton?: boolean;
-  resetButton?: boolean;
+  reloadButton?: boolean;
   showSceneSelector?: boolean;
+  showInfoCard?: boolean;
 }
 
 /**
- * UniversalView360 - Component tổng hợp để hiển thị cả ảnh panorama 360 độ và Google Maps Street View
- * 
+ * UniversalView360 - Component tổng hợp để hiển thị cả ảnh panorama 360 độ và Google Maps Street View (đã đơn giản hóa)
+ *
  * @param source Nguồn dữ liệu 360 độ (panorama hoặc google-maps)
  * @param className CSS class tùy chỉnh
  * @param height Chiều cao của component (mặc định: 400px)
  * @param width Chiều rộng của component (mặc định: 100%)
  * @param fullscreenButton Hiển thị nút toàn màn hình (mặc định: true)
- * @param resetButton Hiển thị nút reset (mặc định: true)
+ * @param reloadButton Hiển thị nút tải lại (mặc định: true)
  * @param showSceneSelector Hiển thị bộ chọn cảnh (chỉ áp dụng cho panorama, mặc định: true)
+ * @param showInfoCard Hiển thị thẻ thông tin địa điểm (chỉ áp dụng cho google-maps, mặc định: true)
  */
 export const UniversalView360: React.FC<UniversalView360Props> = ({
   source,
@@ -36,8 +38,9 @@ export const UniversalView360: React.FC<UniversalView360Props> = ({
   height = '400px',
   width = '100%',
   fullscreenButton = true,
-  resetButton = true,
+  reloadButton = true,
   showSceneSelector = true,
+  showInfoCard = true,
 }) => {
   // Hiển thị component tương ứng dựa trên loại nguồn dữ liệu
   if (source.type === 'panorama') {
@@ -49,7 +52,7 @@ export const UniversalView360: React.FC<UniversalView360Props> = ({
         height={height}
         width={width}
         fullscreenButton={fullscreenButton}
-        resetButton={resetButton}
+        resetButton={true}
         showSceneSelector={showSceneSelector}
       />
     );
@@ -61,9 +64,9 @@ export const UniversalView360: React.FC<UniversalView360Props> = ({
         height={height}
         width={width}
         fullscreenButton={fullscreenButton}
-        resetButton={resetButton}
+        reloadButton={reloadButton}
         title={source.title}
-        description={source.description}
+        showInfoCard={showInfoCard}
       />
     );
   }

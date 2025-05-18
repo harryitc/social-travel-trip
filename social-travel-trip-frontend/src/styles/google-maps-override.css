@@ -1,0 +1,170 @@
+/* CSS để ẩn hoàn toàn các phần tử UI của Google Maps */
+
+/* Container cho iframe */
+.google-maps-iframe-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Ẩn các phần tử UI của Google Maps */
+.gm-style-cc,
+.gmnoprint,
+.gm-style > div:not(:first-child),
+.gm-style > a,
+.gm-style-iw,
+.gm-style-iw-a,
+.gm-style-iw-t,
+.gm-style-iw-d,
+.gm-style-iw-c,
+.gm-iv-address,
+.gm-iv-container,
+.gm-iv-marker,
+.gm-iv-short-address,
+.gm-iv-address-link,
+.gm-control-active,
+.gm-style-moc,
+.gm-style-mot,
+.gm-ui-hover-effect,
+.gm-style > div > div:first-child > div:nth-child(3),
+.gm-style > div > div:first-child > div:nth-child(4) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ẩn các phần tử UI khác */
+.gm-bundled-control,
+.gm-svpc,
+.gm-fullscreen-control,
+.gm-style-mtc,
+.gm-style-pbc,
+.gm-style > div > div > div:last-child,
+.gm-style > div > div:first-child > div:first-child,
+.gm-style > div > div:first-child > div:nth-child(2),
+.gm-style-cc > div,
+.gm-style > div > div:last-child,
+/* Ẩn nút zoom ở góc dưới bên phải */
+.gmnoscreen,
+.gm-control-active.gm-fullscreen-control,
+.gm-style .gm-style-cc,
+.gm-style-cc,
+.gm-style > div > a,
+.gm-style > div > div > a:last-child,
+.gm-style > div > div > div:nth-child(1) > div:nth-child(4),
+.gm-style > div > div > div:nth-child(1) > div:nth-child(3),
+.gm-style > div > div > div:nth-child(1) > div.gmnoprint:last-child,
+.gm-style > div > div > div > div > div.gmnoprint:last-child,
+.gm-style > div > div > div > div > div > div.gmnoprint:last-child,
+.gm-style .gm-style-cc > div,
+.gm-style-zoom,
+.gmnoprint.gm-style-cc,
+.gm-style .gmnoprint > div:last-child,
+.gm-style .gmnoprint > div > div:last-child,
+.gm-style .gmnoprint > div > img:last-child {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ẩn các phần tử UI trong iframe */
+iframe.google-maps-iframe {
+  filter: grayscale(0%);
+}
+
+/* Ẩn các phần tử UI trong iframe bằng CSS injection */
+iframe.google-maps-iframe::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px; /* Chiều cao của khu vực cần ẩn ở trên cùng */
+  background: transparent;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Đảm bảo iframe không có viền và hiển thị đầy đủ */
+iframe.google-maps-iframe {
+  border: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+/* Ẩn nút zoom ở góc dưới bên phải bằng cách sử dụng ::after để che phủ */
+.google-maps-iframe-container::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 80px; /* Chiều rộng của khu vực cần che phủ */
+  height: 80px; /* Chiều cao của khu vực cần che phủ */
+  background-color: transparent;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Ẩn cụ thể nút zoom ở góc dưới bên phải */
+.gm-style .gmnoprint.gm-bundled-control.gm-bundled-control-on-bottom,
+.gm-style .gmnoprint.gm-bundled-control.gm-bundled-control-on-bottom .gmnoprint:not(.gm-svpc),
+.gm-style .gm-style-cc,
+.gm-style .gm-zoom-control,
+.gm-style .gm-control-active,
+.gm-style .gm-control-active img,
+.gm-style .gm-style-cc div,
+.gm-style .gm-style-cc button,
+.gm-style .gm-style-cc img,
+.gm-style .gm-fullscreen-control,
+.gm-style .gm-svpc,
+.gm-style .gm-style-mtc,
+.gm-style .gm-style-mtc div,
+.gm-style .gm-style-mtc button,
+.gm-style .gm-style-mtc img {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ẩn thẻ thông tin (info card) của Google Maps */
+.gm-style-iw,
+.gm-style-iw-c,
+.gm-style-iw-d,
+.gm-style-iw-a,
+.gm-style-iw-t,
+.gm-style-iw-tc,
+.gm-style-iw-tc:after,
+.gm-style div[role="dialog"],
+.gm-style div[role="dialog"] > div,
+.gm-style div[role="dialog"] > div > div,
+.gm-style div[aria-label],
+.gm-style div[jstcache] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ẩn các phần tử UI khác của Google Maps */
+.gm-style div[controlheight],
+.gm-style div[controlwidth],
+.gm-style div[mapid],
+.gm-style div[mapsize],
+.gm-style div[jsaction],
+.gm-style div[jsaction] > div,
+.gm-style div[jsaction] > div > div,
+.gm-style div[jsaction] > div > div > div {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

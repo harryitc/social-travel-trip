@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/styles/google-maps-override.css"; // Import CSS để ẩn UI của Google Maps
 import { ClerkProviders } from "@/lib/providers/clerk.provider";
 import { SidebarNav } from "@/components/common/side-bar";
 import { TopbarNav } from "@/components/common/top-bar";
@@ -50,7 +51,7 @@ export default function RootLayout({
             inherit: true,
           }} locale={viVN}>
             <App >
-              
+
             </App>
             <Toaster />
           </ConfigProvider> */}
