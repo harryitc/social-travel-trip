@@ -13,17 +13,12 @@ module.exports = async (client, schema) => {
     "activity_id" bigserial PRIMARY KEY,
     "name" varchar(255),
     "slug" varchar(100) UNIQUE NOT NULL
+    "description" varchar(255),
+    "json_data" jsonb,
   );`);
   await client.query(
     `INSERT INTO ${schema}."activities" ("name", "slug") VALUES ('Ăn sáng', 'an sang'), ('Ăn trưa', 'an trua'), ('Ăn tối', 'an toi'), ('Cà phê', 'ca phe'), ('Tham quan', 'tham quan'), ('Mua sắm', 'mua sam'), ('Nghỉ ngơi', 'nghi ngoi'), ('Di chuyển', 'di chuyen'), ('Khác', 'khac');`,
   );
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."activity_settings" (
-    "activity_setting_id" bigserial PRIMARY KEY,
-    "description" varchar(255),
-    "json_data" jsonb,
-    "activity_id" int8
-  );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."categories" (
     "category_id" bigserial PRIMARY KEY,

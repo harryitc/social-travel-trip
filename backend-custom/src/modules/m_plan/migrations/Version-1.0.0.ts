@@ -4,35 +4,6 @@
  */
 module.exports = async (client, schema) => {
   /**
-   * Bảng plan_schedules: Danh sách các địa điểm sẽ đi du lịch trong 1 địa điểm
-   * location: name, description, lat, lon.
-   */
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_schedules" (
-    "plan_schedule_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "start_time" timestamp(6),
-    "end_time" timestamp(6),
-    "location" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "plan_day_place_id" int8
-  );`);
-
-  /**
-   * Bảng plan_day_places: Mỗi ngày sẽ có rất nhiều địa điểm
-   * ngay: 1, 2, 3, 4, 5, ... (ngày)
-   * location: name, description, lat, lon.
-   */
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_day_places" (
-    "plan_day_place_id" bigserial PRIMARY KEY,
-    "ngay" varchar(32),
-    "json_data" jsonb, 
-    "location" jsonb,
-    "plan_id" int8
-  );`);
-
-  /**
    * Bảng plans: kế hoạch đi du lịch
    * json_data: name_khong_dau, tags (danh sách slug name hashtags).
    * location: name, description, lat, lon.
@@ -43,13 +14,43 @@ module.exports = async (client, schema) => {
     "name" varchar(255),
     "description" varchar(255),
     "thumbnail_url" varchar(255),
-    "day_travel" int4,
     "json_data" jsonb,
     "location" jsonb,
     "status" varchar(255),
+    "user_created" int8,
+    "created_at" timestamp(6),
+    "updated_at" timestamp(6)
+    );`);
+
+  /**
+   * Bảng plan_day_places: Mỗi ngày sẽ có rất nhiều địa điểm
+   * ngay: 1, 2, 3, 4, 5, ... (ngày)
+   * location: name, description, lat, lon.
+   */
+  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_day_places" (
+      "plan_day_place_id" bigserial PRIMARY KEY,
+      "ngay" varchar(32),
+      "json_data" jsonb, 
+      "location" jsonb,
+      "plan_id" int8
+    );`);
+
+  /**
+   * Bảng plan_schedules: Danh sách các nơi sẽ đi du lịch trong 1 địa điểm
+   * location: name, description, lat, lon.
+   */
+  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_schedules" (
+    "plan_schedule_id" bigserial PRIMARY KEY,
+    "name" varchar(255),
+    "description" varchar(255),
+    "start_time" timestamp(6),
+    "end_time" timestamp(6),
+    "location" jsonb,
+    "json_data" jsonb,
     "created_at" timestamp(6),
     "updated_at" timestamp(6),
-    "user_id" int8
+    "activity_id" int 8,
+    "plan_day_place_id" int8
   );`);
 
   /**
@@ -59,6 +60,9 @@ module.exports = async (client, schema) => {
     "plan_with_group_id" bigserial PRIMARY KEY,
     "plan_id" int8,
     "group_id" int8,
+    "user_created" int8,
+    "created_at" timestamp(6),
+    "updated_at" timestamp(6),
     UNIQUE (plan_id, group_id)
   );`);
 };
