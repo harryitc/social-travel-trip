@@ -1,8 +1,10 @@
-import { Logger, BadRequestException } from '@nestjs/common';
+import { Logger, BadRequestException, Inject } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { UserRelaRepository } from '../repositories/user-rela.repository';
 import { FollowUserDto } from '../dto/follow-user.dto';
 import { UserRela } from '../models/user-rela.model';
+import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
+import { UserService } from '@modules/user/user.service';
 
 export class FollowUserCommand implements ICommand {
   constructor(
@@ -17,7 +19,11 @@ export class FollowUserCommandHandler
 {
   private readonly logger = new Logger(FollowUserCommand.name);
 
-  constructor(private readonly repository: UserRelaRepository) {}
+  constructor(
+    private readonly repository: UserRelaRepository,
+    private readonly notificationService: NotificationEventsService,
+    private readonly userService: UserService,
+  ) {}
 
   async execute(command: FollowUserCommand): Promise<any> {
     const { dto, userId } = command;
@@ -29,12 +35,29 @@ export class FollowUserCommandHandler
 
     // Follow user
     const result = await this.repository.followUser(userId, dto.following_id);
-    
+
     if (result.rowCount === 0) {
       // User is already following
       return { message: 'Already following this user' };
     }
-    
+
+    try {
+      // Get follower user details to include in notification
+      const followerUser = await this.userService.findById(userId);
+
+      if (followerUser) {
+        // Create notification for the user being followed
+        await this.notificationService.notifyNewFollower(
+          dto.following_id,
+          userId,
+          followerUser.full_name || followerUser.username || 'A user',
+        );
+      }
+    } catch (error) {
+      // Log error but don't fail the follow operation if notification fails
+      this.logger.error(`Failed to create follow notification: ${error.message}`);
+    }
+
     return new UserRela(result.rows[0]);
   }
 }

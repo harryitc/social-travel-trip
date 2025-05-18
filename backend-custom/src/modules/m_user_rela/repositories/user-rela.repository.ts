@@ -122,4 +122,16 @@ export class UserRelaRepository {
 
     return this.client.execute(query, [userId]);
   }
+
+  // Get all followers of a user (without pagination)
+  async getAllFollowers(userId: number) {
+    const query = `
+      SELECT ur.user_id, u.username, u.full_name
+      FROM user_rela ur
+      JOIN users u ON ur.user_id = u.user_id
+      WHERE ur.following = $1
+    `;
+
+    return this.client.execute(query, [userId]);
+  }
 }
