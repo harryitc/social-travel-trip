@@ -38,7 +38,7 @@ export function TopbarNav() {
           <SearchIcon className="h-5 w-5" />
         </Button>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -76,10 +76,21 @@ export function TopbarNav() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
+
         <UserButton afterSignOutUrl="/" />
         <SignedOut>
-          <SignInButton></SignInButton>
+          <div className="flex gap-2">
+            <SignInButton>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                Đăng nhập
+              </Button>
+            </SignInButton>
+            <a href="/auth/custom-auth">
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                Đăng nhập đơn giản
+              </Button>
+            </a>
+          </div>
         </SignedOut>
       </div>
     </header>
