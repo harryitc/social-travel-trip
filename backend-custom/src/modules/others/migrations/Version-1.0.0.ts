@@ -2,12 +2,16 @@
 module.exports = async (client, schema) => {
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."hashtags" (
     "tag_id" bigserial PRIMARY KEY,
-    "name" varchar(100)
+    "name" varchar(100) UNIQUE NOT NULL,
+    "slug" varchar(100) UNIQUE NOT NULL
   );`);
+
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."activities" (
     "activity_id" bigserial PRIMARY KEY,
-    "name" varchar(255)
+    "name" varchar(255),
+    "slug" varchar(100) UNIQUE NOT NULL
   );`);
+
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."activity_settings" (
     "activity_setting_id" bigserial PRIMARY KEY,
     "description" varchar(255),
@@ -17,8 +21,10 @@ module.exports = async (client, schema) => {
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."catetory" (
     "category_id" bigserial PRIMARY KEY,
-    "name" varchar(255)
+    "name" varchar(255),
+    "slug" varchar(100) UNIQUE NOT NULL
   );`);
+
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."cities" (
     "city_id" bigserial PRIMARY KEY,
     "name" varchar(100),
