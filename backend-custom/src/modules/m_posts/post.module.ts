@@ -7,9 +7,19 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands';
 import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
+import { NotifyModule } from '@modules/m_notify/notify.module';
+import { UserModule } from '@modules/user/user.module';
+import { UserRelaModule } from '@modules/m_user_rela/user-rela.module';
+import { PostRepository } from './repositories/post.repository';
 
 @Module({
-  imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
+  imports: [
+    CqrsModule,
+    PostgresModule.forFeature(CONNECTION_STRING_DEFAULT),
+    NotifyModule, // Import NotifyModule to use NotificationEventsService
+    UserModule, // Import UserModule to get user details
+    UserRelaModule, // Import UserRelaModule to get followers
+  ],
   controllers: [PostController],
   providers: [
     PostService,
@@ -19,5 +29,6 @@ import { Repositories } from './repositories';
 
     ...Repositories,
   ],
+  exports: [PostService, PostRepository],
 })
 export class PostModule {}
