@@ -19,6 +19,15 @@ export class PostRepository {
   `;
     return this.client.execute(query, params);
   }
+
+  async getPostById(postId: number) {
+    const query = `
+    SELECT *
+    FROM posts
+    WHERE post_id = $1
+  `;
+    return this.client.execute(query, [postId]);
+  }
   async getCountPosts() {
     const params = [];
     const query = `
@@ -75,15 +84,15 @@ export class PostRepository {
     return this.client.execute(query, [postId, userId, reactionId]);
   }
 
-  /** 
-    Trường họp transaction update nhiều dòng tên 1 bảng, 
+  /**
+    Trường họp transaction update nhiều dòng tên 1 bảng,
     hoặc có thể dùng pg-format để insert nhiều dòng trong 1 bảng cho 1 lần query (khong dung transaction)
     Ví dụ về postgres format để insert nhiều dòng dữ liệu cho 1 lần query:
     ...
     updateManyTransaction(data: Array<any>) {
       // Logic map your data to nested array.
       const myNestedArray = [['a', 1], ['b', 2]];
-      const queryString = format('INSERT INTO tableName (name, age) VALUES %L', myNestedArray); 
+      const queryString = format('INSERT INTO tableName (name, age) VALUES %L', myNestedArray);
       reutrn this.client.query(queryString);
     }
   */
@@ -135,7 +144,7 @@ export class PostRepository {
 
       // Execute your query ...
       const productResult = await client.query(
-        `INSERT INTO posts(info, current_status, key, public_time) 
+        `INSERT INTO posts(info, current_status, key, public_time)
          VALUES($1, $2, $3, $4) RETURNING *`,
         [product.info, product.currentStatus, product.key, product.publicTime],
       );
@@ -144,7 +153,7 @@ export class PostRepository {
 
       // Insert default variant
       await client.query(
-        `INSERT INTO ec_variants(info, current_status, is_default, public_time, id) 
+        `INSERT INTO ec_variants(info, current_status, is_default, public_time, id)
          VALUES($1, $2, $3, $4, $5)`,
         [
           variant.info,

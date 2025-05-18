@@ -4,6 +4,8 @@ import {
   Post,
   Body,
   Request,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UserRelaService } from '../services/user-rela.service';
@@ -50,8 +52,18 @@ export class UserRelaController {
 
   @Post('check-follow-status')
   @ApiOperation({ summary: 'Check if user is following another user' })
-  async checkFollowStatus(@Body() dto: CheckFollowStatusDto, @Request() req: any) {
+  async checkFollowStatus(
+    @Body() dto: CheckFollowStatusDto,
+    @Request() req: any,
+  ) {
     const userId: number = req['user']?.user_id ?? 'test';
     return this.service.checkFollowStatus(dto, userId);
+  }
+
+  @Get('all-followers')
+  @ApiOperation({ summary: 'Get all followers of a user without pagination' })
+  async getAllFollowers(@Query('userId') userId: string) {
+    const result = await this.service.getAllFollowers(+userId);
+    return result.rows;
   }
 }

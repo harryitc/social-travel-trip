@@ -17,6 +17,13 @@ user-rela/unfollow
 user-rela/get-followers
 user-rela/get-following
 user-rela/check-follow-status
+user-rela/all-followers
+notify/create
+notify/update
+notify/delete
+notify/mark-read
+notify/get
+notify/query
 posts/query
 posts/create
 posts/like

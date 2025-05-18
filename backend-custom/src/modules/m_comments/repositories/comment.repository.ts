@@ -15,7 +15,7 @@ export class CommentRepository {
    */
   async getComments(postId: number) {
     const query = `
-    SELECT 
+    SELECT
       c.post_comment_id AS id,
       c.content,
       c.user_id,
@@ -112,15 +112,27 @@ export class CommentRepository {
   `;
     return this.client.execute(query, [commentId]);
   }
-  /** 
-    Trường họp transaction update nhiều dòng tên 1 bảng, 
+
+  /**
+   * Get a comment by ID
+   */
+  async getCommentById(commentId: number) {
+    const query = `
+    SELECT *
+    FROM post_comments
+    WHERE post_comment_id = $1
+  `;
+    return this.client.execute(query, [commentId]);
+  }
+  /**
+    Trường họp transaction update nhiều dòng tên 1 bảng,
     hoặc có thể dùng pg-format để insert nhiều dòng trong 1 bảng cho 1 lần query (khong dung transaction)
     Ví dụ về postgres format để insert nhiều dòng dữ liệu cho 1 lần query:
     ...
     updateManyTransaction(data: Array<any>) {
       // Logic map your data to nested array.
       const myNestedArray = [['a', 1], ['b', 2]];
-      const queryString = format('INSERT INTO tableName (name, age) VALUES %L', myNestedArray); 
+      const queryString = format('INSERT INTO tableName (name, age) VALUES %L', myNestedArray);
       reutrn this.client.query(queryString);
     }
   */
@@ -172,7 +184,7 @@ export class CommentRepository {
 
       // Execute your query ...
       const productResult = await client.query(
-        `INSERT INTO posts(info, current_status, key, public_time) 
+        `INSERT INTO posts(info, current_status, key, public_time)
          VALUES($1, $2, $3, $4) RETURNING *`,
         [product.info, product.currentStatus, product.key, product.publicTime],
       );
@@ -181,7 +193,7 @@ export class CommentRepository {
 
       // Insert default variant
       await client.query(
-        `INSERT INTO ec_variants(info, current_status, is_default, public_time, id) 
+        `INSERT INTO ec_variants(info, current_status, is_default, public_time, id)
          VALUES($1, $2, $3, $4, $5)`,
         [
           variant.info,
