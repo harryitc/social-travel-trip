@@ -209,7 +209,7 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
           )}
 
           {/* Controls - Reload and Fullscreen */}
-          <div className="absolute bottom-4 right-4 flex gap-2">
+          <div className="absolute bottom-6 right-16 flex gap-2">
             {reloadButton && (
               <Button
                 variant="outline"
@@ -222,7 +222,7 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
               </Button>
             )}
 
-            {fullscreenButton && (
+            {/* {fullscreenButton && (
               <Button
                 variant="outline"
                 size="icon"
@@ -236,7 +236,7 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
                   <Maximize className="h-4 w-4" />
                 )}
               </Button>
-            )}
+            )} */}
           </div>
         </div>
       </CardContent>

@@ -44,11 +44,11 @@ const sidebarItems: SidebarItem[] = [
     path: '/planning',
     icon: <Calendar className="h-5 w-5" />,
   },
-  {
-    name: 'Khám phá',
-    path: '/explore',
-    icon: <Map className="h-5 w-5" />,
-  },
+  // {
+  //   name: 'Khám phá',
+  //   path: '/explore',
+  //   icon: <Map className="h-5 w-5" />,
+  // },
   {
     name: 'View 360°',
     path: '/view360',

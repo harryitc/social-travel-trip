@@ -197,6 +197,54 @@ export const VIEW_360_LOCATIONS: View360Location[] = [
     },
     googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747414488523!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJQ1VuTlMzQ2c.!2m2!1d9.66389502040506!2d104.3496417202332!3f99.81168081790992!4f0.7850056876728928!5f0.4000000000000002'
   },
+  {
+    id: 'khu-du-lich-dai-nam',
+    name: 'Khu du lịch Đại Nam',
+    city: 'Bình Dương',
+    region: 'Miền Nam',
+    description: '',
+    coordinates: {
+      lat: 11.0522,
+      lng: 106.6527
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747561603966!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJQ2t1UEsyV2c.!2m2!1d11.04273297863585!2d106.6231230307857!3f348.80734111153146!4f-6.92320452177762!5f0.4000000000000002'
+  },
+  {
+    id: 'dao-con-dao',
+    name: 'Đảo Côn Đảo',
+    city: 'Bà Rịa - Vũng Tàu',
+    region: 'Miền Nam',
+    description: '',
+    coordinates: {
+      lat: 8.6833,
+      lng: 106.6333
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747561710036!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJRHVrTWlrVHc.!2m2!1d8.680223308555638!2d106.6077933101246!3f275.5838632836326!4f-15.889832735152922!5f0.4000000000000002'
+  },
+  {
+    id: 'khu-du-lich-tram-chim',
+    name: 'Vườn quốc gia Tràm Chim',
+    city: 'Đồng Tháp',
+    region: 'Miền Nam',
+    description: '',
+    coordinates: {
+      lat: 10.7125,
+      lng: 105.5833
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747561823119!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJQ0VqX0stZHc.!2m2!1d10.71352680128817!2d105.4976494560806!3f189.63468163564727!4f3.176300071053035!5f0.4000000000000002'
+  },
+  {
+    id: 'khu-du-lich-suoi-tien',
+    name: 'Khu du lịch Suối Tiên',
+    city: 'Hồ Chí Minh',
+    region: 'Miền Nam',
+    description: '',
+    coordinates: {
+      lat: 10.8667,
+      lng: 106.8000
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747562106701!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJREV5Ym03Rmc.!2m2!1d10.86375003824863!2d106.8021699904355!3f139.20049558043593!4f3.460598320150865!5f0.4000000000000002'
+  },
 
 
   // Miền Trung
@@ -355,6 +403,54 @@ export const VIEW_360_LOCATIONS: View360Location[] = [
       lng: 108.123989442643
     },
     googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747416506358!6m8!1m7!1sCAoSHENJQUJJaEFEeWRkbXFSS0JfbWV1OU13QUNKaGs.!2m2!1d15.76300706641276!2d108.123989442643!3f344.50527686499316!4f-14.758897808970943!5f0.7820865974627469'
+  },
+  {
+    id: 'bien-nha-trang',
+    name: 'Biển Nha Trang',
+    city: 'Nha Trang',
+    region: 'Miền Trung',
+    description: '',
+    coordinates: {
+      lat: 12.2388,
+      lng: 109.1967
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747562600027!6m8!1m7!1sCAoSF0NJSE0wb2dLRUlDQWdJRFU5cy1NaEFF!2m2!1d12.23576672365317!2d109.199113311098!3f295.9503787412098!4f-8.56763189466777!5f0.4000000000000002'
+  },
+  {
+    id: 'vinpearl-nha-trang',
+    name: 'Vinpearl Nha Trang',
+    city: 'Nha Trang',
+    region: 'Miền Trung',
+    description: '',
+    coordinates: {
+      lat: 12.2086,
+      lng: 109.1233
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747563078452!6m8!1m7!1sCAoSF0NJSE0wb2dLRUlDQWdJRC0ydERPeFFF!2m2!1d12.21603828855668!2d109.2419716610762!3f281.6114334037844!4f-31.027932938717477!5f0.7820865974627469'
+  },
+  {
+    id: 'bien-quy-nhon',
+    name: 'Biển Quy Nhơn',
+    city: 'Quy Nhơn',
+    region: 'Miền Trung',
+    description: '',
+    coordinates: {
+      lat: 13.7829,
+      lng: 109.2196
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747563245340!6m8!1m7!1sCAoSFkNJSE0wb2dLRUlDQWdJQ0VfdlBJS2c.!2m2!1d13.76751709804615!2d109.2307239886753!3f341.57406360660553!4f8.001507463638163!5f0.4000000000000002'
+  },
+  {
+    id: 'thanh-dia-la-vang',
+    name: 'Thánh địa La Vang',
+    city: 'Quảng Trị',
+    region: 'Miền Trung',
+    description: '',
+    coordinates: {
+      lat: 16.5433,
+      lng: 107.3333
+    },
+    googleMapsUrl: 'https://www.google.com/maps/embed?pb=!4v1747563401134!6m8!1m7!1sCAoSF0NJSE0wb2dLRUlDQWdJREVwYXFPN2dF!2m2!1d16.70625162542189!2d107.1954857184009!3f66.60204422834953!4f7.61032793814627!5f0.7820865974627469'
   },
 
   // Miền Bắc
