@@ -26,11 +26,7 @@ export class NotifyRepository {
       RETURNING *
     `;
 
-    return this.client.execute(query, [
-      type,
-      json_data || {},
-      userId,
-    ]);
+    return this.client.execute(query, [type, json_data || {}, userId]);
   }
 
   /**
@@ -41,7 +37,7 @@ export class NotifyRepository {
 
     // Build the SET part of the query dynamically based on provided fields
     let setClause = 'user_updated = $1';
-    const params = [userId];
+    const params: any[] = [userId];
     let paramIndex = 2;
 
     if (type !== undefined) {
@@ -112,10 +108,15 @@ export class NotifyRepository {
    * Get notifications with filtering
    */
   async getNotifications(filter: FilterNotifyDto, userId: number) {
-    const { page = 1, perPage = 10, sorts = ['created_at:desc'], filters = [] } = filter;
+    const {
+      page = 1,
+      perPage = 10,
+      sorts = ['created_at:desc'],
+      filters = [],
+    } = filter;
 
     let whereClause = 'user_created = $1';
-    const params = [userId];
+    const params: any[] = [userId];
     let paramIndex = 2;
 
     // Apply filters
@@ -123,12 +124,13 @@ export class NotifyRepository {
       for (const filter of filters) {
         if (filter.id === 'type' && filter.value) {
           whereClause += ` AND type = $${paramIndex}`;
-          params.push(filter.value);
+          params.push(filter.value.toString());
           paramIndex++;
         }
 
         if (filter.id === 'is_read' && filter.value !== undefined) {
-          const isRead = filter.value === 'true' || filter.value === true ? 'B\'1\'' : 'B\'0\'';
+          const isRead =
+            filter.value === 'true' || filter.value ? "B'1'" : "B'0'";
           whereClause += ` AND is_read = ${isRead}`;
         }
       }
@@ -137,7 +139,7 @@ export class NotifyRepository {
     // Build sort clause
     let sortClause = '';
     if (sorts && sorts.length > 0) {
-      const sortParts = sorts.map(sort => {
+      const sortParts = sorts.map((sort) => {
         const [field, direction] = sort.split(':');
         return `${field} ${direction.toUpperCase()}`;
       });

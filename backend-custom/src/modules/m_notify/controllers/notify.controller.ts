@@ -35,7 +35,7 @@ export class NotifyController {
     description: 'Creates a new notification with the provided data',
   })
   createNotification(@Body() dto: CreateNotifyDto, @Request() req: any) {
-    const userId = req.user?.id;
+    const userId = req.user?.user_id;
     return this.service.createNotification(dto, userId);
   }
 
@@ -46,7 +46,7 @@ export class NotifyController {
     description: 'Updates an existing notification with the provided data',
   })
   updateNotification(@Body() dto: UpdateNotifyDto, @Request() req: any) {
-    const userId = req.user?.id;
+    const userId = req.user?.user_id;
     return this.service.updateNotification(dto, userId);
   }
 
@@ -57,7 +57,7 @@ export class NotifyController {
     description: 'Deletes a notification by ID',
   })
   deleteNotification(@Body() dto: DeleteNotifyDto, @Request() req: any) {
-    const userId = req.user?.id;
+    const userId = req.user?.user_id;
     return this.service.deleteNotification(dto, userId);
   }
 
@@ -68,18 +68,18 @@ export class NotifyController {
     description: 'Marks a notification as read by ID',
   })
   markNotificationAsRead(@Body() dto: MarkReadNotifyDto, @Request() req: any) {
-    const userId = req.user?.id;
+    const userId = req.user?.user_id;
     return this.service.markNotificationAsRead(dto, userId);
   }
 
-  @Get('get')
+  @Post('get')
   @HttpCode(200)
   @ApiOperation({
     summary: 'Get a notification by ID',
     description: 'Retrieves a notification by ID',
   })
-  getNotification(@Query() dto: GetNotifyDto, @Request() req: any) {
-    const userId = req.user?.id;
+  getNotification(@Body() dto: GetNotifyDto, @Request() req: any) {
+    const userId = req.user?.user_id;
     return this.service.getNotification(dto, userId);
   }
 
@@ -90,7 +90,7 @@ export class NotifyController {
     description: 'Retrieves notifications with filtering, pagination, and sorting',
   })
   getNotifications(@Body() dto: FilterNotifyDto, @Request() req: any) {
-    const userId = req.user?.id;
+    const userId = req.user?.user_id;
     return this.service.getNotifications(dto, userId);
   }
 }
