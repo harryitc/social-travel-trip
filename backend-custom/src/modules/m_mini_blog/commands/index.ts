@@ -6,6 +6,10 @@ import { UpdateShareInfoCommandHandler } from './update-share-info.command';
 import { CreateShareLinkCommandHandler } from './create-share-link.command';
 import { DeleteShareLinkCommandHandler } from './delete-share-link.command';
 import { DeleteWithSharesCommandHandler } from './delete-with-shares.command';
+import { CreateMiniBlogCommentCommandHandler } from './create-mini-blog-comment.command';
+import { ReplyMiniBlogCommentCommandHandler } from './reply-mini-blog-comment.command';
+import { LikeMiniBlogCommandHandler } from './like-mini-blog.command';
+import { LikeMiniBlogCommentCommandHandler } from './like-mini-blog-comment.command';
 
 export const CommandHandlers = [
   CreateMiniBlogCommandHandler,
@@ -16,4 +20,8 @@ export const CommandHandlers = [
   CreateShareLinkCommandHandler,
   DeleteShareLinkCommandHandler,
   DeleteWithSharesCommandHandler,
+  CreateMiniBlogCommentCommandHandler,
+  ReplyMiniBlogCommentCommandHandler,
+  LikeMiniBlogCommandHandler,
+  LikeMiniBlogCommentCommandHandler,
 ];

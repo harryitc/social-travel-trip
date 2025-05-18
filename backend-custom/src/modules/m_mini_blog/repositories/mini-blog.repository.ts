@@ -10,6 +10,147 @@ export class MiniBlogRepository {
     private readonly client: PgSQLConnectionPool,
   ) {}
 
+  /**
+   * Get comments by mini blog ID
+   */
+  async getCommentsByMiniBlogId(miniBlogId: number) {
+    const query = `
+    SELECT
+      c.mini_blog_comment_id AS id,
+      c.message,
+      c.json_data,
+      c.user_id,
+      c.created_at,
+      COALESCE(
+        (
+          SELECT json_agg(
+            json_build_object(
+              'id', r.mini_blog_comment_id,
+              'message', r.message,
+              'json_data', r.json_data,
+              'user_id', r.user_id,
+              'created_at', r.created_at
+            ) ORDER BY r.created_at
+          )
+          FROM mini_blog_comments r
+          WHERE r.parent_id = c.mini_blog_comment_id
+        ), '[]'
+      ) AS replies
+    FROM mini_blog_comments c
+    WHERE c.mini_blog_id = $1 AND c.parent_id IS NULL
+    ORDER BY c.created_at DESC
+  `;
+    const params = [miniBlogId];
+    return this.client.execute(query, params);
+  }
+
+  /**
+   * Create a comment on a mini blog
+   */
+  async createComment(data: any, userId: number) {
+    const { miniBlogId, parentId, message, jsonData } = data;
+
+    const query = `
+    INSERT INTO mini_blog_comments (message, json_data, mini_blog_id, user_id, parent_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    RETURNING *
+  `;
+
+    const params = [message, jsonData, miniBlogId, userId, parentId ?? null];
+    return this.client.execute(query, params);
+  }
+
+  /**
+   * Reply to a comment on a mini blog
+   */
+  async replyComment(data: any, userId: number) {
+    const { miniBlogId, parentId, message, jsonData } = data;
+    const query = `
+    INSERT INTO mini_blog_comments (message, json_data, mini_blog_id, parent_id, user_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    RETURNING *
+  `;
+    return this.client.execute(query, [
+      message,
+      jsonData,
+      miniBlogId,
+      parentId,
+      userId,
+    ]);
+  }
+
+  /**
+   * Like a mini blog
+   */
+  async likeMiniBlog(data: any, userId: number) {
+    const { miniBlogId, reactionId } = data;
+
+    const query = `
+    INSERT INTO mini_blog_likes (mini_blog_id, user_id, reaction_id, created_at)
+    VALUES ($1, $2, $3, NOW())
+    ON CONFLICT (mini_blog_id, user_id)
+    DO UPDATE SET reaction_id = EXCLUDED.reaction_id, created_at = NOW()
+    RETURNING *
+  `;
+
+    return this.client.execute(query, [miniBlogId, userId, reactionId || 1]);
+  }
+
+  /**
+   * Like a comment on a mini blog
+   */
+  async likeComment(data: any, userId: number) {
+    const { commentId, reactionId } = data;
+
+    const query = `
+    INSERT INTO mini_blog_comment_likes (mini_blog_comment_id, user_id, reaction_id, created_at)
+    VALUES ($1, $2, $3, NOW())
+    ON CONFLICT (mini_blog_comment_id, user_id)
+    DO UPDATE SET reaction_id = EXCLUDED.reaction_id, created_at = NOW()
+    RETURNING *
+  `;
+
+    return this.client.execute(query, [commentId, userId, reactionId || 1]);
+  }
+
+  /**
+   * Get likes for a mini blog
+   */
+  async getLikesByMiniBlogId(miniBlogId: number) {
+    const query = `
+    SELECT reaction_id, COUNT(*) AS count
+    FROM mini_blog_likes
+    WHERE mini_blog_id = $1
+    GROUP BY reaction_id
+  `;
+    return this.client.execute(query, [miniBlogId]);
+  }
+
+  /**
+   * Get likes for a comment on a mini blog
+   */
+  async getLikesByCommentId(commentId: number) {
+    const query = `
+    SELECT reaction_id, COUNT(*) AS count
+    FROM mini_blog_comment_likes
+    WHERE mini_blog_comment_id = $1
+    GROUP BY reaction_id
+  `;
+    return this.client.execute(query, [commentId]);
+  }
+
+  /**
+   * Get a comment by ID
+   */
+  async getCommentById(commentId: number) {
+    const query = `
+    SELECT *
+    FROM mini_blog_comments
+    WHERE mini_blog_comment_id = $1
+  `;
+    return this.client.execute(query, [commentId]);
+  }
+
   async getMiniBlogList(filters = {}) {
     const params = [];
     const query = `

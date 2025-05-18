@@ -16,6 +16,9 @@ import { DeleteMiniBlogDTO } from '../dto/delete-mini-blog.dto';
 import { GetMiniBlogByIdDTO, GetMiniBlogDTO } from '../dto/get-mini-blog.dto';
 import { CreateShareLinkDTO, DeleteShareLinkDTO, GetSharesListDTO, ShareMiniBlogDTO, UpdateShareInfoDTO } from '../dto/share-mini-blog.dto';
 import { UpdateMiniBlogDTO } from '../dto/update-mini-blog.dto';
+import { CreateMiniBlogCommentDTO, ReplyMiniBlogCommentDTO } from '../dto/create-mini-blog-comment.dto';
+import { LikeMiniBlogCommentDTO, LikeMiniBlogDTO } from '../dto/like-mini-blog.dto';
+import { GetMiniBlogCommentLikesDTO, GetMiniBlogCommentsDTO, GetMiniBlogLikesDTO } from '../dto/get-mini-blog-comments.dto';
 
 @ApiBearerAuth('jwt') // ✅ Cho phép truyền JWT token
 @UseGuards(JwtAuthGuard) // ✅ Bảo vệ route
@@ -143,5 +146,84 @@ export class MiniBlogController {
   async deleteWithShares(@Body() deleteMiniBlogDTO: DeleteMiniBlogDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.deleteWithShares(deleteMiniBlogDTO, userId);
+  }
+
+  // Comment endpoints
+  @Post('comment/create')
+  @ApiOperation({
+    summary: 'Create a comment on a mini blog',
+    description: 'Add a comment to a mini blog or reply to another comment',
+  })
+  @HttpCode(201)
+  async createComment(@Body() createMiniBlogCommentDTO: CreateMiniBlogCommentDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.createComment(createMiniBlogCommentDTO, userId);
+  }
+
+  @Post('comment/reply')
+  @ApiOperation({
+    summary: 'Reply to a comment on a mini blog',
+    description: 'Add a reply to an existing comment on a mini blog',
+  })
+  @HttpCode(201)
+  async replyComment(@Body() replyMiniBlogCommentDTO: ReplyMiniBlogCommentDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.replyComment(replyMiniBlogCommentDTO, userId);
+  }
+
+  @Get('comments')
+  @ApiOperation({
+    summary: 'Get comments for a mini blog',
+    description: 'Get all comments for a mini blog, including replies',
+  })
+  async getComments(@Query('miniBlogId') miniBlogId: number, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    const dto: GetMiniBlogCommentsDTO = { miniBlogId: +miniBlogId };
+    return this.service.getCommentsByMiniBlogId(dto, userId);
+  }
+
+  // Like endpoints
+  @Post('like')
+  @ApiOperation({
+    summary: 'Like a mini blog',
+    description: 'Add a like or reaction to a mini blog',
+  })
+  @HttpCode(200)
+  async likeMiniBlog(@Body() likeMiniBlogDTO: LikeMiniBlogDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.likeMiniBlog(likeMiniBlogDTO, userId);
+  }
+
+  @Post('comment/like')
+  @ApiOperation({
+    summary: 'Like a comment on a mini blog',
+    description: 'Add a like or reaction to a comment on a mini blog',
+  })
+  @HttpCode(200)
+  async likeComment(@Body() likeMiniBlogCommentDTO: LikeMiniBlogCommentDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.likeComment(likeMiniBlogCommentDTO, userId);
+  }
+
+  @Get('likes')
+  @ApiOperation({
+    summary: 'Get likes for a mini blog',
+    description: 'Get all likes and reactions for a mini blog',
+  })
+  async getLikes(@Query('miniBlogId') miniBlogId: number, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    const dto: GetMiniBlogLikesDTO = { miniBlogId: +miniBlogId };
+    return this.service.getLikesByMiniBlogId(dto, userId);
+  }
+
+  @Get('comment/likes')
+  @ApiOperation({
+    summary: 'Get likes for a comment on a mini blog',
+    description: 'Get all likes and reactions for a comment on a mini blog',
+  })
+  async getCommentLikes(@Query('commentId') commentId: number, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    const dto: GetMiniBlogCommentLikesDTO = { commentId: +commentId };
+    return this.service.getLikesByCommentId(dto, userId);
   }
 }
