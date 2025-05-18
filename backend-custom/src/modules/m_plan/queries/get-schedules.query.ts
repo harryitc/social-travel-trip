@@ -6,7 +6,7 @@ import {
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { GetSchedulesDTO } from '../dto/get-schedules.dto';
-import { PlanSchedule } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class GetSchedulesQuery implements IQuery {
   constructor(
@@ -61,9 +61,7 @@ export class GetSchedulesQueryHandler
       this.repository.getSchedulesCount(dto.plan_day_place_id),
     ]);
 
-    const schedules = schedulesResult.rows.map(
-      (schedule) => new PlanSchedule(schedule),
-    );
+    const schedules = ModelMapper.toPlanSchedules(schedulesResult.rows);
     const total = parseInt(countResult.rows[0].count, 10);
     const page = dto.page || 1;
     const limit = dto.limit || 10;

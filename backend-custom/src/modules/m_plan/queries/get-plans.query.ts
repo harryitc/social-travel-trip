@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { GetPlansDTO } from '../dto/get-plans.dto';
-import { Plan } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class GetPlansQuery implements IQuery {
   constructor(
@@ -26,7 +26,7 @@ export class GetPlansQueryHandler implements IQueryHandler<GetPlansQuery> {
       this.repository.getPlansCount(dto, userId),
     ]);
 
-    const plans = plansResult.rows.map((plan) => new Plan(plan));
+    const plans = ModelMapper.toPlans(plansResult.rows);
     const total = parseInt(countResult.rows[0].count, 10);
     const page = dto.page || 1;
     const limit = dto.limit || 10;

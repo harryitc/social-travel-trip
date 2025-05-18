@@ -6,7 +6,7 @@ import {
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { CreateDayPlaceDTO } from '../dto/create-day-place.dto';
-import { PlanDayPlace } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class CreateDayPlaceCommand implements ICommand {
   constructor(
@@ -45,6 +45,6 @@ export class CreateDayPlaceCommandHandler
     // Create day place
     const result = await this.repository.createDayPlace(data);
 
-    return new PlanDayPlace(result.rows[0]);
+    return ModelMapper.toPlanDayPlace(result.rows[0]);
   }
 }

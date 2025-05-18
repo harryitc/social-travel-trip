@@ -2,7 +2,7 @@ import { Logger, NotFoundException } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { GetDayPlacesDTO } from '../dto/get-day-places.dto';
-import { PlanDayPlace, PlanSchedule } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class GetDayPlacesQuery implements IQuery {
   constructor(
@@ -49,9 +49,7 @@ export class GetDayPlacesQueryHandler
       };
     }
 
-    const dayPlaces = dayPlacesResult.rows.map(
-      (dayPlace) => new PlanDayPlace(dayPlace),
-    );
+    const dayPlaces = ModelMapper.toPlanDayPlaces(dayPlacesResult.rows);
 
     // Get schedules for each day place
     const dayPlacesWithSchedules = await Promise.all(
@@ -59,9 +57,7 @@ export class GetDayPlacesQueryHandler
         const schedulesResult = await this.repository.getPlanSchedules(
           dayPlace.plan_day_place_id,
         );
-        const schedules = schedulesResult.rows.map(
-          (schedule) => new PlanSchedule(schedule),
-        );
+        const schedules = ModelMapper.toPlanSchedules(schedulesResult.rows);
         return {
           ...dayPlace,
           schedules,

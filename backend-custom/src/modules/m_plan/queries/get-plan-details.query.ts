@@ -2,7 +2,7 @@ import { Logger, NotFoundException } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { GetPlanDetailsDTO } from '../dto/get-plan-details.dto';
-import { Plan, PlanDayPlace, PlanSchedule } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class GetPlanDetailsQuery implements IQuery {
   constructor(
@@ -29,7 +29,7 @@ export class GetPlanDetailsQueryHandler
       throw new NotFoundException(`Plan with ID ${dto.plan_id} not found`);
     }
 
-    const plan = new Plan(planResult.rows[0]);
+    const plan = ModelMapper.toPlan(planResult.rows[0]);
 
     // Check if user has access to this plan
     if (plan.status !== 'public' && plan.user_created !== userId) {
@@ -38,9 +38,7 @@ export class GetPlanDetailsQueryHandler
 
     // Get day places
     const dayPlacesResult = await this.repository.getPlanDayPlaces(dto.plan_id);
-    const dayPlaces = dayPlacesResult.rows.map(
-      (dayPlace) => new PlanDayPlace(dayPlace),
-    );
+    const dayPlaces = ModelMapper.toPlanDayPlaces(dayPlacesResult.rows);
 
     // Get schedules for each day place
     const dayPlacesWithSchedules = await Promise.all(
@@ -48,9 +46,7 @@ export class GetPlanDetailsQueryHandler
         const schedulesResult = await this.repository.getPlanSchedules(
           dayPlace.plan_day_place_id,
         );
-        const schedules = schedulesResult.rows.map(
-          (schedule) => new PlanSchedule(schedule),
-        );
+        const schedules = ModelMapper.toPlanSchedules(schedulesResult.rows);
         return {
           ...dayPlace,
           schedules,

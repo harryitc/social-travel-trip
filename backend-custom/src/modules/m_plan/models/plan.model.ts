@@ -9,13 +9,41 @@ export class Plan {
   user_created: number;
   created_at: Date;
   updated_at: Date;
+  group_count?: number;
 
-  constructor(data: Partial<Plan>) {
-    Object.assign(this, data);
-  }
+  constructor(data: any) {
+    this.plan_id = data.plan_id;
+    this.name = data.name;
+    this.description = data.description;
+    this.thumbnail_url = data.thumbnail_url;
 
-  static create(data: Partial<Plan>): Plan {
-    return new Plan(data);
+    // Parse JSON fields if they are strings
+    if (typeof data.json_data === 'string') {
+      try {
+        this.json_data = JSON.parse(data.json_data);
+      } catch (e) {
+        this.json_data = data.json_data || {};
+      }
+    } else {
+      this.json_data = data.json_data || {};
+    }
+
+    // Parse location if it's a string
+    if (typeof data.location === 'string') {
+      try {
+        this.location = JSON.parse(data.location);
+      } catch (e) {
+        this.location = data.location || {};
+      }
+    } else {
+      this.location = data.location || {};
+    }
+
+    this.status = data.status;
+    this.user_created = data.user_created;
+    this.created_at = data.created_at ? new Date(data.created_at) : null;
+    this.updated_at = data.updated_at ? new Date(data.updated_at) : null;
+    this.group_count = data.group_count;
   }
 }
 
@@ -26,12 +54,32 @@ export class PlanDayPlace {
   location: any; // Contains name, description, lat, lon
   plan_id: number;
 
-  constructor(data: Partial<PlanDayPlace>) {
-    Object.assign(this, data);
-  }
+  constructor(data: any) {
+    this.plan_day_place_id = data.plan_day_place_id;
+    this.ngay = data.ngay;
+    this.plan_id = data.plan_id;
 
-  static create(data: Partial<PlanDayPlace>): PlanDayPlace {
-    return new PlanDayPlace(data);
+    // Parse JSON fields if they are strings
+    if (typeof data.json_data === 'string') {
+      try {
+        this.json_data = JSON.parse(data.json_data);
+      } catch (e) {
+        this.json_data = data.json_data || {};
+      }
+    } else {
+      this.json_data = data.json_data || {};
+    }
+
+    // Parse location if it's a string
+    if (typeof data.location === 'string') {
+      try {
+        this.location = JSON.parse(data.location);
+      } catch (e) {
+        this.location = data.location || {};
+      }
+    } else {
+      this.location = data.location || {};
+    }
   }
 }
 
@@ -48,12 +96,38 @@ export class PlanSchedule {
   activity_id: number;
   plan_day_place_id: number;
 
-  constructor(data: Partial<PlanSchedule>) {
-    Object.assign(this, data);
-  }
+  constructor(data: any) {
+    this.plan_schedule_id = data.plan_schedule_id;
+    this.name = data.name;
+    this.description = data.description;
+    this.start_time = data.start_time ? new Date(data.start_time) : null;
+    this.end_time = data.end_time ? new Date(data.end_time) : null;
+    this.activity_id = data.activity_id;
+    this.plan_day_place_id = data.plan_day_place_id;
+    this.created_at = data.created_at ? new Date(data.created_at) : null;
+    this.updated_at = data.updated_at ? new Date(data.updated_at) : null;
 
-  static create(data: Partial<PlanSchedule>): PlanSchedule {
-    return new PlanSchedule(data);
+    // Parse JSON fields if they are strings
+    if (typeof data.json_data === 'string') {
+      try {
+        this.json_data = JSON.parse(data.json_data);
+      } catch (e) {
+        this.json_data = data.json_data || {};
+      }
+    } else {
+      this.json_data = data.json_data || {};
+    }
+
+    // Parse location if it's a string
+    if (typeof data.location === 'string') {
+      try {
+        this.location = JSON.parse(data.location);
+      } catch (e) {
+        this.location = data.location || {};
+      }
+    } else {
+      this.location = data.location || {};
+    }
   }
 }
 
@@ -65,11 +139,12 @@ export class PlanWithGroup {
   created_at: Date;
   updated_at: Date;
 
-  constructor(data: Partial<PlanWithGroup>) {
-    Object.assign(this, data);
-  }
-
-  static create(data: Partial<PlanWithGroup>): PlanWithGroup {
-    return new PlanWithGroup(data);
+  constructor(data: any) {
+    this.plan_with_group_id = data.plan_with_group_id;
+    this.plan_id = data.plan_id;
+    this.group_id = data.group_id;
+    this.user_created = data.user_created;
+    this.created_at = data.created_at ? new Date(data.created_at) : null;
+    this.updated_at = data.updated_at ? new Date(data.updated_at) : null;
   }
 }

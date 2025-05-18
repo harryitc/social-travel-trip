@@ -3,6 +3,7 @@ import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { CreatePlanDTO } from '../dto/create-plan.dto';
 import { Plan } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class CreatePlanCommand implements ICommand {
   constructor(
@@ -28,6 +29,6 @@ export class CreatePlanCommandHandler
       userId,
     );
 
-    return new Plan(result);
+    return ModelMapper.toPlan(result);
   }
 }

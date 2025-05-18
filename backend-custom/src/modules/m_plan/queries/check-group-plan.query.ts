@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { CheckGroupPlanDTO } from '../dto/check-group-plan.dto';
-import { Plan } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class CheckGroupPlanQuery implements IQuery {
   constructor(
@@ -34,7 +34,7 @@ export class CheckGroupPlanQueryHandler
 
     return {
       has_plan: true,
-      plan: new Plan(result.rows[0]),
+      plan: ModelMapper.toPlan(result.rows[0]),
     };
   }
 }

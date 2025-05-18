@@ -6,7 +6,7 @@ import {
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { PlanRepository } from '../repositories/plan.repository';
 import { CreateScheduleDTO } from '../dto/create-schedule.dto';
-import { PlanSchedule } from '../models/plan.model';
+import { ModelMapper } from '../utils/model-mapper.util';
 
 export class CreateScheduleCommand implements ICommand {
   constructor(
@@ -58,6 +58,6 @@ export class CreateScheduleCommandHandler
     // Create schedule
     const result = await this.repository.createSchedule(data);
 
-    return new PlanSchedule(result.rows[0]);
+    return ModelMapper.toPlanSchedule(result.rows[0]);
   }
 }
