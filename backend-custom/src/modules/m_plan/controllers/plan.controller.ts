@@ -14,6 +14,7 @@ import { UpdatePlanDTO } from '../dto/update-plan.dto';
 import { UpdatePlanBasicDTO } from '../dto/update-plan-basic.dto';
 import { UpdatePlanPlacesDTO } from '../dto/update-plan-places.dto';
 import { UpdatePlanSchedulesDTO } from '../dto/update-plan-schedules.dto';
+import { CreateDayPlaceDTO } from '../dto/create-day-place.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { GetPlanDetailsDTO } from '../dto/get-plan-details.dto';
 import { DeletePlanDTO } from '../dto/delete-plan.dto';
@@ -151,7 +152,7 @@ export class PlanController {
     return this.service.checkGroupPlan(dto, userId);
   }
 
-  @Post('day-places')
+  @Post('get-day-places')
   @ApiOperation({
     summary: 'Get day places',
     description: 'Get places for a specific day in a plan',
@@ -171,6 +172,17 @@ export class PlanController {
   async createSchedule(@Body() dto: CreateScheduleDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.createSchedule(dto, userId);
+  }
+
+  @Post('create-day-place')
+  @ApiOperation({
+    summary: 'Create a new day place',
+    description: 'Create a new day place for a specific day in a plan',
+  })
+  @HttpCode(201)
+  async createDayPlace(@Body() dto: CreateDayPlaceDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.createDayPlace(dto, userId);
   }
 
   @Post('get-schedules')

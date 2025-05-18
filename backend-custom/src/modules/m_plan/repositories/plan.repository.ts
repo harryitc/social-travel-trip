@@ -8,6 +8,7 @@ import { UpdatePlanDTO } from '../dto/update-plan.dto';
 import { UpdatePlanBasicDTO } from '../dto/update-plan-basic.dto';
 import { UpdatePlanPlacesDTO } from '../dto/update-plan-places.dto';
 import { UpdatePlanSchedulesDTO } from '../dto/update-plan-schedules.dto';
+import { CreateDayPlaceDTO } from '../dto/create-day-place.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { AddPlanToGroupDTO } from '../dto/add-plan-to-group.dto';
 import { removeVietnameseAccents } from '@common/utils/string-utils';
@@ -786,7 +787,7 @@ export class PlanRepository {
             continue; // Skip if day place doesn't belong to the plan
           }
 
-          let scheduleResult;
+          let scheduleResult: any;
 
           if (schedule.plan_schedule_id) {
             // Update existing schedule
@@ -843,5 +844,27 @@ export class PlanRepository {
 
       return updatedSchedules;
     });
+  }
+
+  // Create a new day place
+  async createDayPlace(data: any) {
+    const { plan_id, ngay, location, json_data = {} } = data;
+
+    const params = [
+      ngay,
+      JSON.stringify(json_data),
+      JSON.stringify(location),
+      plan_id
+    ];
+
+    const query = `
+      INSERT INTO plan_day_places (
+        ngay, json_data, location, plan_id
+      )
+      VALUES ($1, $2, $3, $4)
+      RETURNING *
+    `;
+
+    return this.client.execute(query, params);
   }
 }

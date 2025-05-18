@@ -5,6 +5,7 @@ import { UpdatePlanDTO } from '../dto/update-plan.dto';
 import { UpdatePlanBasicDTO } from '../dto/update-plan-basic.dto';
 import { UpdatePlanPlacesDTO } from '../dto/update-plan-places.dto';
 import { UpdatePlanSchedulesDTO } from '../dto/update-plan-schedules.dto';
+import { CreateDayPlaceDTO } from '../dto/create-day-place.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { GetPlanDetailsDTO } from '../dto/get-plan-details.dto';
 import { DeletePlanDTO } from '../dto/delete-plan.dto';
@@ -21,6 +22,7 @@ import { UpdatePlanSchedulesCommand } from '../commands/update-plan-schedules.co
 import { DeletePlanCommand } from '../commands/delete-plan.command';
 import { AddPlanToGroupCommand } from '../commands/add-plan-to-group.command';
 import { CreateScheduleCommand } from '../commands/create-schedule.command';
+import { CreateDayPlaceCommand } from '../commands/create-day-place.command';
 import { GetPlansQuery } from '../queries/get-plans.query';
 import { GetPlanDetailsQuery } from '../queries/get-plan-details.query';
 import { CheckGroupPlanQuery } from '../queries/check-group-plan.query';
@@ -92,6 +94,11 @@ export class PlanService {
   // Create a new schedule
   async createSchedule(dto: CreateScheduleDTO, userId: number) {
     return this.commandBus.execute(new CreateScheduleCommand(dto, userId));
+  }
+
+  // Create a new day place
+  async createDayPlace(dto: CreateDayPlaceDTO, userId: number) {
+    return this.commandBus.execute(new CreateDayPlaceCommand(dto, userId));
   }
 
   // Get schedules for a day place
