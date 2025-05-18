@@ -7,6 +7,7 @@ import { CreatePlanDTO } from '../dto/create-plan.dto';
 import { UpdatePlanDTO } from '../dto/update-plan.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { AddPlanToGroupDTO } from '../dto/add-plan-to-group.dto';
+import { removeVietnameseAccents } from '@common/utils/string-utils';
 
 @Injectable()
 export class PlanRepository {
@@ -21,6 +22,8 @@ export class PlanRepository {
     const offset = (page - 1) * limit;
     const params: any[] = [];
     let paramIndex = 1;
+
+    const textSlug = removeVietnameseAccents(search);
 
     let query = `
       SELECT
@@ -43,9 +46,9 @@ export class PlanRepository {
     }
 
     // Add search filter if provided
-    if (search) {
+    if (textSlug) {
       query += ` AND (p.name ILIKE $${paramIndex} OR p.json_data->>'name_khong_dau' ILIKE $${paramIndex})`;
-      params.push(`%${search}%`);
+      params.push(`%${textSlug}%`);
       paramIndex++;
     }
 
@@ -76,6 +79,8 @@ export class PlanRepository {
     const params: any[] = [];
     let paramIndex = 1;
 
+    const textSlug = removeVietnameseAccents(search);
+
     let query = `
       SELECT COUNT(*)
       FROM plans p
@@ -95,9 +100,9 @@ export class PlanRepository {
     }
 
     // Add search filter if provided
-    if (search) {
+    if (textSlug) {
       query += ` AND (p.name ILIKE $${paramIndex} OR p.json_data->>'name_khong_dau' ILIKE $${paramIndex})`;
-      params.push(`%${search}%`);
+      params.push(`%${textSlug}%`);
       paramIndex++;
     }
 
@@ -214,10 +219,7 @@ export class PlanRepository {
 
       // Add name_khong_dau to json_data if not provided
       if (!json_data.name_khong_dau) {
-        json_data.name_khong_dau = name
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '');
+        json_data.name_khong_dau = removeVietnameseAccents(name);
       }
 
       const planParams = [
@@ -276,6 +278,10 @@ export class PlanRepository {
     if (name !== undefined) {
       updateFields.push(`name = $${paramIndex}`);
       params.push(name);
+      paramIndex++;
+
+      updateFields.push(`json_data->>'name_khong_dau' = $${paramIndex}`);
+      params.push(removeVietnameseAccents(name));
       paramIndex++;
     }
 
@@ -344,6 +350,10 @@ export class PlanRepository {
         if (name !== undefined) {
           updateFields.push(`name = $${paramIndex}`);
           params.push(name);
+          paramIndex++;
+
+          updateFields.push(`json_data->>'name_khong_dau' = $${paramIndex}`);
+          params.push(removeVietnameseAccents(name));
           paramIndex++;
         }
 
