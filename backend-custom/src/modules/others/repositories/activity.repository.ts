@@ -3,6 +3,7 @@ import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configu
 import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool';
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 import { CreateActivityDto, QueryActivityDto, UpdateActivityDto } from '../dto/activity.dto';
+import { removeVietnameseAccents } from '@common/utils/string-utils';
 
 @Injectable()
 export class ActivityRepository {
@@ -107,9 +108,6 @@ export class ActivityRepository {
   }
 
   private generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^\w\s]/gi, '')
-      .replace(/\s+/g, '-');
+    return removeVietnameseAccents (name)
   }
 }
