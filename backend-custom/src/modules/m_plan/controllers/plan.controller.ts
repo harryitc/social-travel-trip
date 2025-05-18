@@ -152,6 +152,17 @@ export class PlanController {
     return this.service.checkGroupPlan(dto, userId);
   }
 
+  @Post('create-day-place')
+  @ApiOperation({
+    summary: 'Create a new day place',
+    description: 'Create a new day place for a specific day in a plan',
+  })
+  @HttpCode(201)
+  async createDayPlace(@Body() dto: CreateDayPlaceDTO, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.createDayPlace(dto, userId);
+  }
+
   @Post('get-day-places')
   @ApiOperation({
     summary: 'Get day places',
@@ -172,17 +183,6 @@ export class PlanController {
   async createSchedule(@Body() dto: CreateScheduleDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.createSchedule(dto, userId);
-  }
-
-  @Post('create-day-place')
-  @ApiOperation({
-    summary: 'Create a new day place',
-    description: 'Create a new day place for a specific day in a plan',
-  })
-  @HttpCode(201)
-  async createDayPlace(@Body() dto: CreateDayPlaceDTO, @Request() req: any) {
-    const userId = req['user']?.user_id ?? 'test';
-    return this.service.createDayPlace(dto, userId);
   }
 
   @Post('get-schedules')
