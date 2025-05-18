@@ -88,7 +88,7 @@ export class ProvinceRepository {
 
     return {
       data,
-      total: parseInt(count.rows[0].count),
+      total: count.rowCount,
     };
   }
 }

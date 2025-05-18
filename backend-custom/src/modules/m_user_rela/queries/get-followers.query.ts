@@ -34,7 +34,7 @@ export class GetFollowersQueryHandler
 
     // Get total count
     const countResult = await this.repository.countFollowers(targetUserId);
-    const total = parseInt(countResult.rows[0].total, 10);
+    const total = countResult.rowCount;
 
     // Map to model
     const followers = followersResult.rows.map((follower) => {

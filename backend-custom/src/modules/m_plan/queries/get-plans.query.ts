@@ -27,7 +27,7 @@ export class GetPlansQueryHandler implements IQueryHandler<GetPlansQuery> {
     ]);
 
     const plans = ModelMapper.toPlans(plansResult.rows);
-    const total = parseInt(countResult.rows[0].count, 10);
+    const total = countResult.rowCount;
     const page = dto.page || 1;
     const limit = dto.limit || 10;
 

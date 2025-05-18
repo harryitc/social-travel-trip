@@ -112,7 +112,7 @@ export class CategoryRepository {
 
     return {
       data,
-      total: parseInt(count.rows[0].count),
+      total: count.rowCount,
     };
   }
 

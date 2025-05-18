@@ -215,7 +215,7 @@ export class UserRepository {
 
     return {
       data: result.rows,
-      total: parseInt(countResult.rows[0].total),
+      total: countResult.rowCount,
       // page,
       // limit,
       // totalPages: Math.ceil(parseInt(countResult.rows[0].total) / limit),

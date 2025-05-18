@@ -35,13 +35,13 @@ export class GetGroupDetailsQueryHandler
 
     // Get member count
     const countResult = await this.repository.countGroupMembers(dto.group_id);
-    const memberCount = parseInt(countResult.rows[0].total, 10);
+    const memberCount = countResult.rowCount;
 
     // Get message count
     const messageCountResult = await this.repository.countMessages(
       dto.group_id,
     );
-    const messageCount = parseInt(messageCountResult.rows[0].total, 10);
+    const messageCount = messageCountResult.rowCount;
 
     // Map to model and add additional info
     const group = new Group(result.rows[0]);

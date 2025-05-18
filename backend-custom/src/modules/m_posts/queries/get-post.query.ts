@@ -38,7 +38,7 @@ export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
 
     const result = {
       list: queryResult.rows.map((item: any) => new Post(item)),
-      total: count.rows[0].count ?? 0,
+      total: count.rowCount ?? 0,
     };
 
     return result;
