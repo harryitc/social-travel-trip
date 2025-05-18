@@ -7,9 +7,16 @@ import { CommandHandlers } from './commands';
 import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
 import { GroupController } from './controllers/group.controller';
+import { NotifyModule } from '@modules/m_notify/notify.module';
+import { UserModule } from '@modules/user/user.module';
 
 @Module({
-  imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
+  imports: [
+    CqrsModule,
+    PostgresModule.forFeature(CONNECTION_STRING_DEFAULT),
+    NotifyModule, // Import NotifyModule to use NotificationEventsService
+    UserModule, // Import UserModule to get user details
+  ],
   controllers: [GroupController],
   providers: [
     GroupService,

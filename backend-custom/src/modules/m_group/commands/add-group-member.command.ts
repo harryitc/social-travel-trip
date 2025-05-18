@@ -8,6 +8,8 @@ import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
 import { GroupMember } from '../models/group.model';
+import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
+import { UserService } from '@modules/user/user.service';
 
 export class AddGroupMemberCommand implements ICommand {
   constructor(
@@ -22,7 +24,11 @@ export class AddGroupMemberCommandHandler
 {
   private readonly logger = new Logger(AddGroupMemberCommand.name);
 
-  constructor(private readonly repository: GroupRepository) {}
+  constructor(
+    private readonly repository: GroupRepository,
+    private readonly notificationService: NotificationEventsService,
+    private readonly userService: UserService,
+  ) {}
 
   async execute(command: AddGroupMemberCommand): Promise<any> {
     const { dto, adminUserId } = command;
@@ -67,6 +73,28 @@ export class AddGroupMemberCommandHandler
       role: dto.role || 'member',
       nickname: dto.nickname,
     });
+
+    try {
+      // Get group details for notification
+      const group = groupResult.rows[0];
+
+      // Get admin user details for notification
+      const adminUser = await this.userService.findById(adminUserId);
+
+      if (group && adminUser) {
+        // Send notification to the invited user
+        await this.notificationService.notifyGroupInvitation(
+          dto.user_id,
+          dto.group_id,
+          group.name,
+          adminUserId,
+          adminUser.full_name || adminUser.username || 'A user',
+        );
+      }
+    } catch (error) {
+      // Log error but don't fail the member addition if notification fails
+      this.logger.error(`Failed to create group invitation notification: ${error.message}`);
+    }
 
     return new GroupMember(result.rows[0]);
   }
