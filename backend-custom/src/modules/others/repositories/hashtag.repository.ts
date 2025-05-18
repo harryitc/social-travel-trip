@@ -3,6 +3,7 @@ import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configu
 import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool';
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 import { CreateHashtagDto, QueryHashtagDto, UpdateHashtagDto } from '../dto/hashtag.dto';
+import { removeVietnameseAccents } from '@common/utils/string-utils';
 
 @Injectable()
 export class HashtagRepository {
@@ -67,7 +68,7 @@ export class HashtagRepository {
     const query = `
       INSERT INTO hashtags (name, slug)
       VALUES ($1, $2)
-      ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name
+      ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, slug = EXCLUDED.slug
       RETURNING *
     `;
     return this.client.execute(query, [name, slug]);
@@ -107,9 +108,6 @@ export class HashtagRepository {
   }
 
   private generateSlug(name: string): string {
-    return name
-      .toLowerCase()
-      .replace(/[^\w\s]/gi, '')
-      .replace(/\s+/g, '-');
+   return removeVietnameseAccents (name) 
   }
 }
