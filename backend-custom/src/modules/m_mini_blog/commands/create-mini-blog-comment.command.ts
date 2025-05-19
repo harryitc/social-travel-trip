@@ -1,9 +1,16 @@
 import { Logger, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 
 import { MiniBlogRepository } from '../repositories/mini-blog.repository';
 import { CreateMiniBlogCommentDTO } from '../dto/create-mini-blog-comment.dto';
 import { UserService } from '@modules/user/user.service';
+import { MiniBlogCommentEvent } from '@modules/m_notify/events/mini-blog-comment.event';
+import { MiniBlogCommentReplyEvent } from '@modules/m_notify/events/mini-blog-comment-reply.event';
 
 export class CreateMiniBlogCommentCommand implements ICommand {
   constructor(
@@ -21,6 +28,7 @@ export class CreateMiniBlogCommentCommandHandler
   constructor(
     private readonly repository: MiniBlogRepository,
     private readonly userService: UserService,
+    private readonly eventBus: EventBus,
   ) {}
 
   execute = async (command: CreateMiniBlogCommentCommand): Promise<any> => {
@@ -75,8 +83,17 @@ export class CreateMiniBlogCommentCommandHandler
             const replier = await this.userService.findById(user_id);
 
             if (replier) {
-              // Notify comment owner about the reply
-
+              // Notify comment owner about the reply by publishing an event
+              await this.eventBus.publish(
+                new MiniBlogCommentReplyEvent(
+                  commentOwnerId,
+                  data.miniBlogId,
+                  data.parentId,
+                  createdComment.mini_blog_comment_id,
+                  user_id,
+                  replier.full_name || replier.username || 'A user',
+                ),
+              );
             }
           }
         }
@@ -92,8 +109,16 @@ export class CreateMiniBlogCommentCommandHandler
           const commenter = await this.userService.findById(user_id);
 
           if (commenter) {
-            // Notify mini blog owner about the comment
-          
+            // Notify mini blog owner about the comment by publishing an event
+            await this.eventBus.publish(
+              new MiniBlogCommentEvent(
+                miniBlogOwnerId,
+                data.miniBlogId,
+                createdComment.mini_blog_comment_id,
+                user_id,
+                commenter.full_name || commenter.username || 'A user',
+              ),
+            );
           }
         }
       }

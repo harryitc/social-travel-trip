@@ -1,9 +1,15 @@
 import { Logger, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 
 import { MiniBlogRepository } from '../repositories/mini-blog.repository';
 import { LikeMiniBlogDTO } from '../dto/like-mini-blog.dto';
 import { UserService } from '@modules/user/user.service';
+import { MiniBlogLikeEvent } from '@modules/m_notify/events/mini-blog-like.event';
 
 export class LikeMiniBlogCommand implements ICommand {
   constructor(
@@ -21,6 +27,7 @@ export class LikeMiniBlogCommandHandler
   constructor(
     private readonly repository: MiniBlogRepository,
     private readonly userService: UserService,
+    private readonly eventBus: EventBus,
   ) {}
 
   execute = async (command: LikeMiniBlogCommand): Promise<any> => {
@@ -51,8 +58,15 @@ export class LikeMiniBlogCommandHandler
         const liker = await this.userService.findById(userId);
 
         if (liker) {
-          // Notify mini blog owner about the like
-          
+          // Notify mini blog owner about the like by publishing an event
+          await this.eventBus.publish(
+            new MiniBlogLikeEvent(
+              miniBlogOwnerId,
+              data.miniBlogId,
+              userId,
+              liker.full_name || liker.username || 'A user',
+            ),
+          );
         }
       }
     } catch (error) {

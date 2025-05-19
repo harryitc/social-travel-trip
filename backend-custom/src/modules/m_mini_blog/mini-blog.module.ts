@@ -10,13 +10,15 @@ import { Repositories } from './repositories';
 import { NotifyModule } from '@modules/m_notify/notify.module';
 import { UserModule } from '@modules/user/user.module';
 import { MiniBlogRepository } from './repositories/mini-blog.repository';
+import { UserRelaModule } from '@modules/m_user_rela/user-rela.module';
 
 @Module({
   imports: [
     CqrsModule,
     PostgresModule.forFeature(CONNECTION_STRING_DEFAULT),
-    NotifyModule, // Import NotifyModule to use NotificationEventsService
+    NotifyModule, // Import NotifyModule to use event classes
     UserModule, // Import UserModule to get user details
+    UserRelaModule, // Import UserRelaModule to get user followers
   ],
   controllers: [MiniBlogController],
   providers: [
