@@ -42,12 +42,11 @@ export class CreatePostCommandHandler
     try {
       // Get user details for notification
       const postCreator = await this.userService.findById(user_id);
-      console.log('postCreator', postCreator);
+
       if (postCreator && createdPost) {
         // Get all followers of the post creator
         const followersResult =
           await this.userRelaService.getAllFollowers(user_id);
-        console.log('followersResult', followersResult);
 
         if (followersResult && followersResult.length > 0) {
           // Extract follower IDs
