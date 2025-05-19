@@ -12,9 +12,10 @@ type PinnedMessagesProps = {
   messages: Message[];
   onUnpin: (messageId: string) => void;
   onScrollToMessage: (messageId: string) => void;
+  isTablet?: boolean;
 };
 
-export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedMessagesProps) {
+export function PinnedMessages({ messages, onUnpin, onScrollToMessage, isTablet = false }: PinnedMessagesProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const pinnedMessages = messages.filter(message => message.pinned);
 
@@ -23,33 +24,33 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
   }
 
   return (
-    <Card className="sticky top-0 z-10 mb-4 border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 shadow-xs">
-      <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-medium flex items-center">
-          <Pin className="h-4 w-4 mr-2 text-purple-600" />
+    <Card className={`sticky top-0 z-10 ${isTablet ? 'mb-3' : 'mb-4'} border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 shadow-xs`}>
+      <CardHeader className={`${isTablet ? 'py-1.5 px-3' : 'py-2 px-4'} flex flex-row items-center justify-between`}>
+        <CardTitle className={`${isTablet ? 'text-xs' : 'text-sm'} font-medium flex items-center`}>
+          <Pin className={`${isTablet ? 'h-3 w-3 mr-1.5' : 'h-4 w-4 mr-2'} text-purple-600`} />
           Tin nhắn đã ghim ({pinnedMessages.length})
         </CardTitle>
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 w-8 p-0 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+          className={`${isTablet ? 'h-6 w-6' : 'h-8 w-8'} p-0 hover:bg-purple-100 dark:hover:bg-purple-900/20`}
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          {isExpanded ? <ChevronUp className={`${isTablet ? 'h-3 w-3' : 'h-4 w-4'}`} /> : <ChevronDown className={`${isTablet ? 'h-3 w-3' : 'h-4 w-4'}`} />}
         </Button>
       </CardHeader>
 
       {isExpanded && (
-        <CardContent className="py-2 px-4">
-          <ScrollArea className="max-h-40">
-            <div className="space-y-2">
+        <CardContent className={`${isTablet ? 'py-1.5 px-3' : 'py-2 px-4'}`}>
+          <ScrollArea className={`${isTablet ? 'max-h-32' : 'max-h-40'}`}>
+            <div className={`${isTablet ? 'space-y-1.5' : 'space-y-2'}`}>
               {pinnedMessages.map((message) => (
                 <div
                   key={message.id}
-                  className="flex items-start gap-2 p-2 rounded-md bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer transition-colors shadow-xs"
+                  className={`flex items-start ${isTablet ? 'gap-1.5 p-1.5' : 'gap-2 p-2'} rounded-md bg-white dark:bg-gray-900 border border-purple-100 dark:border-purple-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 cursor-pointer transition-colors shadow-xs`}
                   onClick={() => onScrollToMessage(message.id)}
                 >
-                  <Avatar className="h-7 w-7 border border-purple-100 dark:border-purple-800">
+                  <Avatar className={`${isTablet ? 'h-6 w-6' : 'h-7 w-7'} border border-purple-100 dark:border-purple-800`}>
                     <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
                     <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
                   </Avatar>
@@ -59,7 +60,7 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
                       <span className="text-xs font-medium">{message.sender.name}</span>
                       <span className="text-xs text-muted-foreground">{message.timestamp}</span>
                     </div>
-                    <p className="text-xs truncate">{message.content}</p>
+                    <p className="text-xs truncate message-content">{message.content}</p>
 
                     {message.attachments && message.attachments.length > 0 && (
                       <div className="flex items-center gap-1 mt-1">
@@ -73,14 +74,14 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-full"
+                    className={`${isTablet ? 'h-5 w-5' : 'h-6 w-6'} p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20 rounded-full`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onUnpin(message.id);
                     }}
                     title="Bỏ ghim"
                   >
-                    <Pin className="h-3 w-3 fill-current" />
+                    <Pin className={`${isTablet ? 'h-2.5 w-2.5' : 'h-3 w-3'} fill-current`} />
                   </Button>
                 </div>
               ))}

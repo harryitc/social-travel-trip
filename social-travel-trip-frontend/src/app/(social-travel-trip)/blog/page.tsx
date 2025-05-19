@@ -6,17 +6,17 @@ import TravelTimeline from "@/features/blog/travel-timeline";
 
 export default function BlogPage() {
   return (
-    <main className="min-h-screen flex flex-col">
-      <header className="bg-emerald-600 text-white p-6">
-        <div className="container mx-auto">
-          <div className="flex justify-between items-center">
+    <div className="w-full">
+      <header className="bg-emerald-600 text-white p-6 -mx-3 sm:-mx-4 md:-mx-6 lg:-mx-8 mb-6">
+        <div className="w-full max-w-[1600px] mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold">My Travel Blog</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">My Travel Blog</h1>
               <p className="text-emerald-100">
                 Khám phá những nơi tôi đã đến thăm
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 asChild
                 variant="outline"
@@ -51,24 +51,24 @@ export default function BlogPage() {
           </div>
         </div>
       </header>
-      <div className="flex-1 grid grid-cols-3 gap-4">
-        <div className="col-span-2 bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="p-4 border-b">
-            <h2 className="text-2xl font-semibold text-emerald-700">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+            <h2 className="text-xl sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-500">
               Bản đồ du lịch của tôi
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Nhấp vào các điểm đánh dấu để xem chi tiết về chuyến đi
             </p>
           </div>
-          <div className="h-[600px] w-full">
+          <div className="h-[500px] sm:h-[600px] w-full">
             <MapClient />
           </div>
         </div>
-        <div className="">
+        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-4">
           <TravelTimeline />
         </div>
       </div>
-    </main>
+    </div>
   );
 }

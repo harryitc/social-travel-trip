@@ -81,16 +81,19 @@ export function SidebarNav() {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 left-4 z-40 lg:hidden"
+        onClick={() => setIsOpen(true)}
+        className={cn(
+          "fixed top-4 right-4 z-40 sm:flex md:hidden lg:hidden items-center justify-center h-10 w-10 rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm hover:bg-white dark:hover:bg-gray-900",
+          isOpen ? "hidden" : "flex"
+        )}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        <Menu className="h-6 w-6" />
       </Button>
 
       <div
         className={cn(
-          "bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-r border-purple-100 dark:border-purple-900 h-full w-72 transition-transform duration-300 ease-in-out lg:translate-x-0",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          "fixed inset-y-0 left-0 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-r border-purple-100 dark:border-purple-900 h-full w-72 sm:w-80 transition-transform duration-300 ease-in-out lg:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full md:-translate-x-full lg:translate-x-0"
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-purple-100 dark:border-purple-900">
@@ -102,6 +105,16 @@ export function SidebarNav() {
               TripTribe
             </span>
           </Link>
+
+          {/* Nút đóng sidebar ở góc phải - chỉ hiển thị khi sidebar mở và ở chế độ mobile */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsOpen(false)}
+            className="sm:flex md:hidden lg:hidden items-center justify-center h-8 w-8 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
 
         <div className="flex flex-col h-[calc(100vh-4rem)] justify-between">
