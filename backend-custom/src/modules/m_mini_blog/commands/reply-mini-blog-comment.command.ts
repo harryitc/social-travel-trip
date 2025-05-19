@@ -3,7 +3,6 @@ import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
 import { MiniBlogRepository } from '../repositories/mini-blog.repository';
 import { ReplyMiniBlogCommentDTO } from '../dto/create-mini-blog-comment.dto';
-import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
 import { UserService } from '@modules/user/user.service';
 
 export class ReplyMiniBlogCommentCommand implements ICommand {
@@ -21,7 +20,6 @@ export class ReplyMiniBlogCommentCommandHandler
 
   constructor(
     private readonly repository: MiniBlogRepository,
-    private readonly notificationService: NotificationEventsService,
     private readonly userService: UserService,
   ) {}
 
@@ -64,14 +62,7 @@ export class ReplyMiniBlogCommentCommandHandler
 
         if (replier) {
           // Notify comment owner about the reply
-          await this.notificationService.notifyCommentReply(
-            commentOwnerId,
-            data.miniBlogId,
-            data.parentId,
-            createdReply.mini_blog_comment_id,
-            user_id,
-            replier.full_name || replier.username || 'A user',
-          );
+         
         }
       }
     } catch (error) {
