@@ -65,7 +65,7 @@ export class UserRelaRepository {
 
   // Get followers list with pagination
   async getFollowers(dto: GetFollowersDto, currentUserId: number) {
-    const userId = dto.user_id || currentUserId;
+    const userId = currentUserId;
     const page = dto.page || 1;
     const limit = dto.limit || 10;
     const offset = (page - 1) * limit;
@@ -95,7 +95,7 @@ export class UserRelaRepository {
 
   // Get following list with pagination
   async getFollowing(dto: GetFollowingDto, currentUserId: number) {
-    const userId = dto.user_id || currentUserId;
+    const userId = currentUserId;
     const page = dto.page || 1;
     const limit = dto.limit || 10;
     const offset = (page - 1) * limit;

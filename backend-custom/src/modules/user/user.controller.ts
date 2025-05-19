@@ -35,7 +35,7 @@ export class UserController {
   @ApiOperation({ summary: 'Get user details' })
   async getUserDetails(@Body() dto: GetUserDTO, @Request() req: any) {
     const userId = req['user']?.user_id;
-    return this.service.getUserDetails(dto, userId);
+    return this.service.getUserDetails(dto, +userId);
   }
 
   @Post('update')
@@ -44,7 +44,7 @@ export class UserController {
   @ApiOperation({ summary: 'Update user information' })
   async updateUser(@Body() dto: UpdateUserDTO, @Request() req: any) {
     const userId = req['user']?.user_id;
-    return this.service.updateUser(dto, userId);
+    return this.service.updateUser(dto, +userId);
   }
 
   @Post('change-password')
@@ -53,7 +53,7 @@ export class UserController {
   @ApiOperation({ summary: 'Change user password' })
   async changePassword(@Body() dto: ChangePasswordDTO, @Request() req: any) {
     const userId = req['user']?.user_id;
-    return this.service.changePassword(dto, userId);
+    return this.service.changePassword(dto, +userId);
   }
 
   @Post('search')
@@ -62,7 +62,7 @@ export class UserController {
   @ApiOperation({ summary: 'Search for users' })
   async searchUsers(@Body() dto: SearchUserDTO, @Request() req: any) {
     const userId = req['user']?.user_id;
-    return this.service.searchUsers(dto, userId);
+    return this.service.searchUsers(dto, +userId);
   }
 
   @Post('delete')
@@ -71,6 +71,6 @@ export class UserController {
   @ApiOperation({ summary: 'Delete user account' })
   async deleteUser(@Body() dto: DeleteUserDTO, @Request() req: any) {
     const userId = req['user']?.user_id;
-    return this.service.deleteUser(dto, userId);
+    return this.service.deleteUser(dto, +userId);
   }
 }

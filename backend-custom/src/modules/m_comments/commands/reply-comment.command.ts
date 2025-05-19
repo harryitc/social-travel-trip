@@ -7,7 +7,7 @@ import { ReplyCommentDTO } from '../dto/reply-comment.dto';
 export class ReplyCommentCommand implements ICommand {
   constructor(
     public readonly data: ReplyCommentDTO,
-    public readonly user_id: string,
+    public readonly user_id: number,
   ) {}
 }
 

@@ -9,9 +9,6 @@ import { UnfollowUserCommand } from '../commands/unfollow-user.command';
 import { GetFollowersQuery } from '../queries/get-followers.query';
 import { GetFollowingQuery } from '../queries/get-following.query';
 import { CheckFollowStatusQuery } from '../queries/check-follow-status.query';
-import { UserRelaRepository } from '../repositories/user-rela.repository';
-import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configuration';
-import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 import { GetAllFollowersQuery } from '../queries/get-all-followers.query';
 
 @Injectable()
@@ -19,8 +16,6 @@ export class UserRelaService {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
-    @PgSQLConnection(CONNECTION_STRING_DEFAULT)
-    private readonly repository: UserRelaRepository,
   ) {}
 
   // Follow a user
@@ -43,10 +38,8 @@ export class UserRelaService {
     return this.queryBus.execute(new GetFollowingQuery(dto, userId));
   }
 
-  // Get all followers of a user (for internal use by other modules)
+  // Get all followers of a user
   async getAllFollowers(userId: number) {
-    // This is for internal use by other modules
-    // It's not exposed via the controller
     return this.queryBus.execute(new GetAllFollowersQuery(userId));
   }
 

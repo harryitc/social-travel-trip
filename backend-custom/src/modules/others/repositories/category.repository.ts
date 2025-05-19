@@ -21,7 +21,7 @@ export class CategoryRepository {
     const finalSlug = slug || this.generateSlug(name);
 
     const query = `
-      INSERT INTO catetory (name, slug)
+      INSERT INTO categories (name, slug)
       VALUES ($1, $2)
       RETURNING *
     `;
@@ -33,7 +33,7 @@ export class CategoryRepository {
     const finalSlug = slug || this.generateSlug(name);
 
     const query = `
-      UPDATE catetory
+      UPDATE categories
       SET name = $1, slug = $2
       WHERE category_id = $3
       RETURNING *
@@ -43,7 +43,7 @@ export class CategoryRepository {
 
   async delete(categoryId: number) {
     const query = `
-      DELETE FROM catetory
+      DELETE FROM categories
       WHERE category_id = $1
       RETURNING *
     `;
@@ -52,7 +52,7 @@ export class CategoryRepository {
 
   async findById(categoryId: number) {
     const query = `
-      SELECT * FROM catetory
+      SELECT * FROM categories
       WHERE category_id = $1
     `;
     return this.client.execute(query, [categoryId]);
@@ -60,7 +60,7 @@ export class CategoryRepository {
 
   async findByName(name: string) {
     const query = `
-      SELECT * FROM catetory
+      SELECT * FROM categories
       WHERE name = $1
     `;
     return this.client.execute(query, [name]);
@@ -70,7 +70,7 @@ export class CategoryRepository {
     const slug = this.generateSlug(name);
 
     const query = `
-      INSERT INTO catetory (name, slug)
+      INSERT INTO categories (name, slug)
       VALUES ($1, $2)
       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
       RETURNING *
@@ -85,7 +85,7 @@ export class CategoryRepository {
     const textSlug = this.generateSlug(search);
 
     let query = `
-      SELECT * FROM catetory
+      SELECT * FROM categories
     `;
 
     const params = [];
@@ -112,7 +112,7 @@ export class CategoryRepository {
 
     return {
       data,
-      total: parseInt(count.rows[0].count),
+      total: count.rowCount,
     };
   }
 

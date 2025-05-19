@@ -28,8 +28,11 @@ export class CheckFollowStatusQueryHandler
     }
 
     // Check follow status
-    const result = await this.repository.checkFollowStatus(userId, dto.following_id);
-    
+    const result = await this.repository.checkFollowStatus(
+      userId,
+      dto.following_id,
+    );
+
     return {
       isFollowing: result.rowCount > 0,
     };

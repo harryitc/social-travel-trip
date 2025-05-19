@@ -45,7 +45,7 @@ export class GetMessagesQueryHandler
 
     // Get total count
     const countResult = await this.repository.countMessages(dto.group_id);
-    const total = parseInt(countResult.rows[0].total, 10);
+    const total = countResult.rowCount;
 
     // Add user's like status to each message and map to model
     const messages = messagesResult.rows.map((message) => {

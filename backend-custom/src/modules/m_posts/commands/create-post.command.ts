@@ -1,11 +1,16 @@
 import { Logger } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 
 import { PostRepository } from '../repositories/post.repository';
 import { CreatePostDTO } from '../dto/create-post.dto';
-import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
 import { UserService } from '@modules/user/user.service';
 import { UserRelaService } from '@modules/m_user_rela/services/user-rela.service';
+import { NewPostFromFollowingEvent } from '@modules/m_notify/events/new-post-from-following.event';
 
 export class CreatePostCommand implements ICommand {
   constructor(
@@ -22,7 +27,7 @@ export class CreatePostCommandHandler
 
   constructor(
     private readonly repository: PostRepository,
-    private readonly notificationService: NotificationEventsService,
+    private readonly eventBus: EventBus,
     private readonly userService: UserService,
     private readonly userRelaService: UserRelaService,
   ) {}
@@ -37,28 +42,26 @@ export class CreatePostCommandHandler
     try {
       // Get user details for notification
       const postCreator = await this.userService.findById(user_id);
-      console.log ("postCreator", postCreator);
+
       if (postCreator && createdPost) {
         // Get all followers of the post creator
         const followersResult =
           await this.userRelaService.getAllFollowers(user_id);
-          console.log ("followersResult", followersResult);
 
-        if (
-          followersResult &&
-          followersResult.length > 0
-        ) {
+        if (followersResult && followersResult.length > 0) {
           // Extract follower IDs
           const followerIds = followersResult.map(
             (follower) => follower.user_id,
           );
 
-          // Notify all followers about the new post
-          await this.notificationService.notifyNewPostFromFollowing(
-            followerIds,
-            createdPost.post_id,
-            user_id,
-            postCreator.full_name || postCreator.username || 'A user',
+          // Notify all followers about the new post by publishing an event
+          await this.eventBus.publish(
+            new NewPostFromFollowingEvent(
+              followerIds,
+              createdPost.post_id,
+              user_id,
+              postCreator.full_name || postCreator.username || 'A user',
+            ),
           );
         }
       }

@@ -78,7 +78,7 @@ export class ReactionRepository {
     
     return {
       data,
-      total: parseInt(count.rows[0].count),
+      total: count.rowCount,
     };
   }
 }

@@ -1,10 +1,13 @@
 health
+auth/login
+auth/register
 user/register
 user/details
 user/update
 user/change-password
 user/search
 user/delete
+<<<<<<< HEAD
 provinces/create
 provinces/update
 provinces/delete
@@ -39,6 +42,8 @@ reactions/get-by-id
 reactions/query
 auth/login
 auth/register
+=======
+>>>>>>> cuong-f-updated
 cak/file-v2/get-list
 cak/file-v2/upload
 cak/file-v2/download
@@ -80,6 +85,7 @@ group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
 group/messages/get-pinned
+<<<<<<< HEAD
 mini-blog/create
 mini-blog/query
 mini-blog/get-by-id
@@ -98,5 +104,51 @@ mini-blog/like
 mini-blog/comment/like
 mini-blog/likes
 mini-blog/comment/likes
+=======
+plan/query
+plan/details
+plan/create
+plan/update
+plan/update-basic
+plan/update-places
+plan/update-schedules
+plan/delete
+plan/add-to-group
+plan/check-group-plan
+plan/create-day-place
+plan/get-day-places
+plan/create-schedule
+plan/get-schedules
+>>>>>>> cuong-f-updated
 log/get-list
 log/clear
+provinces/create
+provinces/update
+provinces/delete
+provinces/get-by-id
+provinces/query
+cities/create
+cities/update
+cities/delete
+cities/get-by-id
+cities/query
+hashtags/create
+hashtags/update
+hashtags/delete
+hashtags/get-by-id
+hashtags/query
+activities/create
+activities/update
+activities/delete
+activities/get-by-id
+activities/query
+categories/create
+categories/update
+categories/delete
+categories/get-by-id
+categories/query
+reactions/create
+reactions/update
+reactions/delete
+reactions/get-by-id
+reactions/query

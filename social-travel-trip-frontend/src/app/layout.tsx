@@ -36,10 +36,10 @@ export default function RootLayout({
         <ClerkProviders>
           <AntdProviderLayout>
             <div className="flex min-h-screen">
-              <div className="fixed inset-y-0 z-50 w-64 hidden lg:block">
+              <div className="fixed inset-y-0 z-50 w-72 hidden lg:block">
                 <SidebarNav />
               </div>
-              <div className="flex-1 lg:pl-64">
+              <div className="flex-1 lg:pl-72">
                 <TopbarNav />
                 <main className="px-4 sm:px-6 md:px-8 py-6">
                   {children}

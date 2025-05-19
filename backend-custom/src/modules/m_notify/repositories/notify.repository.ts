@@ -170,7 +170,7 @@ export class NotifyRepository {
 
     return {
       data: dataResult.rows,
-      total: parseInt(countResult.rows[0].total),
+      total: countResult.rowCount,
       page,
       perPage,
     };

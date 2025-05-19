@@ -1,4 +1,8 @@
-import { Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  Logger,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { GetGroupMembersDto } from '../dto/get-group-members.dto';
@@ -39,7 +43,7 @@ export class GetGroupMembersQueryHandler
 
     // Get total count
     const countResult = await this.repository.countGroupMembers(dto.group_id);
-    const total = parseInt(countResult.rows[0].total, 10);
+    const total = countResult.rowCount;
 
     // Map to model
     const members = result.rows.map((member) => new GroupMember(member));

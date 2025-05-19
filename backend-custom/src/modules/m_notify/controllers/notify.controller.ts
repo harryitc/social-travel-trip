@@ -3,10 +3,6 @@ import {
   UseGuards,
   Post,
   Body,
-  Get,
-  Put,
-  Delete,
-  Query,
   Request,
   HttpCode,
 } from '@nestjs/common';
@@ -36,7 +32,7 @@ export class NotifyController {
   })
   createNotification(@Body() dto: CreateNotifyDto, @Request() req: any) {
     const userId = req.user?.user_id;
-    return this.service.createNotification(dto, userId);
+    return this.service.createNotification(dto, +userId);
   }
 
   @Post('update')
@@ -47,7 +43,7 @@ export class NotifyController {
   })
   updateNotification(@Body() dto: UpdateNotifyDto, @Request() req: any) {
     const userId = req.user?.user_id;
-    return this.service.updateNotification(dto, userId);
+    return this.service.updateNotification(dto, +userId);
   }
 
   @Post('delete')
@@ -58,7 +54,7 @@ export class NotifyController {
   })
   deleteNotification(@Body() dto: DeleteNotifyDto, @Request() req: any) {
     const userId = req.user?.user_id;
-    return this.service.deleteNotification(dto, userId);
+    return this.service.deleteNotification(dto, +userId);
   }
 
   @Post('mark-read')
@@ -69,7 +65,7 @@ export class NotifyController {
   })
   markNotificationAsRead(@Body() dto: MarkReadNotifyDto, @Request() req: any) {
     const userId = req.user?.user_id;
-    return this.service.markNotificationAsRead(dto, userId);
+    return this.service.markNotificationAsRead(dto, +userId);
   }
 
   @Post('get')
@@ -80,17 +76,18 @@ export class NotifyController {
   })
   getNotification(@Body() dto: GetNotifyDto, @Request() req: any) {
     const userId = req.user?.user_id;
-    return this.service.getNotification(dto, userId);
+    return this.service.getNotification(dto, +userId);
   }
 
   @Post('query')
   @HttpCode(200)
   @ApiOperation({
     summary: 'Get notifications with filtering',
-    description: 'Retrieves notifications with filtering, pagination, and sorting',
+    description:
+      'Retrieves notifications with filtering, pagination, and sorting',
   })
   getNotifications(@Body() dto: FilterNotifyDto, @Request() req: any) {
     const userId = req.user?.user_id;
-    return this.service.getNotifications(dto, userId);
+    return this.service.getNotifications(dto, +userId);
   }
 }

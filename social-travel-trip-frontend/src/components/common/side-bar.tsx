@@ -89,7 +89,7 @@ export function SidebarNav() {
 
       <div
         className={cn(
-          "bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-r border-purple-100 dark:border-purple-900 h-full w-64 transition-transform duration-300 ease-in-out lg:translate-x-0",
+          "bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl border-r border-purple-100 dark:border-purple-900 h-full w-72 transition-transform duration-300 ease-in-out lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
       >

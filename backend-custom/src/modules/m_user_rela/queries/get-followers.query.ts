@@ -21,7 +21,7 @@ export class GetFollowersQueryHandler
 
   async execute(query: GetFollowersQuery): Promise<any> {
     const { dto, userId } = query;
-    const targetUserId = dto.user_id || userId;
+    const targetUserId = userId;
 
     // Check if user exists
     const userExists = await this.repository.checkUserExists(targetUserId);
@@ -34,7 +34,7 @@ export class GetFollowersQueryHandler
 
     // Get total count
     const countResult = await this.repository.countFollowers(targetUserId);
-    const total = parseInt(countResult.rows[0].total, 10);
+    const total = countResult.rowCount;
 
     // Map to model
     const followers = followersResult.rows.map((follower) => {

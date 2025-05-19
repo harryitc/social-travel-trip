@@ -4,12 +4,12 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommand, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
 import { GroupMember } from '../models/group.model';
-import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
 import { UserService } from '@modules/user/user.service';
+import { GroupInvitationEvent } from '@modules/m_notify/events/group-invitation.event';
 
 export class AddGroupMemberCommand implements ICommand {
   constructor(
@@ -26,7 +26,7 @@ export class AddGroupMemberCommandHandler
 
   constructor(
     private readonly repository: GroupRepository,
-    private readonly notificationService: NotificationEventsService,
+    private readonly eventBus: EventBus,
     private readonly userService: UserService,
   ) {}
 
@@ -82,13 +82,15 @@ export class AddGroupMemberCommandHandler
       const adminUser = await this.userService.findById(adminUserId);
 
       if (group && adminUser) {
-        // Send notification to the invited user
-        await this.notificationService.notifyGroupInvitation(
-          dto.user_id,
-          dto.group_id,
-          group.name,
-          adminUserId,
-          adminUser.full_name || adminUser.username || 'A user',
+        // Send notification to the invited user by publishing an event
+        await this.eventBus.publish(
+          new GroupInvitationEvent(
+            dto.user_id,
+            dto.group_id,
+            group.name,
+            adminUserId,
+            adminUser.full_name || adminUser.username || 'A user',
+          )
         );
       }
     } catch (error) {

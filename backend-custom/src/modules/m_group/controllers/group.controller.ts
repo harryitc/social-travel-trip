@@ -34,50 +34,50 @@ export class GroupController {
   @Get('get-list')
   @ApiOperation({ summary: 'Get list groups' })
   async getListGroups(@Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getListGroups(userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getListGroups(+userId);
   }
 
   @Post('get-details')
   @ApiOperation({ summary: 'Get group details' })
   async getGroupDetails(@Body() dto: GetGroupDetailsDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getGroupDetails(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getGroupDetails(dto, +userId);
   }
 
   @Post('update')
   @ApiOperation({ summary: 'Update group information' })
   async updateGroup(@Body() dto: UpdateGroupDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.updateGroup(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.updateGroup(dto, +userId);
   }
 
   @Post('create')
   @ApiOperation({ summary: 'Create a new group' })
   async createGroup(@Body() dto: CreateGroupDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.createGroup(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.createGroup(dto, +userId);
   }
 
   @Post('add-member')
   @ApiOperation({ summary: 'Add a member to group' })
   async addMember(@Body() dto: AddGroupMemberDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.addMember(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.addMember(dto, +userId);
   }
 
   @Post('get-members')
   @ApiOperation({ summary: 'Get members of a group with pagination' })
   async getGroupMembers(@Body() dto: GetGroupMembersDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getGroupMembers(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getGroupMembers(dto, +userId);
   }
 
   @Post('kick-member')
   @ApiOperation({ summary: 'Kick a member from group' })
   async kickMember(@Body() dto: KickGroupMemberDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.kickGroupMember(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.kickGroupMember(dto, +userId);
   }
 
   @Post('update-member-role')
@@ -86,36 +86,36 @@ export class GroupController {
     @Body() dto: UpdateMemberRoleDto,
     @Request() req: any,
   ) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.updateMemberRole(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.updateMemberRole(dto, +userId);
   }
 
   @Post('send-message')
   @ApiOperation({ summary: 'Send a message to group' })
   async sendMessage(@Body() dto: SendMessageDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.sendMessage(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.sendMessage(dto, +userId);
   }
 
   @Post('get-messages')
   @ApiOperation({ summary: 'Get messages from group with pagination' })
   async getMessages(@Body() dto: GetMessagesDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getMessages(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getMessages(dto, +userId);
   }
 
   @Post('messages/like')
   @ApiOperation({ summary: 'Toggle like on a message' })
   async toggleLike(@Body() dto: ToggleMessageLikeDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.toggleLike(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.toggleLike(dto, +userId);
   }
 
   @Post('messages/add-pin')
   @ApiOperation({ summary: 'Add pin to a message' })
   async addMessagePin(@Body() dto: AddMessagePinDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.addMessagePin(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.addMessagePin(dto, +userId);
   }
 
   @Post('messages/remove-pin')
@@ -124,8 +124,8 @@ export class GroupController {
     @Body() dto: RemoveMessagePinDto,
     @Request() req: any,
   ) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.removeMessagePin(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.removeMessagePin(dto, +userId);
   }
 
   @Post('messages/get-reactions')
@@ -134,8 +134,8 @@ export class GroupController {
     @Body() dto: GetMessageReactionsDto,
     @Request() req: any,
   ) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getMessageReactions(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getMessageReactions(dto, +userId);
   }
 
   @Post('messages/get-pinned')
@@ -144,7 +144,7 @@ export class GroupController {
     @Body() dto: GetPinnedMessagesDto,
     @Request() req: any,
   ) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getPinnedMessages(dto.group_id, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getPinnedMessages(dto.group_id, +userId);
   }
 }
