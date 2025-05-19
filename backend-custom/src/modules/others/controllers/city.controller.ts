@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Body,
+  Get,
   UseGuards,
   Request,
   HttpCode,
@@ -9,13 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { CityService } from '../services/city.service';
-import {
-  CreateCityDto,
-  DeleteCityDto,
-  GetCityDto,
-  QueryCityDto,
-  UpdateCityDto,
-} from '../dto/city.dto';
+import { CreateCityDto, DeleteCityDto, GetCityDto, QueryCityDto, UpdateCityDto } from '../dto/city.dto';
 
 @ApiTags('Cities')
 @ApiBearerAuth('jwt')

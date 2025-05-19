@@ -3,7 +3,6 @@ import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configu
 import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool';
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
 import { CreateCityDto, QueryCityDto, UpdateCityDto } from '../dto/city.dto';
-import { removeVietnameseAccents } from '@common/utils/string-utils';
 
 @Injectable()
 export class CityRepository {
@@ -24,36 +23,36 @@ export class CityRepository {
 
   async update(data: UpdateCityDto) {
     const { city_id, name, province_id } = data;
-
+    
     let query = `
       UPDATE cities
       SET 
     `;
-
+    
     const params = [];
     let paramIndex = 1;
     const updates = [];
-
+    
     if (name !== undefined) {
       updates.push(`name = $${paramIndex}`);
       params.push(name);
       paramIndex++;
     }
-
+    
     if (province_id !== undefined) {
       updates.push(`province_id = $${paramIndex}`);
       params.push(province_id);
       paramIndex++;
     }
-
+    
     if (updates.length === 0) {
       return { rowCount: 0, rows: [] };
     }
-
+    
     query += updates.join(', ');
     query += ` WHERE city_id = $${paramIndex} RETURNING *`;
     params.push(city_id);
-
+    
     return this.client.execute(query, params);
   }
 
@@ -79,51 +78,46 @@ export class CityRepository {
   async findAll(queryDto: QueryCityDto) {
     const { page = 1, limit = 10, search, province_id } = queryDto;
     const offset = (page - 1) * limit;
-
-    const textSlug = removeVietnameseAccents(search);
-
+    
     let query = `
       SELECT c.*, p.name as province_name
       FROM cities c
       LEFT JOIN provinces p ON c.province_id = p.province_id
     `;
-
+    
     const params = [];
     let paramIndex = 1;
     const conditions = [];
-
-    if (textSlug) {
+    
+    if (search) {
       conditions.push(`c.name ILIKE $${paramIndex}`);
-      params.push(`%${textSlug}%`);
+      params.push(`%${search}%`);
       paramIndex++;
     }
-
+    
     if (province_id) {
       conditions.push(`c.province_id = $${paramIndex}`);
       params.push(province_id);
       paramIndex++;
     }
-
+    
     if (conditions.length > 0) {
       query += ` WHERE ${conditions.join(' AND ')}`;
     }
-
+    
     // Add count query
     const countQuery = `SELECT COUNT(*) FROM (${query}) AS count_query`;
-
+    
     // Add pagination
     query += ` ORDER BY c.city_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
-
+    
     const data = await this.client.execute(query, params);
-    const count = await this.client.execute(
-      countQuery,
-      params.slice(0, paramIndex - 1),
-    );
-
+    const count = await this.client.execute(countQuery, params.slice(0, paramIndex - 1));
+    
     return {
       data,
-      total: count.rowCount,
+      total: parseInt(count.rows[0].count),
     };
   }
 }

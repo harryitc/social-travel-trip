@@ -2,12 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CONNECTION_STRING_DEFAULT } from '@configs/databases/postgresql/configuration';
 import { PgSQLConnectionPool } from '@libs/persistent/postgresql/connection-pool';
 import { PgSQLConnection } from '@libs/persistent/postgresql/postgresql.utils';
-import {
-  CreateReactionDto,
-  QueryReactionDto,
-  UpdateReactionDto,
-} from '../dto/reaction.dto';
-import { removeVietnameseAccents } from '@common/utils/string-utils';
+import { CreateReactionDto, QueryReactionDto, UpdateReactionDto } from '../dto/reaction.dto';
 
 @Injectable()
 export class ReactionRepository {
@@ -57,35 +52,30 @@ export class ReactionRepository {
   async findAll(queryDto: QueryReactionDto) {
     const { page = 1, limit = 10, search } = queryDto;
     const offset = (page - 1) * limit;
-
-    const textSlug = removeVietnameseAccents(search);
-
+    
     let query = `
       SELECT * FROM reactions
     `;
-
+    
     const params = [];
     let paramIndex = 1;
-
-    if (textSlug) {
+    
+    if (search) {
       query += ` WHERE name ILIKE $${paramIndex}`;
-      params.push(`%${textSlug}%`);
+      params.push(`%${search}%`);
       paramIndex++;
     }
-
+    
     // Add count query
     const countQuery = `SELECT COUNT(*) FROM (${query}) AS count_query`;
-
+    
     // Add pagination
     query += ` ORDER BY reaction_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
-
+    
     const data = await this.client.execute(query, params);
-    const count = await this.client.execute(
-      countQuery,
-      params.slice(0, paramIndex - 1),
-    );
-
+    const count = await this.client.execute(countQuery, params.slice(0, paramIndex - 1));
+    
     return {
       data,
       total: parseInt(count.rows[0].count),

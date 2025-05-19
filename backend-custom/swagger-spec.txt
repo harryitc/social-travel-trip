@@ -21,11 +21,13 @@ hashtags/delete
 hashtags/get-by-id
 hashtags/query
 activities/create
+activities/create-if-not-exists
 activities/update
 activities/delete
 activities/get-by-id
 activities/query
 categories/create
+categories/create-if-not-exists
 categories/update
 categories/delete
 categories/get-by-id

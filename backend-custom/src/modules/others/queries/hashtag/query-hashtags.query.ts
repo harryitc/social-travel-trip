@@ -24,9 +24,9 @@ export class QueryHashtagsQueryHandler
 
     // Query hashtags with pagination
     const result = await this.repository.findAll(dto);
-
+    
     return {
-      data: result.data.rows.map((row) => new Hashtag(row)),
+      data: result.data.rows.map(row => new Hashtag(row)),
       total: result.total,
       page: dto.page || 1,
       limit: dto.limit || 10,
