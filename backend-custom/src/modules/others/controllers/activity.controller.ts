@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Body,
+  Get,
   UseGuards,
   Request,
   HttpCode,
@@ -9,13 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { ActivityService } from '../services/activity.service';
-import {
-  CreateIfNotExistsActivityDto,
-  DeleteActivityDto,
-  GetActivityDto,
-  QueryActivityDto,
-  UpdateActivityDto,
-} from '../dto/activity.dto';
+import { CreateActivityDto, CreateIfNotExistsActivityDto, DeleteActivityDto, GetActivityDto, QueryActivityDto, UpdateActivityDto } from '../dto/activity.dto';
 
 @ApiTags('Activities')
 @ApiBearerAuth('jwt')
@@ -25,6 +20,13 @@ export class ActivityController {
   constructor(private readonly service: ActivityService) {}
 
   @Post('create')
+  @ApiOperation({ summary: 'Create a new activity' })
+  async create(@Body() dto: CreateActivityDto, @Request() req: any) {
+    const userId: number = req['user']?.user_id ?? 'test';
+    return this.service.create(dto, userId);
+  }
+
+  @Post('create-if-not-exists')
   @ApiOperation({ summary: 'Create an activity if it does not exist' })
   async createIfNotExists(
     @Body() dto: CreateIfNotExistsActivityDto,

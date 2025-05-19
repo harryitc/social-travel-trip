@@ -7,9 +7,17 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands';
 import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
+import { NotifyModule } from '@modules/m_notify/notify.module';
+import { UserModule } from '@modules/user/user.module';
+import { MiniBlogRepository } from './repositories/mini-blog.repository';
 
 @Module({
-  imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
+  imports: [
+    CqrsModule,
+    PostgresModule.forFeature(CONNECTION_STRING_DEFAULT),
+    NotifyModule, // Import NotifyModule to use NotificationEventsService
+    UserModule, // Import UserModule to get user details
+  ],
   controllers: [MiniBlogController],
   providers: [
     MiniBlogService,
@@ -19,5 +27,6 @@ import { Repositories } from './repositories';
 
     ...Repositories,
   ],
+  exports: [MiniBlogService, MiniBlogRepository],
 })
 export class MiniBlogModule {}

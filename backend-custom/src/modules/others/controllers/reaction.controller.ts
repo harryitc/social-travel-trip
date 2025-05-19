@@ -9,13 +9,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { ReactionService } from '../services/reaction.service';
-import {
-  CreateReactionDto,
-  DeleteReactionDto,
-  GetReactionDto,
-  QueryReactionDto,
-  UpdateReactionDto,
-} from '../dto/reaction.dto';
+import { CreateReactionDto, DeleteReactionDto, GetReactionDto, QueryReactionDto, UpdateReactionDto } from '../dto/reaction.dto';
 
 @ApiTags('Reactions')
 @ApiBearerAuth('jwt')
