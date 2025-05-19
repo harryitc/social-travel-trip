@@ -358,4 +358,30 @@ export class MiniBlogRepository {
       [miniBlogId],
     );
   }
+
+  /**
+   * Get likes for a mini blog with reaction details
+   */
+  async getLikesByMiniBlogIdWithReactions(miniBlogId: number) {
+    const query = `
+    SELECT reaction_id, COUNT(*) AS count
+    FROM mini_blog_likes
+    WHERE mini_blog_id = $1 AND reaction_id > 1
+    GROUP BY reaction_id
+    `;
+    return this.client.execute(query, [miniBlogId]);
+  }
+
+  /**
+   * Get likes for a comment on a mini blog with reaction details
+   */
+  async getLikesByCommentIdWithReactions(commentId: number) {
+    const query = `
+    SELECT reaction_id, COUNT(*) AS count
+    FROM mini_blog_comment_likes
+    WHERE mini_blog_comment_id = $1 AND reaction_id > 1
+    GROUP BY reaction_id
+    `;
+    return this.client.execute(query, [commentId]);
+  }
 }

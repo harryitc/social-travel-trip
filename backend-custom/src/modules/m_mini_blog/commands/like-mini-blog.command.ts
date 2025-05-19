@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
 import { MiniBlogRepository } from '../repositories/mini-blog.repository';
@@ -28,39 +28,68 @@ export class LikeMiniBlogCommandHandler
   execute = async (command: LikeMiniBlogCommand): Promise<any> => {
     const { data, userId } = command;
 
+    // Check if mini blog exists
+    const miniBlogResult = await this.repository.getMiniBlogById(
+      data.miniBlogId,
+    );
+    if (!miniBlogResult || miniBlogResult.rowCount === 0) {
+      throw new NotFoundException(
+        `Mini blog with ID ${data.miniBlogId} not found`,
+      );
+    }
+
     // Like the mini blog
     const insertResult = await this.repository.likeMiniBlog(data, userId);
     const likeResult = insertResult.rows[0];
 
     try {
-      // Get the mini blog to find the owner
-      const miniBlogResult = await this.repository.getMiniBlogById(data.miniBlogId);
+      // We already have the mini blog from the check above
+      const miniBlog = miniBlogResult.rows[0];
+      const miniBlogOwnerId = miniBlog.user_id;
 
-      if (miniBlogResult && miniBlogResult.rows && miniBlogResult.rows.length > 0) {
-        const miniBlog = miniBlogResult.rows[0];
-        const miniBlogOwnerId = miniBlog.user_id;
+      // Don't notify if the user is liking their own mini blog
+      if (miniBlogOwnerId !== userId) {
+        // Get user details for notification
+        const liker = await this.userService.findById(userId);
 
-        // Don't notify if the user is liking their own mini blog
-        if (miniBlogOwnerId !== userId) {
-          // Get user details for notification
-          const liker = await this.userService.findById(userId);
-
-          if (liker) {
-            // Notify mini blog owner about the like
-            await this.notificationService.notifyPostLike(
-              miniBlogOwnerId,
-              data.miniBlogId,
-              userId,
-              liker.full_name || liker.username || 'A user',
-            );
-          }
+        if (liker) {
+          // Notify mini blog owner about the like
+          await this.notificationService.notifyPostLike(
+            miniBlogOwnerId,
+            data.miniBlogId,
+            userId,
+            liker.full_name || liker.username || 'A user',
+          );
         }
       }
     } catch (error) {
       // Log error but don't fail the like operation if notification fails
-      this.logger.error(`Failed to create mini blog like notification: ${error.message}`);
+      this.logger.error(
+        `Failed to create mini blog like notification: ${error.message}`,
+      );
     }
 
-    return Promise.resolve(likeResult);
+    // Get reaction statistics for the mini blog
+    const reactionStats =
+      await this.repository.getLikesByMiniBlogIdWithReactions(data.miniBlogId);
+
+    // Get total likes (including default likes with reaction_id = 1)
+    const totalLikesResult = await this.repository.getLikesByMiniBlogId(
+      data.miniBlogId,
+    );
+
+    // Calculate total likes across all reaction types
+    const total =
+      totalLikesResult.rowCount > 0
+        ? totalLikesResult.rows.reduce((sum, row) => sum + Number(row.count), 0)
+        : 0;
+
+    return {
+      like: likeResult,
+      stats: {
+        total,
+        reactions: reactionStats.rows || [],
+      },
+    };
   };
 }

@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
 import { MiniBlogRepository } from '../repositories/mini-blog.repository';
@@ -27,6 +27,28 @@ export class CreateMiniBlogCommentCommandHandler
 
   execute = async (command: CreateMiniBlogCommentCommand): Promise<any> => {
     const { data, user_id } = command;
+
+    // Check if mini blog exists
+    const miniBlogResult = await this.repository.getMiniBlogById(
+      data.miniBlogId,
+    );
+    if (!miniBlogResult || miniBlogResult.rowCount === 0) {
+      throw new NotFoundException(
+        `Mini blog with ID ${data.miniBlogId} not found`,
+      );
+    }
+
+    // Check if parent comment exists if parentId is provided
+    if (data.parentId) {
+      const parentCommentResult = await this.repository.getCommentById(
+        data.parentId,
+      );
+      if (!parentCommentResult || parentCommentResult.rowCount === 0) {
+        throw new NotFoundException(
+          `Parent comment with ID ${data.parentId} not found`,
+        );
+      }
+    }
 
     // Create comment
     const insertResult = await this.repository.createComment(data, user_id);
@@ -69,34 +91,32 @@ export class CreateMiniBlogCommentCommandHandler
         }
       } else {
         // This is a comment on a mini blog
-        // Get the mini blog to find the owner
-        const miniBlogResult = await this.repository.getMiniBlogById(data.miniBlogId);
+        // We already verified the mini blog exists above
+        const miniBlog = miniBlogResult.rows[0];
+        const miniBlogOwnerId = miniBlog.user_id;
 
-        if (miniBlogResult && miniBlogResult.rows && miniBlogResult.rows.length > 0) {
-          const miniBlog = miniBlogResult.rows[0];
-          const miniBlogOwnerId = miniBlog.user_id;
+        // Don't notify if the user is commenting on their own mini blog
+        if (miniBlogOwnerId !== user_id) {
+          // Get user details for notification
+          const commenter = await this.userService.findById(user_id);
 
-          // Don't notify if the user is commenting on their own mini blog
-          if (miniBlogOwnerId !== user_id) {
-            // Get user details for notification
-            const commenter = await this.userService.findById(user_id);
-
-            if (commenter) {
-              // Notify mini blog owner about the comment
-              await this.notificationService.notifyPostComment(
-                miniBlogOwnerId,
-                data.miniBlogId,
-                createdComment.mini_blog_comment_id,
-                user_id,
-                commenter.full_name || commenter.username || 'A user',
-              );
-            }
+          if (commenter) {
+            // Notify mini blog owner about the comment
+            await this.notificationService.notifyPostComment(
+              miniBlogOwnerId,
+              data.miniBlogId,
+              createdComment.mini_blog_comment_id,
+              user_id,
+              commenter.full_name || commenter.username || 'A user',
+            );
           }
         }
       }
     } catch (error) {
       // Log error but don't fail the comment creation if notification fails
-      this.logger.error(`Failed to create comment notification: ${error.message}`);
+      this.logger.error(
+        `Failed to create comment notification: ${error.message}`,
+      );
     }
 
     return Promise.resolve(createdComment);
