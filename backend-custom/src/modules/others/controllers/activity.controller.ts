@@ -28,18 +28,12 @@ export class ActivityController {
 
   @Post('create-if-not-exists')
   @ApiOperation({ summary: 'Create an activity if it does not exist' })
-<<<<<<< HEAD
-  async createIfNotExists(@Body() dto: CreateIfNotExistsActivityDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.createIfNotExists(dto, userId);
-=======
   async createIfNotExists(
     @Body() dto: CreateIfNotExistsActivityDto,
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.createIfNotExists(dto, +userId);
->>>>>>> cuong-f-updated
   }
 
   @Post('update')
