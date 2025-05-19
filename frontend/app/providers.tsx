@@ -7,13 +7,13 @@ import { viVN } from '@clerk/localizations';
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider 
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      localization={viVN}
-    >
       <ThemeProvider attribute="class" defaultTheme="light">
         {children}
       </ThemeProvider>
-    </ClerkProvider>
+    // <ClerkProvider 
+    //   publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    //   localization={viVN}
+    // >
+    // </ClerkProvider>
   );
 }

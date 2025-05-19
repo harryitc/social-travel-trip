@@ -12,30 +12,6 @@ import { notification } from "antd";
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const { getToken } = useAuth();
-
-  const getUser = async () => {
-    try {
-      const token = await getToken();
-      if(!token) {
-        notification.warning({
-          message: `Cảnh báo: Không có token`,
-          description: `Chưa đăng nhập!`,
-        });
-      }else {
-        await getHello({}, token);
-      }
-    } catch (err: any) {
-      notification.error({
-        message: `Lỗi: ${err.status}: ${err.code}`,
-        description: `${err.message}`,
-      });
-    }
-  };
-
-  useEffect(() => {
-    getUser();
-  }, []);
 
   return (
     <div className="container mx-auto">

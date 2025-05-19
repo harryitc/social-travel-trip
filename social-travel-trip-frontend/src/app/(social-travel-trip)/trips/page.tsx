@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/radix-
 import { SearchTrips } from "@/features/trips/search-trips";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
 
 export default function TripsPage() {

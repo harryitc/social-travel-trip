@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useUser } from '@clerk/nextjs';
 import { SendIcon, Heart, Reply, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,7 +27,10 @@ type CommentType = {
 };
 
 export function PostComment() {
-  const { user } = useUser();
+  const user = {
+    fullName: 'Đức Anh',
+    imageUrl: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+  };
   const [comment, setComment] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [replyingToName, setReplyingToName] = useState<string | null>(null);

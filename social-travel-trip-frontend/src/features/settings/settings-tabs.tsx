@@ -8,13 +8,12 @@ import { Textarea } from '@/components/ui/radix-ui/textarea';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Switch } from '@/components/ui/radix-ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
-import { useUser } from '@clerk/nextjs';
 import { useState } from 'react';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import { X } from 'lucide-react';
 
 export function SettingsTabs() {
-  const { user } = useUser();
+  const user: any = null;
   const [bio, setBio] = useState('Người yêu thích du lịch và khám phá văn hóa.');
   const [interests, setInterests] = useState<string[]>(['DuLich', 'Bien', 'PhuQuoc', 'Camping']);
   const [notifications, setNotifications] = useState({

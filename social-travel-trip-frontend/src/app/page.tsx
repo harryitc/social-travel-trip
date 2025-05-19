@@ -5,7 +5,6 @@ import { TrendingDestinations } from "@/features/explore/trending-destinations";
 import { UpcomingTrips } from "@/features/trips/upcoming-trips";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { PageHeader } from "@/components/ui/page-header";
 import { getHello } from "@/features/home/abc.service";
 import { App } from "antd";
@@ -13,34 +12,7 @@ import { catchError, map, Observable, of, switchMap, tap } from "rxjs";
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const { getToken } = useAuth();
   const { notification } = App.useApp();
-
-  useEffect(() => {
-    const subscription = of(null).pipe(
-      tap(() => {
-        console.log("Component calling GetToken")
-      }),
-      switchMap(() => getToken()),
-      tap(() => {
-        console.log("Component calling GetHello")
-      }),
-      switchMap((token) => getHello({}, token)),
-      map(res => {
-        return res;
-      }),
-      catchError(err => {
-        console.log("err = ", err);
-        notification.error({
-          message: "Lỗi",
-          description: err.message,
-        });
-        return [];
-      })
-    ).subscribe();
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   return (
     <>

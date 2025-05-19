@@ -127,7 +127,7 @@ export function SidebarNav() {
           </ScrollArea>
 
           <div className="p-4 border-t border-purple-100 dark:border-purple-900">
-            <UserProfile />
+            {/* <UserProfile /> */}
             <div className="mt-4 flex justify-end">
               <ModeToggle />
             </div>

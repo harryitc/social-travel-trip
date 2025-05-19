@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/radix-ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Image as ImageIcon, MapPin, MessageCircle, XIcon, AtSign, Hash } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/radix-ui/command';
@@ -17,7 +16,7 @@ type PostCreatorProps = {
 };
 
 export function PostCreator({ onPostCreated }: PostCreatorProps) {
-  const { user } = useUser();
+  const user:any = null;
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [hashtags, setHashtags] = useState<string[]>([]);

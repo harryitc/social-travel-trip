@@ -1,7 +1,6 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { ThemeProvider } from 'next-themes';
 import { ClerkProvider } from '@clerk/nextjs';
 import { viVN } from '@clerk/localizations';
 
@@ -11,9 +10,7 @@ export function ClerkProviders({ children }: { children: ReactNode }) {
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       localization={viVN}
     >
-      <ThemeProvider attribute="class" defaultTheme="light">
         {children}
-      </ThemeProvider>
     </ClerkProvider>
   );
 }

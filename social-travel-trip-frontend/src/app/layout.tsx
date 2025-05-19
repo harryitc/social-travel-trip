@@ -24,6 +24,7 @@ export const metadata: Metadata = {
 
 import 'dayjs/locale/vi';
 import AntdProviderLayout from "@/lib/providers/antd.provider";
+import { ThemeProvider } from "next-themes";
 
 export default function RootLayout({
   children,
@@ -33,8 +34,8 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 min-h-screen`}>
-        <ClerkProviders>
-          <AntdProviderLayout>
+        <AntdProviderLayout>
+          <ThemeProvider attribute="class" defaultTheme="light">
             <div className="flex min-h-screen">
               <div className="fixed inset-y-0 z-50 w-72 hidden lg:block">
                 <SidebarNav />
@@ -46,8 +47,9 @@ export default function RootLayout({
                 </main>
               </div>
             </div>
-          </AntdProviderLayout>
-          {/* <ConfigProvider theme={{
+          </ThemeProvider>
+        </AntdProviderLayout>
+        {/* <ConfigProvider theme={{
             inherit: true,
           }} locale={viVN}>
             <App >
@@ -55,8 +57,7 @@ export default function RootLayout({
             </App>
             <Toaster />
           </ConfigProvider> */}
-          <Toaster />
-        </ClerkProviders>
+        <Toaster />
       </body>
     </html>
   );
