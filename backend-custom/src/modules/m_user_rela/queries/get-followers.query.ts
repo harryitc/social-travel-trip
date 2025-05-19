@@ -21,7 +21,7 @@ export class GetFollowersQueryHandler
 
   async execute(query: GetFollowersQuery): Promise<any> {
     const { dto, userId } = query;
-    const targetUserId = dto.user_id || userId;
+    const targetUserId = userId;
 
     // Check if user exists
     const userExists = await this.repository.checkUserExists(targetUserId);

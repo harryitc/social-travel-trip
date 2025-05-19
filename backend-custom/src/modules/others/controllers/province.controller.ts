@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Body,
-  Get,
   UseGuards,
   Request,
   HttpCode,
@@ -28,37 +27,37 @@ export class ProvinceController {
   @Post('create')
   @ApiOperation({ summary: 'Create a new province' })
   async create(@Body() dto: CreateProvinceDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.create(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.create(dto, +userId);
   }
 
   @Post('update')
   @ApiOperation({ summary: 'Update a province' })
   async update(@Body() dto: UpdateProvinceDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.update(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.update(dto, +userId);
   }
 
   @Post('delete')
   @ApiOperation({ summary: 'Delete a province' })
   async delete(@Body() dto: DeleteProvinceDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.delete(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.delete(dto, +userId);
   }
 
   @Post('get-by-id')
   @ApiOperation({ summary: 'Get province by ID' })
   @HttpCode(200)
   async getById(@Body() dto: GetProvinceDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getById(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getById(dto, +userId);
   }
 
   @Post('query')
   @ApiOperation({ summary: 'Query provinces with pagination' })
   @HttpCode(200)
   async query(@Body() dto: QueryProvinceDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.query(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.query(dto, +userId);
   }
 }

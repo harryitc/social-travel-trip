@@ -5,7 +5,6 @@ import {
   Body,
   Request,
   Get,
-  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UserRelaService } from '../services/user-rela.service';
@@ -25,29 +24,29 @@ export class UserRelaController {
   @Post('follow')
   @ApiOperation({ summary: 'Follow a user' })
   async followUser(@Body() dto: FollowUserDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.followUser(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.followUser(dto, +userId);
   }
 
   @Post('unfollow')
   @ApiOperation({ summary: 'Unfollow a user' })
   async unfollowUser(@Body() dto: FollowUserDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.unfollowUser(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.unfollowUser(dto, +userId);
   }
 
   @Post('get-followers')
   @ApiOperation({ summary: 'Get followers list with pagination' })
   async getFollowers(@Body() dto: GetFollowersDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getFollowers(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getFollowers(dto, +userId);
   }
 
   @Post('get-following')
   @ApiOperation({ summary: 'Get following list with pagination' })
   async getFollowing(@Body() dto: GetFollowingDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getFollowing(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getFollowing(dto, +userId);
   }
 
   @Post('check-follow-status')
@@ -56,14 +55,14 @@ export class UserRelaController {
     @Body() dto: CheckFollowStatusDto,
     @Request() req: any,
   ) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.checkFollowStatus(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.checkFollowStatus(dto, +userId);
   }
 
   @Get('all-followers')
   @ApiOperation({ summary: 'Get all followers of a user without pagination' })
-  async getAllFollowers(@Query('userId') userId: string) {
-    const result = await this.service.getAllFollowers(+userId);
-    return result.rows;
+  async getAllFollowers(@Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getAllFollowers(+userId);
   }
 }

@@ -32,7 +32,7 @@ export class CommentController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.createComment(createCommentDTO, userId);
+    return this.service.createComment(createCommentDTO, +userId);
   }
 
   @Get('get')
@@ -42,7 +42,7 @@ export class CommentController {
   })
   async getPostComments(@Query('postId') postId: string, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getComments(+postId, userId);
+    return this.service.getComments(+postId, +userId);
   }
 
   @Post('like')
@@ -56,7 +56,7 @@ export class CommentController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.likeComment(likeCommentDTO, userId);
+    return this.service.likeComment(likeCommentDTO, +userId);
   }
 
   @Get('get-likes')
@@ -69,6 +69,6 @@ export class CommentController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getLikesComment(+commentId, userId);
+    return this.service.getLikesComment(+commentId, +userId);
   }
 }

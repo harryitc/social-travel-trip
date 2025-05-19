@@ -26,8 +26,6 @@ import { UserModule } from '@modules/user/user.module';
 
     ...Repositories,
   ],
-  exports: [
-    UserRelaService,
-  ]
+  exports: [UserRelaService],
 })
 export class UserRelaModule {}

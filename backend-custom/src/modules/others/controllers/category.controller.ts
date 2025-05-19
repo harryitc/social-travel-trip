@@ -10,7 +10,6 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { CategoryService } from '../services/category.service';
 import {
-  CreateCategoryDto,
   CreateIfNotExistsCategoryDto,
   DeleteCategoryDto,
   GetCategoryDto,
@@ -31,37 +30,37 @@ export class CategoryController {
     @Body() dto: CreateIfNotExistsCategoryDto,
     @Request() req: any,
   ) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.createIfNotExists(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.createIfNotExists(dto, +userId);
   }
 
   @Post('update')
   @ApiOperation({ summary: 'Update a category' })
   async update(@Body() dto: UpdateCategoryDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.update(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.update(dto, +userId);
   }
 
   @Post('delete')
   @ApiOperation({ summary: 'Delete a category' })
   async delete(@Body() dto: DeleteCategoryDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.delete(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.delete(dto, +userId);
   }
 
   @Post('get-by-id')
   @ApiOperation({ summary: 'Get category by ID' })
   @HttpCode(200)
   async getById(@Body() dto: GetCategoryDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getById(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getById(dto, +userId);
   }
 
   @Post('query')
   @ApiOperation({ summary: 'Query categories with pagination' })
   @HttpCode(200)
   async query(@Body() dto: QueryCategoryDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.query(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.query(dto, +userId);
   }
 }

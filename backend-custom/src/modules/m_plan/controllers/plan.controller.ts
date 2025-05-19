@@ -39,7 +39,7 @@ export class PlanController {
   @HttpCode(200)
   async getPlans(@Body() dto: GetPlansDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getPlans(dto, userId);
+    return this.service.getPlans(dto, +userId);
   }
 
   @Post('details')
@@ -51,7 +51,7 @@ export class PlanController {
   @HttpCode(200)
   async getPlanDetails(@Body() dto: GetPlanDetailsDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getPlanDetails(dto, userId);
+    return this.service.getPlanDetails(dto, +userId);
   }
 
   @Post('create')
@@ -62,7 +62,7 @@ export class PlanController {
   @HttpCode(201)
   async createPlan(@Body() dto: CreatePlanDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.createPlan(dto, userId);
+    return this.service.createPlan(dto, +userId);
   }
 
   @Post('update')
@@ -74,7 +74,7 @@ export class PlanController {
   @HttpCode(200)
   async updatePlan(@Body() dto: UpdatePlanDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.updatePlan(dto, userId);
+    return this.service.updatePlan(dto, +userId);
   }
 
   @Post('update-basic')
@@ -86,7 +86,7 @@ export class PlanController {
   @HttpCode(200)
   async updatePlanBasic(@Body() dto: UpdatePlanBasicDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.updatePlanBasic(dto, userId);
+    return this.service.updatePlanBasic(dto, +userId);
   }
 
   @Post('update-places')
@@ -101,7 +101,7 @@ export class PlanController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.updatePlanPlaces(dto, userId);
+    return this.service.updatePlanPlaces(dto, +userId);
   }
 
   @Post('update-schedules')
@@ -116,7 +116,7 @@ export class PlanController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.updatePlanSchedules(dto, userId);
+    return this.service.updatePlanSchedules(dto, +userId);
   }
 
   @Post('delete')
@@ -127,7 +127,7 @@ export class PlanController {
   @HttpCode(200)
   async deletePlan(@Body() dto: DeletePlanDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.deletePlan(dto, userId);
+    return this.service.deletePlan(dto, +userId);
   }
 
   @Post('add-to-group')
@@ -138,7 +138,7 @@ export class PlanController {
   @HttpCode(200)
   async addPlanToGroup(@Body() dto: AddPlanToGroupDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.addPlanToGroup(dto, userId);
+    return this.service.addPlanToGroup(dto, +userId);
   }
 
   @Post('check-group-plan')
@@ -149,7 +149,7 @@ export class PlanController {
   @HttpCode(200)
   async checkGroupPlan(@Body() dto: CheckGroupPlanDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.checkGroupPlan(dto, userId);
+    return this.service.checkGroupPlan(dto, +userId);
   }
 
   @Post('create-day-place')
@@ -160,7 +160,7 @@ export class PlanController {
   @HttpCode(201)
   async createDayPlace(@Body() dto: CreateDayPlaceDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.createDayPlace(dto, userId);
+    return this.service.createDayPlace(dto, +userId);
   }
 
   @Post('get-day-places')
@@ -171,7 +171,7 @@ export class PlanController {
   @HttpCode(200)
   async getDayPlaces(@Body() dto: GetDayPlacesDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getDayPlaces(dto, userId);
+    return this.service.getDayPlaces(dto, +userId);
   }
 
   @Post('create-schedule')
@@ -182,7 +182,7 @@ export class PlanController {
   @HttpCode(201)
   async createSchedule(@Body() dto: CreateScheduleDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.createSchedule(dto, userId);
+    return this.service.createSchedule(dto, +userId);
   }
 
   @Post('get-schedules')
@@ -193,6 +193,6 @@ export class PlanController {
   @HttpCode(200)
   async getSchedules(@Body() dto: GetSchedulesDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getSchedules(dto, userId);
+    return this.service.getSchedules(dto, +userId);
   }
 }

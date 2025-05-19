@@ -30,37 +30,37 @@ export class ActivityController {
     @Body() dto: CreateIfNotExistsActivityDto,
     @Request() req: any,
   ) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.createIfNotExists(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.createIfNotExists(dto, +userId);
   }
 
   @Post('update')
   @ApiOperation({ summary: 'Update an activity' })
   async update(@Body() dto: UpdateActivityDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.update(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.update(dto, +userId);
   }
 
   @Post('delete')
   @ApiOperation({ summary: 'Delete an activity' })
   async delete(@Body() dto: DeleteActivityDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.delete(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.delete(dto, +userId);
   }
 
   @Post('get-by-id')
   @ApiOperation({ summary: 'Get activity by ID' })
   @HttpCode(200)
   async getById(@Body() dto: GetActivityDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.getById(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getById(dto, +userId);
   }
 
   @Post('query')
   @ApiOperation({ summary: 'Query activities with pagination' })
   @HttpCode(200)
   async query(@Body() dto: QueryActivityDto, @Request() req: any) {
-    const userId: number = req['user']?.user_id ?? 'test';
-    return this.service.query(dto, userId);
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.query(dto, +userId);
   }
 }
