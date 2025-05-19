@@ -34,6 +34,12 @@ export class ShareMiniBlogCommandHandler
     const { data, user_id } = command;
     const { miniBlogId, platform, shareData } = data;
 
+    // Check if mini blog exists
+    const miniBlogResult = await this.repository.getMiniBlogById(miniBlogId);
+    if (!miniBlogResult || miniBlogResult.rowCount == 0) {
+      throw new NotFoundException(`Mini blog with ID ${miniBlogId} not found`);
+    }
+
     const shareResult = await this.repository.shareMiniBlog(
       miniBlogId,
       platform,
@@ -44,13 +50,7 @@ export class ShareMiniBlogCommandHandler
     const sharedBlog = shareResult.rows[0];
 
     try {
-      // Get mini blog to find owner
-      const miniBlogResult = await this.repository.getMiniBlogById(miniBlogId);
-      if (!miniBlogResult || miniBlogResult.rowCount == 0) {
-        throw new NotFoundException(
-          `Mini blog with ID ${miniBlogId} not found`,
-        );
-      }
+      // Get mini blog to find owner (we already validated it exists above)
 
       const miniBlog = miniBlogResult.rows[0];
       const miniBlogOwnerId = miniBlog.user_id;

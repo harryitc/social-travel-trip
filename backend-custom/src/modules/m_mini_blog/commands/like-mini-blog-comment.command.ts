@@ -52,7 +52,6 @@ export class LikeMiniBlogCommentCommandHandler
         if (liker) {
           // Notify comment owner about the like
           // We'll use the post_like notification type for simplicity
-         
         }
       }
     } catch (error) {

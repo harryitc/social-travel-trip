@@ -270,7 +270,13 @@ export class MiniBlogRepository {
 
   async createShareLink(data) {
     const { miniBlogId, title, description, isShowMap, isShowTimeline } = data;
-    const params: any = [title, description, isShowMap ? '1' : '0', isShowTimeline ? '1' : '0', miniBlogId];
+    const params: any = [
+      title,
+      description,
+      isShowMap ? '1' : '0',
+      isShowTimeline ? '1' : '0',
+      miniBlogId,
+    ];
     const query = `
       INSERT INTO mini_blog_shareable (title, description, is_show_map, is_show_timeline, created_at, updated_at, mini_blog_id)
       VALUES ($1, $2, $3, $4, NOW(), NOW(), $5)
@@ -383,5 +389,17 @@ export class MiniBlogRepository {
     GROUP BY reaction_id
     `;
     return this.client.execute(query, [commentId]);
+  }
+
+  /**
+   * Get shareable by ID
+   */
+  async getShareableById(shareableId: number) {
+    const query = `
+    SELECT *
+    FROM mini_blog_shareable
+    WHERE mini_blog_shareable_id = $1
+    `;
+    return this.client.execute(query, [shareableId]);
   }
 }

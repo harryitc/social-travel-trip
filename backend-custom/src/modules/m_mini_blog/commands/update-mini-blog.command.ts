@@ -1,4 +1,8 @@
-import { Logger } from '@nestjs/common';
+import {
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
 import { MiniBlogRepository } from '../repositories/mini-blog.repository';
@@ -20,7 +24,30 @@ export class UpdateMiniBlogCommandHandler
   constructor(private readonly repository: MiniBlogRepository) {}
 
   execute = async (command: UpdateMiniBlogCommand): Promise<any> => {
-    const updateResult = await this.repository.updateMiniBlog(command.data);
+    const { data, user_id } = command;
+
+    // Check if mini blog exists and user has permission to update it
+    const miniBlogResult = await this.repository.getMiniBlogById(
+      data.miniBlogId,
+    );
+
+    if (!miniBlogResult || miniBlogResult.rowCount == 0) {
+      throw new NotFoundException(
+        `Mini blog with ID ${data.miniBlogId} not found`,
+      );
+    }
+
+    const miniBlog = miniBlogResult.rows[0];
+
+    // Only the creator can update the mini blog
+    if (miniBlog.user_id != user_id) {
+      throw new UnauthorizedException(
+        'You do not have permission to update this mini blog',
+      );
+    }
+
+    // Proceed with update
+    const updateResult = await this.repository.updateMiniBlog(data);
     const updatedBlog = updateResult.rows[0];
 
     return Promise.resolve(updatedBlog);

@@ -62,7 +62,6 @@ export class ReplyMiniBlogCommentCommandHandler
 
         if (replier) {
           // Notify comment owner about the reply
-         
         }
       }
     } catch (error) {
