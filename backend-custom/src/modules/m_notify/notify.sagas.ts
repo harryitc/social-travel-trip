@@ -13,6 +13,7 @@ import { GroupInvitationEvent } from './events/group-invitation.event';
 import { MiniBlogLikeEvent } from './events/mini-blog-like.event';
 import { MiniBlogCommentEvent } from './events/mini-blog-comment.event';
 import { MiniBlogCommentReplyEvent } from './events/mini-blog-comment-reply.event';
+import { MiniBlogCommentLikeEvent } from './events/mini-blog-comment-like.event';
 import { MiniBlogShareEvent } from './events/mini-blog-share.event';
 import { NewMiniBlogFromFollowingEvent } from './events/new-mini-blog-from-following.event';
 
@@ -349,6 +350,36 @@ export class NotifySagas {
         });
 
         return commands;
+      }),
+    );
+  };
+
+  /**
+   * Saga to handle mini blog comment like events and create notifications
+   */
+  @Saga()
+  miniBlogCommentLikeEvent = (
+    events$: Observable<any>,
+  ): Observable<ICommand> => {
+    return events$.pipe(
+      ofType(MiniBlogCommentLikeEvent),
+      mergeMap((event) => {
+        this.logger.debug(`Processing MiniBlogCommentLikeEvent in saga`);
+
+        const notificationData = {
+          type: NotificationType.MINI_BLOG_COMMENT_LIKE,
+          json_data: {
+            mini_blog_id: event.miniBlogId,
+            comment_id: event.commentId,
+            liker_id: event.likerId,
+            liker_name: event.likerName,
+            message: `${event.likerName} liked your comment on a mini blog`,
+          },
+        };
+
+        return [
+          new CreateNotifyCommand(notificationData, event.commentOwnerId),
+        ];
       }),
     );
   };

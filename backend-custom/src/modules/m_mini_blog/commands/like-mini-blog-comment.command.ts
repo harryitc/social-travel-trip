@@ -1,9 +1,10 @@
 import { Logger, NotFoundException } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommand, ICommandHandler, EventBus } from '@nestjs/cqrs';
 
 import { MiniBlogRepository } from '../repositories/mini-blog.repository';
 import { LikeMiniBlogCommentDTO } from '../dto/like-mini-blog.dto';
 import { UserService } from '@modules/user/user.service';
+import { MiniBlogCommentLikeEvent } from '@modules/m_notify/events/mini-blog-comment-like.event';
 
 export class LikeMiniBlogCommentCommand implements ICommand {
   constructor(
@@ -21,6 +22,7 @@ export class LikeMiniBlogCommentCommandHandler
   constructor(
     private readonly repository: MiniBlogRepository,
     private readonly userService: UserService,
+    private readonly eventBus: EventBus,
   ) {}
 
   execute = async (command: LikeMiniBlogCommentCommand): Promise<any> => {
@@ -50,8 +52,16 @@ export class LikeMiniBlogCommentCommandHandler
         const liker = await this.userService.findById(userId);
 
         if (liker) {
-          // Notify comment owner about the like
-          // We'll use the post_like notification type for simplicity
+          // Notify comment owner about the like by publishing an event
+          await this.eventBus.publish(
+            new MiniBlogCommentLikeEvent(
+              commentOwnerId,
+              miniBlogId,
+              data.commentId,
+              userId,
+              liker.full_name || liker.username || 'A user',
+            )
+          );
         }
       }
     } catch (error) {

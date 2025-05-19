@@ -11,6 +11,7 @@ import { MiniBlogCommentEventHandler } from './mini-blog-comment.event';
 import { MiniBlogCommentReplyEventHandler } from './mini-blog-comment-reply.event';
 import { MiniBlogShareEventHandler } from './mini-blog-share.event';
 import { NewMiniBlogFromFollowingEventHandler } from './new-mini-blog-from-following.event';
+import { MiniBlogCommentLikeEventHandler } from './mini-blog-comment-like.event';
 
 export const EventHandlers = [
   PostLikeEventHandler,
@@ -26,6 +27,7 @@ export const EventHandlers = [
   MiniBlogLikeEventHandler,
   MiniBlogCommentEventHandler,
   MiniBlogCommentReplyEventHandler,
+  MiniBlogCommentLikeEventHandler,
   MiniBlogShareEventHandler,
   NewMiniBlogFromFollowingEventHandler,
 ];
