@@ -7,7 +7,7 @@ import { CommandHandlers } from './commands';
 import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
 import { NotifyController } from './controllers/notify.controller';
-import { NotificationEventsService } from './services/notification-events.service';
+
 import { EventHandlers } from './events';
 import { NotifySagas } from './notify.sagas';
 
@@ -16,7 +16,6 @@ import { NotifySagas } from './notify.sagas';
   controllers: [NotifyController],
   providers: [
     NotifyService,
-    NotificationEventsService,
     NotifySagas,
 
     ...QueryHandlers,
@@ -24,6 +23,6 @@ import { NotifySagas } from './notify.sagas';
     ...EventHandlers,
     ...Repositories,
   ],
-  exports: [NotificationEventsService], // Export for use in other modules
+  exports: [], // No need to export anything as we're using events
 })
 export class NotifyModule {}

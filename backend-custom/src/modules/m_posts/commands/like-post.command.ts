@@ -1,10 +1,15 @@
 import { Logger } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 
 import { PostRepository } from '../repositories/post.repository';
 import { LikePostDTO } from '../dto/like-post.dto';
-import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
 import { UserService } from '@modules/user/user.service';
+import { PostLikeEvent } from '@modules/m_notify/events/post-like.event';
 
 export class LikePostCommand implements ICommand {
   constructor(
@@ -21,7 +26,7 @@ export class LikePostCommandHandler
 
   constructor(
     private readonly repository: PostRepository,
-    private readonly notificationService: NotificationEventsService,
+    private readonly eventBus: EventBus,
     private readonly userService: UserService,
   ) {}
 
@@ -46,19 +51,23 @@ export class LikePostCommandHandler
           const liker = await this.userService.findById(userId);
 
           if (liker) {
-            // Notify post owner about the like
-            await this.notificationService.notifyPostLike(
-              postOwnerId,
-              data.postId,
-              userId,
-              liker.full_name || liker.username || 'A user',
+            // Notify post owner about the like by publishing an event
+            await this.eventBus.publish(
+              new PostLikeEvent(
+                postOwnerId,
+                data.postId,
+                userId,
+                liker.full_name || liker.username || 'A user',
+              ),
             );
           }
         }
       }
     } catch (error) {
       // Log error but don't fail the like operation if notification fails
-      this.logger.error(`Failed to create post like notification: ${error.message}`);
+      this.logger.error(
+        `Failed to create post like notification: ${error.message}`,
+      );
     }
 
     return Promise.resolve(likeResult);

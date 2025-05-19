@@ -1,10 +1,15 @@
-import { Logger, BadRequestException, Inject } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import { Logger, BadRequestException } from '@nestjs/common';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 import { UserRelaRepository } from '../repositories/user-rela.repository';
 import { FollowUserDto } from '../dto/follow-user.dto';
 import { UserRela } from '../models/user-rela.model';
-import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
 import { UserService } from '@modules/user/user.service';
+import { NewFollowerEvent } from '@modules/m_notify/events/new-follower.event';
 
 export class FollowUserCommand implements ICommand {
   constructor(
@@ -21,7 +26,7 @@ export class FollowUserCommandHandler
 
   constructor(
     private readonly repository: UserRelaRepository,
-    private readonly notificationService: NotificationEventsService,
+    private readonly eventBus: EventBus,
     private readonly userService: UserService,
   ) {}
 
@@ -46,16 +51,20 @@ export class FollowUserCommandHandler
       const followerUser = await this.userService.findById(userId);
 
       if (followerUser) {
-        // Create notification for the user being followed
-        await this.notificationService.notifyNewFollower(
-          dto.following_id,
-          userId,
-          followerUser.full_name || followerUser.username || 'A user',
+        // Create notification for the user being followed by publishing an event
+        await this.eventBus.publish(
+          new NewFollowerEvent(
+            dto.following_id,
+            userId,
+            followerUser.full_name || followerUser.username || 'A user',
+          ),
         );
       }
     } catch (error) {
       // Log error but don't fail the follow operation if notification fails
-      this.logger.error(`Failed to create follow notification: ${error.message}`);
+      this.logger.error(
+        `Failed to create follow notification: ${error.message}`,
+      );
     }
 
     return new UserRela(result.rows[0]);

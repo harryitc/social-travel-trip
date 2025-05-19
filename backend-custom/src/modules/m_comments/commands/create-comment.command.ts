@@ -1,11 +1,17 @@
 import { Logger } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 
 import { CommentRepository } from '../repositories/comment.repository';
 import { CreateCommentDTO } from '../dto/create-comment.dto';
-import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
 import { UserService } from '@modules/user/user.service';
 import { PostRepository } from '@modules/m_posts/repositories/post.repository';
+import { CommentReplyEvent } from '@modules/m_notify/events/comment-reply.event';
+import { PostCommentEvent } from '@modules/m_notify/events/post-comment.event';
 
 export class CreateCommentCommand implements ICommand {
   constructor(
@@ -22,7 +28,7 @@ export class CreateCommentCommandHandler
 
   constructor(
     private readonly repository: CommentRepository,
-    private readonly notificationService: NotificationEventsService,
+    private readonly eventBus: EventBus,
     private readonly userService: UserService,
     private readonly postRepository: PostRepository,
   ) {}
@@ -57,14 +63,16 @@ export class CreateCommentCommandHandler
             const replier = await this.userService.findById(user_id);
 
             if (replier) {
-              // Notify comment owner about the reply
-              await this.notificationService.notifyCommentReply(
-                commentOwnerId,
-                data.postId,
-                data.parentId,
-                createdComment.post_comment_id,
-                user_id,
-                replier.full_name || replier.username || 'A user',
+              // Notify comment owner about the reply by publishing an event
+              await this.eventBus.publish(
+                new CommentReplyEvent(
+                  commentOwnerId,
+                  data.postId,
+                  data.parentId,
+                  createdComment.post_comment_id,
+                  user_id,
+                  replier.full_name || replier.username || 'A user',
+                ),
               );
             }
           }
@@ -84,13 +92,15 @@ export class CreateCommentCommandHandler
             const commenter = await this.userService.findById(user_id);
 
             if (commenter) {
-              // Notify post owner about the comment
-              await this.notificationService.notifyPostComment(
-                postOwnerId,
-                data.postId,
-                createdComment.post_comment_id,
-                user_id,
-                commenter.full_name || commenter.username || 'A user',
+              // Notify post owner about the comment by publishing an event
+              await this.eventBus.publish(
+                new PostCommentEvent(
+                  postOwnerId,
+                  data.postId,
+                  createdComment.post_comment_id,
+                  user_id,
+                  commenter.full_name || commenter.username || 'A user',
+                ),
               );
             }
           }

@@ -15,7 +15,7 @@ import { PostModule } from '@modules/m_posts/post.module';
   imports: [
     CqrsModule,
     PostgresModule.forFeature(CONNECTION_STRING_DEFAULT),
-    NotifyModule, // Import NotifyModule to use NotificationEventsService
+    NotifyModule, // Import NotifyModule to use event classes
     UserModule, // Import UserModule to get user details
     PostModule,
   ],

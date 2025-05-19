@@ -1,10 +1,15 @@
 import { Logger } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 
 import { CommentRepository } from '../repositories/comment.repository';
 import { LikeCommentDTO } from '../dto/like-comment.dto';
-import { NotificationEventsService } from '@modules/m_notify/services/notification-events.service';
 import { UserService } from '@modules/user/user.service';
+import { PostLikeEvent } from '@modules/m_notify/events/post-like.event';
 
 export class LikeCommentCommand implements ICommand {
   constructor(
@@ -21,7 +26,7 @@ export class LikeCommentCommandHandler
 
   constructor(
     private readonly repository: CommentRepository,
-    private readonly notificationService: NotificationEventsService,
+    private readonly eventBus: EventBus,
     private readonly userService: UserService,
   ) {}
 
@@ -34,9 +39,15 @@ export class LikeCommentCommandHandler
 
     try {
       // Get the comment to find the comment owner
-      const commentResult = await this.repository.getCommentById(data.commentId);
+      const commentResult = await this.repository.getCommentById(
+        data.commentId,
+      );
 
-      if (commentResult && commentResult.rows && commentResult.rows.length > 0) {
+      if (
+        commentResult &&
+        commentResult.rows &&
+        commentResult.rows.length > 0
+      ) {
         const comment = commentResult.rows[0];
         const commentOwnerId = comment.user_id;
         const postId = comment.post_id;
@@ -47,20 +58,24 @@ export class LikeCommentCommandHandler
           const liker = await this.userService.findById(userId);
 
           if (liker) {
-            // Notify comment owner about the like
-            // We'll use the post_like notification type for simplicity
-            await this.notificationService.notifyPostLike(
-              commentOwnerId,
-              postId,
-              userId,
-              liker.full_name || liker.username || 'A user',
+            // Notify comment owner about the like by publishing an event
+            // We'll use the PostLikeEvent for simplicity
+            await this.eventBus.publish(
+              new PostLikeEvent(
+                commentOwnerId,
+                postId,
+                userId,
+                liker.full_name || liker.username || 'A user',
+              ),
             );
           }
         }
       }
     } catch (error) {
       // Log error but don't fail the like operation if notification fails
-      this.logger.error(`Failed to create comment like notification: ${error.message}`);
+      this.logger.error(
+        `Failed to create comment like notification: ${error.message}`,
+      );
     }
 
     return Promise.resolve(likeResult);
