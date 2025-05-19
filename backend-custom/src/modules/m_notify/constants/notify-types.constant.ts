@@ -6,6 +6,7 @@ export enum NotificationType {
   NEW_POST_FROM_FOLLOWING = 'new_post_from_following',
   POST_LIKE = 'post_like',
   POST_COMMENT = 'post_comment',
+  POST_COMMENT_LIKE = 'post_comment_like',
   POST_SHARE = 'post_share',
   COMMENT_REPLY = 'comment_reply',
   GROUP_INVITATION = 'group_invitation',

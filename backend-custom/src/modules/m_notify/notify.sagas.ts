@@ -7,6 +7,7 @@ import { PostLikeEvent } from './events/post-like.event';
 import { PostCommentEvent } from './events/post-comment.event';
 import { NewFollowerEvent } from './events/new-follower.event';
 import { CommentReplyEvent } from './events/comment-reply.event';
+import { CommentLikeEvent } from './events/comment-like.event';
 import { PostShareEvent } from './events/post-share.event';
 import { NewPostFromFollowingEvent } from './events/new-post-from-following.event';
 import { GroupInvitationEvent } from './events/group-invitation.event';
@@ -374,6 +375,34 @@ export class NotifySagas {
             liker_id: event.likerId,
             liker_name: event.likerName,
             message: `${event.likerName} liked your comment on a mini blog`,
+          },
+        };
+
+        return [
+          new CreateNotifyCommand(notificationData, event.commentOwnerId),
+        ];
+      }),
+    );
+  };
+
+  /**
+   * Saga to handle post comment like events and create notifications
+   */
+  @Saga()
+  commentLikeEvent = (events$: Observable<any>): Observable<ICommand> => {
+    return events$.pipe(
+      ofType(CommentLikeEvent),
+      mergeMap((event) => {
+        this.logger.debug(`Processing CommentLikeEvent in saga`);
+
+        const notificationData = {
+          type: NotificationType.POST_COMMENT_LIKE,
+          json_data: {
+            post_id: event.postId,
+            comment_id: event.commentId,
+            liker_id: event.likerId,
+            liker_name: event.likerName,
+            message: `${event.likerName} liked your comment`,
           },
         };
 
