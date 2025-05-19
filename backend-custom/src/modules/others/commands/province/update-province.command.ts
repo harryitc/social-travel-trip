@@ -24,7 +24,7 @@ export class UpdateProvinceCommandHandler
 
     // Check if province exists
     const existingProvince = await this.repository.findById(dto.province_id);
-    if (existingProvince.rowCount === 0) {
+    if (existingProvince.rowCount == 0) {
       throw new NotFoundException(`Province with ID ${dto.province_id} not found`);
     }
 

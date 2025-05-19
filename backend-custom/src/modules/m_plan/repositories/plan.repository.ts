@@ -279,7 +279,7 @@ export class PlanRepository {
     const updateFields: string[] = [];
     let paramIndex = 1;
 
-    if (name !== undefined) {
+    if (name != undefined) {
       updateFields.push(`name = $${paramIndex}`);
       params.push(name);
       paramIndex++;
@@ -289,25 +289,25 @@ export class PlanRepository {
       paramIndex++;
     }
 
-    if (description !== undefined) {
+    if (description != undefined) {
       updateFields.push(`description = $${paramIndex}`);
       params.push(description);
       paramIndex++;
     }
 
-    if (thumbnail_url !== undefined) {
+    if (thumbnail_url != undefined) {
       updateFields.push(`thumbnail_url = $${paramIndex}`);
       params.push(thumbnail_url);
       paramIndex++;
     }
 
-    if (location !== undefined) {
+    if (location != undefined) {
       updateFields.push(`location = $${paramIndex}`);
       params.push(JSON.stringify(location));
       paramIndex++;
     }
 
-    if (status !== undefined) {
+    if (status != undefined) {
       updateFields.push(`status = $${paramIndex}`);
       params.push(status);
       paramIndex++;
@@ -316,7 +316,7 @@ export class PlanRepository {
     updateFields.push(`updated_at = NOW()`);
 
     // If no fields to update, return early
-    if (updateFields.length === 1) {
+    if (updateFields.length == 1) {
       return { rowCount: 0, rows: [] };
     }
 
@@ -351,7 +351,7 @@ export class PlanRepository {
         const updateFields: string[] = [];
         let paramIndex = 1;
 
-        if (name !== undefined) {
+        if (name != undefined) {
           updateFields.push(`name = $${paramIndex}`);
           params.push(name);
           paramIndex++;
@@ -361,25 +361,25 @@ export class PlanRepository {
           paramIndex++;
         }
 
-        if (description !== undefined) {
+        if (description != undefined) {
           updateFields.push(`description = $${paramIndex}`);
           params.push(description);
           paramIndex++;
         }
 
-        if (thumbnail_url !== undefined) {
+        if (thumbnail_url != undefined) {
           updateFields.push(`thumbnail_url = $${paramIndex}`);
           params.push(thumbnail_url);
           paramIndex++;
         }
 
-        if (location !== undefined) {
+        if (location != undefined) {
           updateFields.push(`location = $${paramIndex}`);
           params.push(JSON.stringify(location));
           paramIndex++;
         }
 
-        if (status !== undefined) {
+        if (status != undefined) {
           updateFields.push(`status = $${paramIndex}`);
           params.push(status);
           paramIndex++;
@@ -651,7 +651,7 @@ export class PlanRepository {
     const updateFields: string[] = [];
     let paramIndex = 1;
 
-    if (name !== undefined) {
+    if (name != undefined) {
       updateFields.push(`name = $${paramIndex}`);
       params.push(name);
       paramIndex++;
@@ -661,25 +661,25 @@ export class PlanRepository {
       paramIndex++;
     }
 
-    if (description !== undefined) {
+    if (description != undefined) {
       updateFields.push(`description = $${paramIndex}`);
       params.push(description);
       paramIndex++;
     }
 
-    if (thumbnail_url !== undefined) {
+    if (thumbnail_url != undefined) {
       updateFields.push(`thumbnail_url = $${paramIndex}`);
       params.push(thumbnail_url);
       paramIndex++;
     }
 
-    if (location !== undefined) {
+    if (location != undefined) {
       updateFields.push(`location = $${paramIndex}`);
       params.push(JSON.stringify(location));
       paramIndex++;
     }
 
-    if (status !== undefined) {
+    if (status != undefined) {
       updateFields.push(`status = $${paramIndex}`);
       params.push(status);
       paramIndex++;
@@ -688,7 +688,7 @@ export class PlanRepository {
     updateFields.push(`updated_at = NOW()`);
 
     // If no fields to update, return early
-    if (updateFields.length === 1) {
+    if (updateFields.length == 1) {
       return { rowCount: 0, rows: [] };
     }
 
@@ -783,7 +783,7 @@ export class PlanRepository {
             plan_id,
           ]);
 
-          if (dayPlaceResult.rowCount === 0) {
+          if (dayPlaceResult.rowCount == 0) {
             continue; // Skip if day place doesn't belong to the plan
           }
 

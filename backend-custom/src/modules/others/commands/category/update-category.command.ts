@@ -24,7 +24,7 @@ export class UpdateCategoryCommandHandler
 
     // Check if category exists
     const existingCategory = await this.repository.findById(dto.category_id);
-    if (existingCategory.rowCount === 0) {
+    if (existingCategory.rowCount == 0) {
       throw new NotFoundException(`Category with ID ${dto.category_id} not found`);
     }
 

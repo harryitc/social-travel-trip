@@ -289,8 +289,8 @@ export class MiniBlogRepository {
     } = data;
 
     const parseToBit = (val) => {
-      if (val === true || val === 1 || val === '1') return '1';
-      if (val === false || val === 0 || val === '0') return '0';
+      if (val == true || val == 1 || val == '1') return '1';
+      if (val == false || val == 0 || val == '0') return '0';
       return null; // hoặc throw new Error('Invalid bit value') nếu muốn bắt lỗi
     };
 

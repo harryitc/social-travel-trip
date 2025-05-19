@@ -101,13 +101,13 @@ export class UserRepository {
 
     // Get current user data to merge json_data
     const currentUser = await this.getUserByID(user_id);
-    if (currentUser.rowCount === 0) {
+    if (currentUser.rowCount == 0) {
       throw new NotFoundException(`User with ID ${user_id} not found`);
     }
 
     // Update json_data with ho_ten_khong_dau if full_name is provided
     let jsonData = currentUser.rows[0].json_data || {};
-    if (typeof jsonData === 'string') {
+    if (typeof jsonData == 'string') {
       jsonData = JSON.parse(jsonData);
     }
 

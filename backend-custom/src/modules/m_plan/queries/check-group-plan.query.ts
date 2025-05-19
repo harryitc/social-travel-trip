@@ -25,7 +25,7 @@ export class CheckGroupPlanQueryHandler
     // Check if group has a plan
     const result = await this.repository.checkGroupPlan(dto.group_id);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       return {
         has_plan: false,
         plan: null,

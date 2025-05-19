@@ -42,7 +42,7 @@ export class LikeCommentCommandHandler
       if (
         !commentResult ||
         !commentResult.rows ||
-        commentResult.rows.length === 0
+        commentResult.rows.length == 0
       ) {
         throw new NotFoundException(
           `Comment with ID ${data.commentId} not found`,
@@ -59,7 +59,7 @@ export class LikeCommentCommandHandler
       const likeResult = insertResult.rows[0];
 
       // Don't notify if the user is liking their own comment
-      if (commentOwnerId !== userId) {
+      if (commentOwnerId != userId) {
         // Get user details for notification
         const liker = await this.userService.findById(userId);
 

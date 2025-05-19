@@ -28,14 +28,14 @@ export class UpdateCityCommandHandler
 
     // Check if city exists
     const existingCity = await this.repository.findById(dto.city_id);
-    if (existingCity.rowCount === 0) {
+    if (existingCity.rowCount == 0) {
       throw new NotFoundException(`City with ID ${dto.city_id} not found`);
     }
 
     // Check if province exists if province_id is provided
     if (dto.province_id) {
       const existingProvince = await this.provinceRepository.findById(dto.province_id);
-      if (existingProvince.rowCount === 0) {
+      if (existingProvince.rowCount == 0) {
         throw new NotFoundException(`Province with ID ${dto.province_id} not found`);
       }
     }

@@ -25,14 +25,14 @@ export class GetDayPlacesQueryHandler
     // Check if plan exists and user has access
     const planResult = await this.repository.getPlanById(dto.plan_id);
 
-    if (planResult.rowCount === 0) {
+    if (planResult.rowCount == 0) {
       throw new NotFoundException(`Plan with ID ${dto.plan_id} not found`);
     }
 
     const plan = planResult.rows[0];
 
     // Check if user has access to this plan
-    if (plan.status !== 'public' && plan.user_created !== userId) {
+    if (plan.status != 'public' && plan.user_created != userId) {
       throw new NotFoundException(`Plan with ID ${dto.plan_id} not found`);
     }
 
@@ -42,7 +42,7 @@ export class GetDayPlacesQueryHandler
       dto.day,
     );
 
-    if (dayPlacesResult.rowCount === 0) {
+    if (dayPlacesResult.rowCount == 0) {
       return {
         day: dto.day,
         places: [],

@@ -22,13 +22,13 @@ export class UnfollowUserCommandHandler
     const { dto, userId } = command;
 
     // Prevent unfollowing yourself
-    if (userId === dto.following_id) {
+    if (userId == dto.following_id) {
       throw new BadRequestException('You cannot unfollow yourself');
     }
 
     // Check if following exists
     const checkResult = await this.repository.checkFollowStatus(userId, dto.following_id);
-    if (checkResult.rowCount === 0) {
+    if (checkResult.rowCount == 0) {
       throw new NotFoundException('You are not following this user');
     }
 

@@ -28,7 +28,7 @@ export class CreateCityCommandHandler
 
     // Check if province exists
     const existingProvince = await this.provinceRepository.findById(dto.province_id);
-    if (existingProvince.rowCount === 0) {
+    if (existingProvince.rowCount == 0) {
       throw new NotFoundException(`Province with ID ${dto.province_id} not found`);
     }
 

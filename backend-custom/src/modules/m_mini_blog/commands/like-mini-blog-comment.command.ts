@@ -28,7 +28,7 @@ export class LikeMiniBlogCommentCommandHandler
 
     // Check if comment exists
     const commentResult = await this.repository.getCommentById(data.commentId);
-    if (!commentResult || commentResult.rowCount === 0) {
+    if (!commentResult || commentResult.rowCount == 0) {
       throw new NotFoundException(
         `Comment with ID ${data.commentId} not found`,
       );
@@ -45,7 +45,7 @@ export class LikeMiniBlogCommentCommandHandler
       const miniBlogId = comment.mini_blog_id;
 
       // Don't notify if the user is liking their own comment
-      if (commentOwnerId !== userId) {
+      if (commentOwnerId != userId) {
         // Get user details for notification
         const liker = await this.userService.findById(userId);
 

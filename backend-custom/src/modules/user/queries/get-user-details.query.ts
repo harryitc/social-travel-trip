@@ -25,7 +25,7 @@ export class GetUserDetailsQueryHandler
     // Get user details
     const result = await this.repository.getUserByID(dto.user_id);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`User with ID ${dto.user_id} not found`);
     }
 

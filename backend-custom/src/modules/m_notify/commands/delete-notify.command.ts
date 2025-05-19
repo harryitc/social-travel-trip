@@ -23,14 +23,14 @@ export class DeleteNotifyCommandHandler
 
     // Check if notification exists
     const checkResult = await this.repository.getNotificationById(dto.notify_id);
-    if (checkResult.rowCount === 0) {
+    if (checkResult.rowCount == 0) {
       throw new NotFoundException(`Notification with ID ${dto.notify_id} not found`);
     }
 
     // Delete notification
     const result = await this.repository.deleteNotification(dto.notify_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new Error('Failed to delete notification');
     }
     

@@ -62,7 +62,7 @@ export class UpdateMemberRoleCommandHandler
     if (dto.role == 'admin') {
       // Check if we're trying to create a second admin
       const existingAdmins = membersResult.rows.filter(
-        (member) => member.role == 'admin' && member.user_id !== dto.user_id,
+        (member) => member.role == 'admin' && member.user_id != dto.user_id,
       );
 
       if (existingAdmins.length > 0) {

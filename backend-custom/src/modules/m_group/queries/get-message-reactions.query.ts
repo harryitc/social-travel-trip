@@ -26,7 +26,7 @@ export class GetMessageReactionsQueryHandler
       dto.group_message_id,
     );
 
-    if (messageExists.rowCount === 0) {
+    if (messageExists.rowCount == 0) {
       throw new NotFoundException('Message not found');
     }
 

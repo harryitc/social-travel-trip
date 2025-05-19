@@ -27,7 +27,7 @@ export class DeleteUserCommandHandler
     const { data, userId } = command;
 
     // Verify user is deleting their own account or is admin
-    if (data.user_id !== userId) {
+    if (data.user_id != userId) {
       // In a real app, check if user is admin here
       // For now, throw error if user tries to delete another user's account
       throw new UnauthorizedException(
@@ -37,7 +37,7 @@ export class DeleteUserCommandHandler
 
     const result = await this.repository.deleteUser(data.user_id);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`User with ID ${data.user_id} not found`);
     }
 

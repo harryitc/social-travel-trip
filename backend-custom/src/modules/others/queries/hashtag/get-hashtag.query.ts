@@ -25,7 +25,7 @@ export class GetHashtagQueryHandler
     // Get hashtag by ID
     const result = await this.repository.findById(dto.tag_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`Hashtag with ID ${dto.tag_id} not found`);
     }
     

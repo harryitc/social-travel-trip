@@ -28,7 +28,7 @@ export class ChangePasswordCommandHandler
     const { data, userId } = command;
 
     // Verify user is changing their own password or is admin
-    if (data.user_id !== userId) {
+    if (data.user_id != userId) {
       // In a real app, check if user is admin here
       // For now, throw error if user tries to change another user's password
       throw new NotFoundException('You can only change your own password');
@@ -37,7 +37,7 @@ export class ChangePasswordCommandHandler
     // Get current user data to verify old password
     const currentUser = await this.repository.getUserByID(data.user_id);
 
-    if (currentUser.rowCount === 0) {
+    if (currentUser.rowCount == 0) {
       throw new NotFoundException(`User with ID ${data.user_id} not found`);
     }
 

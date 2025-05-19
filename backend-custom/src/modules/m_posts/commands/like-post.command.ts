@@ -37,7 +37,7 @@ export class LikePostCommandHandler
       // First, check if the post exists
       const postResult = await this.repository.getPostById(data.postId);
 
-      if (!postResult || !postResult.rows || postResult.rows.length === 0) {
+      if (!postResult || !postResult.rows || postResult.rows.length == 0) {
         throw new NotFoundException(`Post with ID ${data.postId} not found`);
       }
 
@@ -50,7 +50,7 @@ export class LikePostCommandHandler
       const likeResult = insertResult.rows[0];
 
       // Don't notify if the user is liking their own post
-      if (postOwnerId !== userId) {
+      if (postOwnerId != userId) {
         // Get user details for notification
         const liker = await this.userService.findById(userId);
 

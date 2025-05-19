@@ -20,7 +20,7 @@ export class GetMiniBlogByIdQueryHandler implements IQueryHandler<GetMiniBlogByI
     const { data } = query;
     const result = await this.repository.getMiniBlogById(data.miniBlogId);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`Mini blog with ID ${data.miniBlogId} not found`);
     }
 

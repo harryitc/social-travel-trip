@@ -39,7 +39,7 @@ export class CreateCommentCommandHandler
     try {
       // Validate post exists
       const postResult = await this.postRepository.getPostById(data.postId);
-      if (!postResult || !postResult.rows || postResult.rows.length === 0) {
+      if (!postResult || !postResult.rows || postResult.rows.length == 0) {
         throw new NotFoundException(`Post with ID ${data.postId} not found`);
       }
 
@@ -51,7 +51,7 @@ export class CreateCommentCommandHandler
         if (
           !parentCommentResult ||
           !parentCommentResult.rows ||
-          parentCommentResult.rows.length === 0
+          parentCommentResult.rows.length == 0
         ) {
           throw new NotFoundException(
             `Parent comment with ID ${data.parentId} not found`,
@@ -79,7 +79,7 @@ export class CreateCommentCommandHandler
           const commentOwnerId = parentComment.user_id;
 
           // Don't notify if the user is replying to their own comment
-          if (commentOwnerId !== user_id) {
+          if (commentOwnerId != user_id) {
             // Get user details for notification
             const replier = await this.userService.findById(user_id);
 
@@ -108,7 +108,7 @@ export class CreateCommentCommandHandler
           const postOwnerId = post.user_id;
 
           // Don't notify if the user is commenting on their own post
-          if (postOwnerId !== user_id) {
+          if (postOwnerId != user_id) {
             // Get user details for notification
             const commenter = await this.userService.findById(user_id);
 

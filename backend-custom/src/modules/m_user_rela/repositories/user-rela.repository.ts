@@ -26,7 +26,7 @@ export class UserRelaRepository {
   async followUser(userId: number, followingId: number) {
     // First check if the user to follow exists
     const userExists = await this.checkUserExists(followingId);
-    if (userExists.rowCount === 0) {
+    if (userExists.rowCount == 0) {
       throw new NotFoundException(`User with ID ${followingId} not found`);
     }
 

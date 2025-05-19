@@ -34,14 +34,14 @@ export class FollowUserCommandHandler
     const { dto, userId } = command;
 
     // Prevent following yourself
-    if (userId === dto.following_id) {
+    if (userId == dto.following_id) {
       throw new BadRequestException('You cannot follow yourself');
     }
 
     // Follow user
     const result = await this.repository.followUser(userId, dto.following_id);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       // User is already following
       return { message: 'Already following this user' };
     }

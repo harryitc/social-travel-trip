@@ -29,14 +29,14 @@ export class UpdatePlanBasicCommandHandler
     // Check if plan exists and user has permission to update it
     const planResult = await this.repository.getPlanById(data.plan_id);
 
-    if (planResult.rowCount === 0) {
+    if (planResult.rowCount == 0) {
       throw new NotFoundException(`Plan with ID ${data.plan_id} not found`);
     }
 
     const plan = planResult.rows[0];
 
     // Only the creator can update the plan
-    if (plan.user_created !== userId) {
+    if (plan.user_created != userId) {
       throw new UnauthorizedException(
         'You do not have permission to update this plan',
       );

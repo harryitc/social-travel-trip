@@ -24,14 +24,14 @@ export class UpdateNotifyCommandHandler
 
     // Check if notification exists
     const checkResult = await this.repository.getNotificationById(dto.notify_id);
-    if (checkResult.rowCount === 0) {
+    if (checkResult.rowCount == 0) {
       throw new NotFoundException(`Notification with ID ${dto.notify_id} not found`);
     }
 
     // Update notification
     const result = await this.repository.updateNotification(dto, userId);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new Error('Failed to update notification');
     }
     

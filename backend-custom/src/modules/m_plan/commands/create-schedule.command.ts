@@ -31,7 +31,7 @@ export class CreateScheduleCommandHandler
       data.plan_day_place_id,
     );
 
-    if (dayPlaceResult.rowCount === 0) {
+    if (dayPlaceResult.rowCount == 0) {
       throw new NotFoundException(
         `Day place with ID ${data.plan_day_place_id} not found`,
       );
@@ -42,14 +42,14 @@ export class CreateScheduleCommandHandler
     // Check if plan exists and user has permission
     const planResult = await this.repository.getPlanById(dayPlace.plan_id);
 
-    if (planResult.rowCount === 0) {
+    if (planResult.rowCount == 0) {
       throw new NotFoundException(`Plan not found`);
     }
 
     const plan = planResult.rows[0];
 
     // Only the creator can add schedules to the plan
-    if (plan.user_created !== userId) {
+    if (plan.user_created != userId) {
       throw new UnauthorizedException(
         'You do not have permission to add schedules to this plan',
       );

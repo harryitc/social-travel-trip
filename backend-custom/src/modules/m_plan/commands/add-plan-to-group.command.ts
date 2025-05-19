@@ -25,7 +25,7 @@ export class AddPlanToGroupCommandHandler
     // Check if plan exists
     const planResult = await this.repository.getPlanById(data.plan_id);
 
-    if (planResult.rowCount === 0) {
+    if (planResult.rowCount == 0) {
       throw new NotFoundException(`Plan with ID ${data.plan_id} not found`);
     }
 
@@ -39,7 +39,7 @@ export class AddPlanToGroupCommandHandler
     // Add plan to group
     const result = await this.repository.addPlanToGroup(data, userId);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       // This could happen if there's a conflict (plan already added to group)
       return { success: false, message: 'Plan is already added to this group' };
     }

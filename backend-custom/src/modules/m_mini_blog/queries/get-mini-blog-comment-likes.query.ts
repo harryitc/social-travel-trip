@@ -19,7 +19,7 @@ export class GetMiniBlogCommentLikesQueryHandler implements IQueryHandler<GetMin
     const { data } = query;
     const result = await this.repository.getLikesByCommentId(data.commentId);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       return {
         total: 0,
         reactions: [],

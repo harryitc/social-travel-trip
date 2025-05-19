@@ -24,7 +24,7 @@ export class UpdateReactionCommandHandler
 
     // Check if reaction exists
     const existingReaction = await this.repository.findById(dto.reaction_id);
-    if (existingReaction.rowCount === 0) {
+    if (existingReaction.rowCount == 0) {
       throw new NotFoundException(`Reaction with ID ${dto.reaction_id} not found`);
     }
 

@@ -20,7 +20,7 @@ export class GetMiniBlogCommentsQueryHandler implements IQueryHandler<GetMiniBlo
     const { data } = query;
     const result = await this.repository.getCommentsByMiniBlogId(data.miniBlogId);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       return {
         data: [],
         meta: {

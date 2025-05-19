@@ -25,7 +25,7 @@ export class GetActivityQueryHandler
     // Get activity by ID
     const result = await this.repository.findById(dto.activity_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`Activity with ID ${dto.activity_id} not found`);
     }
     

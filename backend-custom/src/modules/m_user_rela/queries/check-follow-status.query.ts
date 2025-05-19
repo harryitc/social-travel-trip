@@ -23,7 +23,7 @@ export class CheckFollowStatusQueryHandler
 
     // Check if target user exists
     const userExists = await this.repository.checkUserExists(dto.following_id);
-    if (userExists.rowCount === 0) {
+    if (userExists.rowCount == 0) {
       throw new NotFoundException(`User with ID ${dto.following_id} not found`);
     }
 

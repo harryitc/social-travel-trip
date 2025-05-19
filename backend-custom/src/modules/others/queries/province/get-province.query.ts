@@ -25,7 +25,7 @@ export class GetProvinceQueryHandler
     // Get province by ID
     const result = await this.repository.findById(dto.province_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`Province with ID ${dto.province_id} not found`);
     }
     

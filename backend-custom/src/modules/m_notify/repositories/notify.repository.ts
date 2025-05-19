@@ -40,13 +40,13 @@ export class NotifyRepository {
     const params: any[] = [userId];
     let paramIndex = 2;
 
-    if (type !== undefined) {
+    if (type != undefined) {
       setClause += `, type = $${paramIndex}`;
       params.push(type);
       paramIndex++;
     }
 
-    if (json_data !== undefined) {
+    if (json_data != undefined) {
       setClause += `, json_data = $${paramIndex}`;
       params.push(json_data);
       paramIndex++;
@@ -122,15 +122,15 @@ export class NotifyRepository {
     // Apply filters
     if (filters && filters.length > 0) {
       for (const filter of filters) {
-        if (filter.id === 'type' && filter.value) {
+        if (filter.id == 'type' && filter.value) {
           whereClause += ` AND type = $${paramIndex}`;
           params.push(filter.value.toString());
           paramIndex++;
         }
 
-        if (filter.id === 'is_read' && filter.value !== undefined) {
+        if (filter.id == 'is_read' && filter.value != undefined) {
           const isRead =
-            filter.value === 'true' || filter.value ? "B'1'" : "B'0'";
+            filter.value == 'true' || filter.value ? "B'1'" : "B'0'";
           whereClause += ` AND is_read = ${isRead}`;
         }
       }

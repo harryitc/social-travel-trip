@@ -20,7 +20,7 @@ export class GetAllFollowersQueryHandler
 
     // Check if user exists
     // const userExists = await this.repository.checkUserExists(targetUserId);
-    // if (userExists.rowCount === 0) {
+    // if (userExists.rowCount == 0) {
     //   throw new NotFoundException(`User with ID ${targetUserId} not found`);
     // }
     const followersResult = await this.repository.getAllFollowers(targetUserId);

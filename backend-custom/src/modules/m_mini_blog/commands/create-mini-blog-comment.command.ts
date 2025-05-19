@@ -38,7 +38,7 @@ export class CreateMiniBlogCommentCommandHandler
     const miniBlogResult = await this.repository.getMiniBlogById(
       data.miniBlogId,
     );
-    if (!miniBlogResult || miniBlogResult.rowCount === 0) {
+    if (!miniBlogResult || miniBlogResult.rowCount == 0) {
       throw new NotFoundException(
         `Mini blog with ID ${data.miniBlogId} not found`,
       );
@@ -49,7 +49,7 @@ export class CreateMiniBlogCommentCommandHandler
       const parentCommentResult = await this.repository.getCommentById(
         data.parentId,
       );
-      if (!parentCommentResult || parentCommentResult.rowCount === 0) {
+      if (!parentCommentResult || parentCommentResult.rowCount == 0) {
         throw new NotFoundException(
           `Parent comment with ID ${data.parentId} not found`,
         );
@@ -78,7 +78,7 @@ export class CreateMiniBlogCommentCommandHandler
           const commentOwnerId = parentComment.user_id;
 
           // Don't notify if the user is replying to their own comment
-          if (commentOwnerId !== user_id) {
+          if (commentOwnerId != user_id) {
             // Get user details for notification
             const replier = await this.userService.findById(user_id);
 
@@ -104,7 +104,7 @@ export class CreateMiniBlogCommentCommandHandler
         const miniBlogOwnerId = miniBlog.user_id;
 
         // Don't notify if the user is commenting on their own mini blog
-        if (miniBlogOwnerId !== user_id) {
+        if (miniBlogOwnerId != user_id) {
           // Get user details for notification
           const commenter = await this.userService.findById(user_id);
 

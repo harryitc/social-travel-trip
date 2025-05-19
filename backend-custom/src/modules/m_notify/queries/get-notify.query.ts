@@ -25,7 +25,7 @@ export class GetNotifyQueryHandler
     // Get notification by ID
     const result = await this.repository.getNotificationById(dto.notify_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`Notification with ID ${dto.notify_id} not found`);
     }
     

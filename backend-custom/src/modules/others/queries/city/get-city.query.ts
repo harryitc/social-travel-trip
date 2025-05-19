@@ -25,7 +25,7 @@ export class GetCityQueryHandler
     // Get city by ID
     const result = await this.repository.findById(dto.city_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`City with ID ${dto.city_id} not found`);
     }
     

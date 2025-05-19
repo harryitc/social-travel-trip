@@ -23,7 +23,7 @@ export class UpdateUserCommandHandler
     const { data, userId } = command;
 
     // Verify user is updating their own profile or is admin
-    if (data.user_id !== userId) {
+    if (data.user_id != userId) {
       // In a real app, check if user is admin here
       // For now, throw error if user tries to update another user's profile
       throw new NotFoundException('You can only update your own profile');
@@ -31,7 +31,7 @@ export class UpdateUserCommandHandler
 
     const result = await this.repository.updateUser(data);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`User with ID ${data.user_id} not found`);
     }
 

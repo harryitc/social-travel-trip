@@ -46,7 +46,7 @@ export class ShareMiniBlogCommandHandler
     try {
       // Get mini blog to find owner
       const miniBlogResult = await this.repository.getMiniBlogById(miniBlogId);
-      if (!miniBlogResult || miniBlogResult.rowCount === 0) {
+      if (!miniBlogResult || miniBlogResult.rowCount == 0) {
         throw new NotFoundException(
           `Mini blog with ID ${miniBlogId} not found`,
         );
@@ -56,7 +56,7 @@ export class ShareMiniBlogCommandHandler
       const miniBlogOwnerId = miniBlog.user_id;
 
       // Don't notify if user is sharing their own mini blog
-      if (miniBlogOwnerId !== user_id) {
+      if (miniBlogOwnerId != user_id) {
         // Get user details for notification
         const sharer = await this.userService.findById(user_id);
 

@@ -24,7 +24,7 @@ export class DeleteCityCommandHandler
 
     // Check if city exists
     const existingCity = await this.repository.findById(dto.city_id);
-    if (existingCity.rowCount === 0) {
+    if (existingCity.rowCount == 0) {
       throw new NotFoundException(`City with ID ${dto.city_id} not found`);
     }
 

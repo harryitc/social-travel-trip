@@ -33,19 +33,19 @@ export class CityRepository {
     let paramIndex = 1;
     const updates = [];
     
-    if (name !== undefined) {
+    if (name != undefined) {
       updates.push(`name = $${paramIndex}`);
       params.push(name);
       paramIndex++;
     }
     
-    if (province_id !== undefined) {
+    if (province_id != undefined) {
       updates.push(`province_id = $${paramIndex}`);
       params.push(province_id);
       paramIndex++;
     }
     
-    if (updates.length === 0) {
+    if (updates.length == 0) {
       return { rowCount: 0, rows: [] };
     }
     

@@ -25,7 +25,7 @@ export class CreateNotifyCommandHandler
     // Create notification
     const result = await this.repository.createNotification(dto, userId);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new Error('Failed to create notification');
     }
     

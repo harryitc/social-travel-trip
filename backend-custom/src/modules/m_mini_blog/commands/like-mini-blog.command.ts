@@ -37,7 +37,7 @@ export class LikeMiniBlogCommandHandler
     const miniBlogResult = await this.repository.getMiniBlogById(
       data.miniBlogId,
     );
-    if (!miniBlogResult || miniBlogResult.rowCount === 0) {
+    if (!miniBlogResult || miniBlogResult.rowCount == 0) {
       throw new NotFoundException(
         `Mini blog with ID ${data.miniBlogId} not found`,
       );
@@ -53,7 +53,7 @@ export class LikeMiniBlogCommandHandler
       const miniBlogOwnerId = miniBlog.user_id;
 
       // Don't notify if the user is liking their own mini blog
-      if (miniBlogOwnerId !== userId) {
+      if (miniBlogOwnerId != userId) {
         // Get user details for notification
         const liker = await this.userService.findById(userId);
 

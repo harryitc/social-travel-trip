@@ -25,7 +25,7 @@ export class GetCategoryQueryHandler
     // Get category by ID
     const result = await this.repository.findById(dto.category_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`Category with ID ${dto.category_id} not found`);
     }
     

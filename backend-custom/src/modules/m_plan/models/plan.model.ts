@@ -18,7 +18,7 @@ export class Plan {
     this.thumbnail_url = data.thumbnail_url;
 
     // Parse JSON fields if they are strings
-    if (typeof data.json_data === 'string') {
+    if (typeof data.json_data == 'string') {
       try {
         this.json_data = JSON.parse(data.json_data);
       } catch (e) {
@@ -29,7 +29,7 @@ export class Plan {
     }
 
     // Parse location if it's a string
-    if (typeof data.location === 'string') {
+    if (typeof data.location == 'string') {
       try {
         this.location = JSON.parse(data.location);
       } catch (e) {
@@ -60,7 +60,7 @@ export class PlanDayPlace {
     this.plan_id = data.plan_id;
 
     // Parse JSON fields if they are strings
-    if (typeof data.json_data === 'string') {
+    if (typeof data.json_data == 'string') {
       try {
         this.json_data = JSON.parse(data.json_data);
       } catch (e) {
@@ -71,7 +71,7 @@ export class PlanDayPlace {
     }
 
     // Parse location if it's a string
-    if (typeof data.location === 'string') {
+    if (typeof data.location == 'string') {
       try {
         this.location = JSON.parse(data.location);
       } catch (e) {
@@ -108,7 +108,7 @@ export class PlanSchedule {
     this.updated_at = data.updated_at ? new Date(data.updated_at) : null;
 
     // Parse JSON fields if they are strings
-    if (typeof data.json_data === 'string') {
+    if (typeof data.json_data == 'string') {
       try {
         this.json_data = JSON.parse(data.json_data);
       } catch (e) {
@@ -119,7 +119,7 @@ export class PlanSchedule {
     }
 
     // Parse location if it's a string
-    if (typeof data.location === 'string') {
+    if (typeof data.location == 'string') {
       try {
         this.location = JSON.parse(data.location);
       } catch (e) {

@@ -31,7 +31,7 @@ export class GetSchedulesQueryHandler
       dto.plan_day_place_id,
     );
 
-    if (dayPlaceResult.rowCount === 0) {
+    if (dayPlaceResult.rowCount == 0) {
       throw new NotFoundException(
         `Day place with ID ${dto.plan_day_place_id} not found`,
       );
@@ -42,14 +42,14 @@ export class GetSchedulesQueryHandler
     // Check if plan exists and user has access
     const planResult = await this.repository.getPlanById(dayPlace.plan_id);
 
-    if (planResult.rowCount === 0) {
+    if (planResult.rowCount == 0) {
       throw new NotFoundException(`Plan not found`);
     }
 
     const plan = planResult.rows[0];
 
     // Check if user has access to this plan
-    if (plan.status !== 'public' && plan.user_created !== userId) {
+    if (plan.status != 'public' && plan.user_created != userId) {
       throw new UnauthorizedException(
         'You do not have permission to view schedules for this plan',
       );

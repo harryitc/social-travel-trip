@@ -24,7 +24,7 @@ export class DeleteHashtagCommandHandler
 
     // Check if hashtag exists
     const existingHashtag = await this.repository.findById(dto.tag_id);
-    if (existingHashtag.rowCount === 0) {
+    if (existingHashtag.rowCount == 0) {
       throw new NotFoundException(`Hashtag with ID ${dto.tag_id} not found`);
     }
 

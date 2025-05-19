@@ -25,7 +25,7 @@ export class GetReactionQueryHandler
     // Get reaction by ID
     const result = await this.repository.findById(dto.reaction_id);
     
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException(`Reaction with ID ${dto.reaction_id} not found`);
     }
     

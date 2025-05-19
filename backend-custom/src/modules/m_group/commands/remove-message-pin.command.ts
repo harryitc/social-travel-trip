@@ -41,7 +41,7 @@ export class RemoveMessagePinCommandHandler
       dto.group_id,
     );
 
-    if (pinExists.rowCount === 0) {
+    if (pinExists.rowCount == 0) {
       throw new NotFoundException('Message is not pinned');
     }
 

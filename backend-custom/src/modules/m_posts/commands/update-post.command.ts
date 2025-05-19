@@ -26,13 +26,13 @@ export class UpdatePostCommandHandler
       // Check if post exists
       const postResult = await this.repository.getPostById(data.postId);
 
-      if (!postResult || !postResult.rows || postResult.rows.length === 0) {
+      if (!postResult || !postResult.rows || postResult.rows.length == 0) {
         throw new NotFoundException(`Post with ID ${data.postId} not found`);
       }
 
       // Check if user is the owner of the post
       const post = postResult.rows[0];
-      if (post.user_id !== user_id) {
+      if (post.user_id != user_id) {
         throw new UnauthorizedException('You can only update your own posts');
       }
 
