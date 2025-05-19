@@ -1,6 +1,6 @@
 "use client";
 
-import { ForumFeed } from "@/features/forum/forum-feed";
+import { ForumFeed } from "@/features/forum/components/forum-feed";
 import { TrendingDestinations } from "@/features/explore/trending-destinations";
 import { UpcomingTrips } from "@/features/trips/upcoming-trips";
 import { useSearchParams } from "next/navigation";

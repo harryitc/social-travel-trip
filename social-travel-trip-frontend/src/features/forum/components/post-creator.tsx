@@ -9,7 +9,7 @@ import { Image as ImageIcon, MapPin, MessageCircle, XIcon, AtSign, Hash } from '
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/radix-ui/command';
-import { POPULAR_LOCATIONS, USERS, POPULAR_HASHTAGS, SAMPLE_IMAGES } from './mock-data';
+import { POPULAR_LOCATIONS, USERS, POPULAR_HASHTAGS, SAMPLE_IMAGES } from '../mock-data';
 
 type PostCreatorProps = {
   onPostCreated: (newPost: any) => void;

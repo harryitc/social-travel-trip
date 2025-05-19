@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-u
 import ReactMarkdown from 'react-markdown';
 import { PostComment } from './post-comment';
 import { Badge } from '@/components/ui/radix-ui/badge';
-import { REACTION_TYPES } from './mock-data';
+import { REACTION_TYPES } from '../mock-data';
 
 type ForumPostProps = {
   post: {
