@@ -80,6 +80,41 @@ export class GroupRepository {
     return this.client.execute(query, [groupId]);
   }
 
+  async getGroupByJoinCode(joinCode: string) {
+    const query = `
+      SELECT * FROM groups
+      WHERE join_code = $1
+    `;
+
+    return this.client.execute(query, [joinCode]);
+  }
+
+  async updateGroupJoinCode(
+    groupId: number,
+    joinCode: string,
+    expiresAt: Date,
+  ) {
+    const query = `
+      UPDATE groups
+      SET join_code = $2, join_code_expires_at = $3
+      WHERE group_id = $1
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [groupId, joinCode, expiresAt]);
+  }
+
+  async invalidateJoinCode(groupId: number) {
+    const query = `
+      UPDATE groups
+      SET join_code = NULL, join_code_expires_at = NULL
+      WHERE group_id = $1
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [groupId]);
+  }
+
   // Group member operations
   async checkUserExists(userId: number) {
     const query = `

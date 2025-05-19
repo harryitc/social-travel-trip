@@ -12,6 +12,8 @@ import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
 import { AddMessagePinDto } from '../dto/add-message-pin.dto';
 import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
 import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
+import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
+import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { CreateGroupCommand } from '../commands/create-group.command';
 import { AddGroupMemberCommand } from '../commands/add-group-member.command';
@@ -22,6 +24,8 @@ import { RemoveMessagePinCommand } from '../commands/remove-message-pin.command'
 import { UpdateGroupCommand } from '../commands/update-group.command';
 import { KickGroupMemberCommand } from '../commands/kick-group-member.command';
 import { UpdateMemberRoleCommand } from '../commands/update-member-role.command';
+import { GenerateJoinQRCodeCommand } from '../commands/generate-join-qrcode.command';
+import { JoinGroupByCodeCommand } from '../commands/join-group-by-code.command';
 import { GetMessagesQuery } from '../queries/get-messages.query';
 import { GetPinnedMessagesQuery } from '../queries/get-pinned-messages.query';
 import { GetListGroupsQuery } from '../queries/get-list-groups.query';
@@ -68,6 +72,14 @@ export class GroupService {
 
   async updateMemberRole(dto: UpdateMemberRoleDto, userId: number) {
     return this.commandBus.execute(new UpdateMemberRoleCommand(dto, userId));
+  }
+
+  async generateJoinQRCode(dto: GenerateJoinQRCodeDto, userId: number) {
+    return this.commandBus.execute(new GenerateJoinQRCodeCommand(dto, userId));
+  }
+
+  async joinGroupByCode(dto: JoinGroupByCodeDto, userId: number) {
+    return this.commandBus.execute(new JoinGroupByCodeCommand(dto, userId));
   }
 
   // Message operations

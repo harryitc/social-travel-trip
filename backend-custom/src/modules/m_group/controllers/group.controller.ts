@@ -21,6 +21,8 @@ import { AddMessagePinDto } from '../dto/add-message-pin.dto';
 import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
 import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
 import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
+import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
+import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { GroupService } from '../services/group.service';
 
@@ -146,5 +148,22 @@ export class GroupController {
   ) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.getPinnedMessages(dto.group_id, +userId);
+  }
+
+  @Post('generate-join-qrcode')
+  @ApiOperation({ summary: 'Generate QR code for joining a group' })
+  async generateJoinQRCode(
+    @Body() dto: GenerateJoinQRCodeDto,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.generateJoinQRCode(dto, +userId);
+  }
+
+  @Post('join-by-code')
+  @ApiOperation({ summary: 'Join a group using a join code from QR code' })
+  async joinGroupByCode(@Body() dto: JoinGroupByCodeDto, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.joinGroupByCode(dto, +userId);
   }
 }

@@ -7,6 +7,8 @@ import { KickGroupMemberCommandHandler } from './kick-group-member.command';
 import { UpdateMemberRoleCommandHandler } from './update-member-role.command';
 import { AddMessagePinCommandHandler } from './add-message-pin.command';
 import { RemoveMessagePinCommandHandler } from './remove-message-pin.command';
+import { GenerateJoinQRCodeCommandHandler } from './generate-join-qrcode.command';
+import { JoinGroupByCodeCommandHandler } from './join-group-by-code.command';
 
 export const CommandHandlers = [
   CreateGroupCommandHandler,
@@ -18,4 +20,6 @@ export const CommandHandlers = [
   UpdateMemberRoleCommandHandler,
   AddMessagePinCommandHandler,
   RemoveMessagePinCommandHandler,
+  GenerateJoinQRCodeCommandHandler,
+  JoinGroupByCodeCommandHandler,
 ];

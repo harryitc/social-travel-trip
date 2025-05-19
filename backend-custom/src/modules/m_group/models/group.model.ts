@@ -8,6 +8,8 @@ export class Group {
   created_at: Date;
   updated_at: Date;
   plan_id?: number;
+  join_code?: string;
+  join_code_expires_at?: Date;
 
   constructor(data: any) {
     this.group_id = data.group_id;
@@ -19,6 +21,8 @@ export class Group {
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
     this.plan_id = data.plan_id;
+    this.join_code = data.join_code;
+    this.join_code_expires_at = data.join_code_expires_at;
   }
 }
 
