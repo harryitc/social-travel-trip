@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import {
   CommandHandler,
   ICommand,
@@ -36,11 +36,32 @@ export class CreateCommentCommandHandler
   execute = async (command: CreateCommentCommand): Promise<any> => {
     const { data, user_id } = command;
 
-    // Create comment
-    const insertResult = await this.repository.createComment(data, user_id);
-    const createdComment = insertResult.rows[0];
-
     try {
+      // Validate post exists
+      const postResult = await this.postRepository.getPostById(data.postId);
+      if (!postResult || !postResult.rows || postResult.rows.length === 0) {
+        throw new NotFoundException(`Post with ID ${data.postId} not found`);
+      }
+
+      // Validate parent comment exists if provided
+      if (data.parentId) {
+        const parentCommentResult = await this.repository.getCommentById(
+          data.parentId,
+        );
+        if (
+          !parentCommentResult ||
+          !parentCommentResult.rows ||
+          parentCommentResult.rows.length === 0
+        ) {
+          throw new NotFoundException(
+            `Parent comment with ID ${data.parentId} not found`,
+          );
+        }
+      }
+
+      // Create comment
+      const insertResult = await this.repository.createComment(data, user_id);
+      const createdComment = insertResult.rows[0];
       // Check if this is a reply to another comment
       if (data.parentId) {
         // This is a reply to another comment
@@ -106,13 +127,12 @@ export class CreateCommentCommandHandler
           }
         }
       }
-    } catch (error) {
-      // Log error but don't fail the comment creation if notification fails
-      this.logger.error(
-        `Failed to create comment notification: ${error.message}`,
-      );
-    }
 
-    return Promise.resolve(createdComment);
+      return Promise.resolve(createdComment);
+    } catch (error) {
+      // Log error
+      this.logger.error(`Failed to create comment: ${error.message}`);
+      throw error;
+    }
   };
 }

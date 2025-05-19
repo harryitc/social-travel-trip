@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 
 import { PostRepository } from '../repositories/post.repository';
@@ -20,10 +20,30 @@ export class UpdatePostCommandHandler
   constructor(private readonly repository: PostRepository) {}
 
   execute = async (command: UpdatePostCommand): Promise<any> => {
-    const insertResult = await this.repository.updatePost(command.data);
+    const { data, user_id } = command;
 
-    const idCreated = insertResult.rows[0];
+    try {
+      // Check if post exists
+      const postResult = await this.repository.getPostById(data.postId);
 
-    return Promise.resolve(idCreated);
+      if (!postResult || !postResult.rows || postResult.rows.length === 0) {
+        throw new NotFoundException(`Post with ID ${data.postId} not found`);
+      }
+
+      // Check if user is the owner of the post
+      const post = postResult.rows[0];
+      if (post.user_id !== user_id) {
+        throw new UnauthorizedException('You can only update your own posts');
+      }
+
+      // Update post
+      const updateResult = await this.repository.updatePost(data);
+      const updatedPost = updateResult.rows[0];
+
+      return Promise.resolve(updatedPost);
+    } catch (error) {
+      this.logger.error(`Failed to update post: ${error.message}`);
+      throw error;
+    }
   };
 }
