@@ -8,7 +8,6 @@ import { UpdatePlanDTO } from '../dto/update-plan.dto';
 import { UpdatePlanBasicDTO } from '../dto/update-plan-basic.dto';
 import { UpdatePlanPlacesDTO } from '../dto/update-plan-places.dto';
 import { UpdatePlanSchedulesDTO } from '../dto/update-plan-schedules.dto';
-import { CreateDayPlaceDTO } from '../dto/create-day-place.dto';
 import { GetPlansDTO } from '../dto/get-plans.dto';
 import { AddPlanToGroupDTO } from '../dto/add-plan-to-group.dto';
 import { removeVietnameseAccents } from '@common/utils/string-utils';
@@ -284,7 +283,9 @@ export class PlanRepository {
       params.push(name);
       paramIndex++;
 
-      updateFields.push(`json_data->>'name_khong_dau' = $${paramIndex}`);
+      updateFields.push(
+        `json_data = jsonb_set(json_data, '{name_khong_dau}', to_jsonb($${paramIndex}::text), true)`,
+      );
       params.push(removeVietnameseAccents(name));
       paramIndex++;
     }
@@ -356,7 +357,9 @@ export class PlanRepository {
           params.push(name);
           paramIndex++;
 
-          updateFields.push(`json_data->>'name_khong_dau' = $${paramIndex}`);
+          updateFields.push(
+            `json_data = jsonb_set(json_data, '{name_khong_dau}', to_jsonb($${paramIndex}::text), true)`,
+          );
           params.push(removeVietnameseAccents(name));
           paramIndex++;
         }
@@ -656,7 +659,9 @@ export class PlanRepository {
       params.push(name);
       paramIndex++;
 
-      updateFields.push(`json_data->>'name_khong_dau' = $${paramIndex}`);
+      updateFields.push(
+        `json_data = jsonb_set(json_data, '{name_khong_dau}', to_jsonb($${paramIndex}::text), true)`,
+      );
       params.push(removeVietnameseAccents(name));
       paramIndex++;
     }
@@ -854,7 +859,7 @@ export class PlanRepository {
       ngay,
       JSON.stringify(json_data),
       JSON.stringify(location),
-      plan_id
+      plan_id,
     ];
 
     const query = `
