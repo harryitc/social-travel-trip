@@ -1,14 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import { CreateNotifyCommand } from '../commands/create-notify.command';
-import { NotificationType } from '../constants/notify-types.constant';
+import { Injectable, Logger } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
+import { PostLikeEvent } from '../events/post-like.event';
+import { PostCommentEvent } from '../events/post-comment.event';
+import { NewFollowerEvent } from '../events/new-follower.event';
+import { CommentReplyEvent } from '../events/comment-reply.event';
+import { PostShareEvent } from '../events/post-share.event';
+import { NewPostFromFollowingEvent } from '../events/new-post-from-following.event';
+import { GroupInvitationEvent } from '../events/group-invitation.event';
 
 /**
  * Service to handle notification events from other modules
  */
 @Injectable()
 export class NotificationEventsService {
-  constructor(private readonly commandBus: CommandBus) {}
+  private readonly logger = new Logger(NotificationEventsService.name);
+
+  constructor(private readonly eventBus: EventBus) {}
 
   /**
    * Create a notification for a new follower
@@ -21,17 +28,11 @@ export class NotificationEventsService {
     followerId: number,
     followerName: string,
   ) {
-    const notificationData = {
-      type: NotificationType.NEW_FOLLOWER,
-      json_data: {
-        follower_id: followerId,
-        follower_name: followerName,
-        message: `${followerName} started following you`,
-      },
-    };
+    this.logger.debug(`Publishing NewFollowerEvent for user ${userId}`);
 
-    return this.commandBus.execute(
-      new CreateNotifyCommand(notificationData, userId),
+    // Publish event instead of executing command directly
+    return this.eventBus.publish(
+      new NewFollowerEvent(userId, followerId, followerName),
     );
   }
 
@@ -48,23 +49,19 @@ export class NotificationEventsService {
     postCreatorId: number,
     postCreatorName: string,
   ) {
-    const notificationPromises = followerIds.map((followerId) => {
-      const notificationData = {
-        type: NotificationType.NEW_POST_FROM_FOLLOWING,
-        json_data: {
-          post_id: postId,
-          post_creator_id: postCreatorId,
-          post_creator_name: postCreatorName,
-          message: `${postCreatorName} published a new post`,
-        },
-      };
+    this.logger.debug(
+      `Publishing NewPostFromFollowingEvent for ${followerIds.length} followers`,
+    );
 
-      return this.commandBus.execute(
-        new CreateNotifyCommand(notificationData, followerId),
-      );
-    });
-
-    return Promise.all(notificationPromises);
+    // Publish event instead of executing command directly
+    return this.eventBus.publish(
+      new NewPostFromFollowingEvent(
+        followerIds,
+        postId,
+        postCreatorId,
+        postCreatorName,
+      ),
+    );
   }
 
   /**
@@ -80,18 +77,11 @@ export class NotificationEventsService {
     likerId: number,
     likerName: string,
   ) {
-    const notificationData = {
-      type: NotificationType.POST_LIKE,
-      json_data: {
-        post_id: postId,
-        liker_id: likerId,
-        liker_name: likerName,
-        message: `${likerName} liked your post`,
-      },
-    };
+    this.logger.debug(`Publishing PostLikeEvent for post ${postId}`);
 
-    return this.commandBus.execute(
-      new CreateNotifyCommand(notificationData, postOwnerId),
+    // Publish event instead of executing command directly
+    return this.eventBus.publish(
+      new PostLikeEvent(postOwnerId, postId, likerId, likerName),
     );
   }
 
@@ -110,19 +100,17 @@ export class NotificationEventsService {
     commenterId: number,
     commenterName: string,
   ) {
-    const notificationData = {
-      type: NotificationType.POST_COMMENT,
-      json_data: {
-        post_id: postId,
-        comment_id: commentId,
-        commenter_id: commenterId,
-        commenter_name: commenterName,
-        message: `${commenterName} commented on your post`,
-      },
-    };
+    this.logger.debug(`Publishing PostCommentEvent for post ${postId}`);
 
-    return this.commandBus.execute(
-      new CreateNotifyCommand(notificationData, postOwnerId),
+    // Publish event instead of executing command directly
+    return this.eventBus.publish(
+      new PostCommentEvent(
+        postOwnerId,
+        postId,
+        commentId,
+        commenterId,
+        commenterName,
+      ),
     );
   }
 
@@ -139,18 +127,11 @@ export class NotificationEventsService {
     sharerId: number,
     sharerName: string,
   ) {
-    const notificationData = {
-      type: NotificationType.POST_SHARE,
-      json_data: {
-        post_id: postId,
-        sharer_id: sharerId,
-        sharer_name: sharerName,
-        message: `${sharerName} shared your post`,
-      },
-    };
+    this.logger.debug(`Publishing PostShareEvent for post ${postId}`);
 
-    return this.commandBus.execute(
-      new CreateNotifyCommand(notificationData, postOwnerId),
+    // Publish event instead of executing command directly
+    return this.eventBus.publish(
+      new PostShareEvent(postOwnerId, postId, sharerId, sharerName),
     );
   }
 
@@ -171,20 +152,18 @@ export class NotificationEventsService {
     replierId: number,
     replierName: string,
   ) {
-    const notificationData = {
-      type: NotificationType.COMMENT_REPLY,
-      json_data: {
-        post_id: postId,
-        comment_id: commentId,
-        reply_id: replyId,
-        replier_id: replierId,
-        replier_name: replierName,
-        message: `${replierName} replied to your comment`,
-      },
-    };
+    this.logger.debug(`Publishing CommentReplyEvent for comment ${commentId}`);
 
-    return this.commandBus.execute(
-      new CreateNotifyCommand(notificationData, commentOwnerId),
+    // Publish event instead of executing command directly
+    return this.eventBus.publish(
+      new CommentReplyEvent(
+        commentOwnerId,
+        postId,
+        commentId,
+        replyId,
+        replierId,
+        replierName,
+      ),
     );
   }
 
@@ -203,19 +182,19 @@ export class NotificationEventsService {
     inviterId: number,
     inviterName: string,
   ) {
-    const notificationData = {
-      type: NotificationType.GROUP_INVITATION,
-      json_data: {
-        group_id: groupId,
-        group_name: groupName,
-        inviter_id: inviterId,
-        inviter_name: inviterName,
-        message: `${inviterName} invited you to join the group "${groupName}"`,
-      },
-    };
+    this.logger.debug(
+      `Publishing GroupInvitationEvent for user ${invitedUserId}`,
+    );
 
-    return this.commandBus.execute(
-      new CreateNotifyCommand(notificationData, invitedUserId),
+    // Publish event instead of executing command directly
+    return this.eventBus.publish(
+      new GroupInvitationEvent(
+        invitedUserId,
+        groupId,
+        groupName,
+        inviterId,
+        inviterName,
+      ),
     );
   }
 }

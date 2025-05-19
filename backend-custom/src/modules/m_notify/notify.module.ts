@@ -8,6 +8,8 @@ import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
 import { NotifyController } from './controllers/notify.controller';
 import { NotificationEventsService } from './services/notification-events.service';
+import { EventHandlers } from './events';
+import { NotifySagas } from './notify.sagas';
 
 @Module({
   imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
@@ -15,10 +17,11 @@ import { NotificationEventsService } from './services/notification-events.servic
   providers: [
     NotifyService,
     NotificationEventsService,
+    NotifySagas,
 
     ...QueryHandlers,
     ...CommandHandlers,
-
+    ...EventHandlers,
     ...Repositories,
   ],
   exports: [NotificationEventsService], // Export for use in other modules
