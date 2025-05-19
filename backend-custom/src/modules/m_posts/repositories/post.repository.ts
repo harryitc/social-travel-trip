@@ -61,10 +61,10 @@ export class PostRepository {
   }
 
   async createPost(data, userId) {
-    const { content, jsonData, place_id } = data;
-    const params = [content, jsonData, userId, place_id];
+    const { content, jsonData } = data;
+    const params = [content, jsonData, userId];
     const query = `
-    INSERT INTO posts (content, json_data, user_id, place_id, created_at, updated_at)
+    INSERT INTO posts (content, json_data, user_id, created_at, updated_at)
     VALUES ($1, $2, $3, $4, NOW(), NOW())
     RETURNING *
   `;

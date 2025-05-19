@@ -8,7 +8,4 @@ export class CreatePostDTO {
 
   @ApiProperty({ default: {} })
   jsonData?: any;
-
-  @ApiProperty({ default: null })
-  placeId?: number;
 }

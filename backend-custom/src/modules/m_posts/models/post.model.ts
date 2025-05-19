@@ -9,7 +9,6 @@ export class Post {
   created_at: Date;
   updated_at: Date;
   user_id: number;
-  place_id: number | null;
 
   constructor(partial: Partial<Post>) {
     Object.assign(this, partial);
@@ -27,7 +26,6 @@ export class Post {
     return {
       content: post.content ?? '',
       jsonData: post.jsonData ?? null,
-      placeId: post.placeId ?? null,
     };
   }
 }
