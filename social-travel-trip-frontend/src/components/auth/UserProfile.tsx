@@ -18,10 +18,12 @@ export default function UserProfile() {
   useEffect(() => {
     const checkAuth = () => {
       const authenticated = isLoggedIn();
+      console.log('UserProfile - isAuthenticated:', authenticated);
       setIsAuthenticated(authenticated);
 
       if (authenticated) {
         const userInfo = getUserInfo();
+        console.log('UserProfile - userInfo:', userInfo);
         setUser(userInfo);
       }
     };
@@ -31,8 +33,12 @@ export default function UserProfile() {
     // Kiểm tra lại khi component được mount
     window.addEventListener('storage', checkAuth);
 
+    // Thêm interval để kiểm tra định kỳ (cho mục đích debug)
+    const interval = setInterval(checkAuth, 2000);
+
     return () => {
       window.removeEventListener('storage', checkAuth);
+      clearInterval(interval);
     };
   }, []);
 

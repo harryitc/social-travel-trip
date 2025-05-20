@@ -20,7 +20,7 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
 
   // Get redirect URL from query params
-  const redirectUrl = searchParams.get('redirect') || '/';
+  const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
   // Initialize form with zod validation
   const {
@@ -42,10 +42,17 @@ export default function LoginForm() {
 
     try {
       const response = await loginService(data);
-      
+      console.log('Login form - response:', response);
+
       if (response.access_token) {
-        // Redirect to the original URL or default page
-        router.push(redirectUrl);
+        // Kích hoạt sự kiện storage để các component khác biết người dùng đã đăng nhập
+        window.dispatchEvent(new Event('storage'));
+
+        // Đợi một chút để đảm bảo dữ liệu được lưu trước khi chuyển hướng
+        setTimeout(() => {
+          // Redirect to the original URL or default page
+          router.push(redirectUrl);
+        }, 500);
       } else {
         setError('Đăng nhập không thành công. Vui lòng thử lại.');
       }

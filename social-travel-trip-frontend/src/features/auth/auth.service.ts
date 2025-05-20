@@ -11,6 +11,7 @@ import { APIS, TConfirmResetPasswordPayload, TLoginPayload, TRegisterPayload, TR
 export const loginService = async (payload: TLoginPayload) => {
   try {
     const response: any = await Http.post(APIS.login, payload);
+    console.log('Login response:', response);
 
     if (!response.access_token) {
       return response;
@@ -21,11 +22,15 @@ export const loginService = async (payload: TLoginPayload) => {
 
     // Lưu thông tin người dùng vào cookie
     if (response.user) {
+      console.log('Setting user info:', response.user);
       setUserInfo(response.user);
+    } else {
+      console.warn('No user info in response');
     }
 
     return response;
   } catch (error) {
+    console.error('Login error:', error);
     throw error;
   }
 };
@@ -126,14 +131,34 @@ export const getAuthorizationHeader = (type = 'Bearer') => {
  * @returns User information or null
  */
 export const getUserInfo = () => {
+  // Kiểm tra cả hai vị trí lưu trữ có thể
   const userJson = CoreAppStorageService.getItem<string>(CookieConfigKeys.features.auth.user, {
     location: StorageLocation.COOKIES,
   });
 
-  if (!userJson) return null;
+  const resultJson = CoreAppStorageService.getItem<string>(CookieConfigKeys.features.auth.result, {
+    location: StorageLocation.COOKIES,
+  });
+
+  console.log('getUserInfo - userJson:', userJson);
+  console.log('getUserInfo - resultJson:', resultJson);
+
+  if (!userJson && !resultJson) return null;
 
   try {
-    return JSON.parse(userJson);
+    if (userJson) {
+      return JSON.parse(userJson);
+    } else if (resultJson) {
+      const result = JSON.parse(resultJson);
+      // Chuyển đổi định dạng nếu cần
+      return {
+        username: result.username || '',
+        full_name: result.fullname || '',
+        email: result.email || '',
+        avatar_url: result.avatar || '',
+      };
+    }
+    return null;
   } catch (error) {
     console.error('Error parsing user info:', error);
     return null;
@@ -144,11 +169,14 @@ export const getUserInfo = () => {
  * Logout user by removing token and user info
  */
 export const logoutService = () => {
+  // Xóa tất cả các key liên quan đến xác thực
   CoreAppStorageService.removeItems([
     CookieConfigKeys.features.auth.token,
-    CookieConfigKeys.features.auth.user
+    CookieConfigKeys.features.auth.user,
+    CookieConfigKeys.features.auth.result
   ], {
     location: StorageLocation.COOKIES,
   });
+  console.log('User logged out, cookies cleared');
   window.location.href = '/auth/sign-in';
 };

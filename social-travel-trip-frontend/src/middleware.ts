@@ -28,7 +28,12 @@ export function middleware(request: NextRequest) {
   if (!token?.value && !isPublicRoute) {
     // Create redirect URL with original destination as query parameter
     const redirectUrl = new URL(AUTH.login_route, request.url);
-    redirectUrl.searchParams.set('redirect', request.nextUrl.pathname + request.nextUrl.search);
+
+    // Thêm đường dẫn hiện tại vào tham số redirect
+    const currentPath = request.nextUrl.pathname + request.nextUrl.search;
+    redirectUrl.searchParams.set('redirect', currentPath);
+
+    console.log(`Redirecting unauthenticated user from ${currentPath} to login page`);
     return NextResponse.redirect(redirectUrl);
   }
 
