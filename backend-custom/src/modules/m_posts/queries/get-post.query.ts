@@ -55,12 +55,12 @@ export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
         );
 
         return {
-          id: row.post_id,
+          post_id: row.post_id,
           content: row.content,
           created_at: row.created_at,
           updated_at: row.updated_at,
           user: {
-            id: row.user_id,
+            user_id: row.user_id,
             username: row.username,
             full_name: row.full_name,
             avatar_url: row.avatar_url,

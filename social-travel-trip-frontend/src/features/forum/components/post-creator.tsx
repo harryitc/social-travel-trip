@@ -5,30 +5,90 @@ import { Button } from '@/components/ui/radix-ui/button';
 import { Textarea } from '@/components/ui/radix-ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
-import { Image as ImageIcon, MapPin, MessageCircle, XIcon, AtSign, Hash } from 'lucide-react';
+import { Image as ImageIcon, MapPin, MessageCircle, XIcon, AtSign, Hash, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/radix-ui/command';
-import { POPULAR_LOCATIONS, USERS, POPULAR_HASHTAGS, SAMPLE_IMAGES } from '../mock-data';
+import { getUserInfo, isLoggedIn } from '@/features/auth/auth.service';
+import { postService, CreatePostPayload } from '../services/post.service';
+import { fileService } from '@/features/file/file.service';
+import { locationService } from '@/features/explore/services/location.service';
+import { useRouter } from 'next/navigation';
 
-type PostCreatorProps = {
+// Mock data for users and hashtags until API is available
+const USERS = [
+  { id: '1', name: 'Nguyễn Minh', avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
+  { id: '2', name: 'Trần Thu Hà', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
+  { id: '3', name: 'Lê Hoàng', avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
+  { id: '4', name: 'Ngọc Mai', avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
+  { id: '5', name: 'Đức Anh', avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
+];
+
+const POPULAR_HASHTAGS = [
+  { tag: 'DuLichVietNam', posts: 1205 },
+  { tag: 'PhuQuoc', posts: 954 },
+  { tag: 'DaNang', posts: 862 },
+  { tag: 'SaPa', posts: 743 },
+  { tag: 'HaLong', posts: 628 },
+  { tag: 'DaLat', posts: 587 },
+  { tag: 'HoiAn', posts: 521 },
+];
+
+interface PostCreatorProps {
   onPostCreated: (newPost: any) => void;
-};
+}
 
 export function PostCreator({ onPostCreated }: PostCreatorProps) {
-  const user:any = null;
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [location, setLocation] = useState('');
+  const [locationId, setLocationId] = useState('');
+  const [locations, setLocations] = useState<any[]>([]);
+  const [loadingLocations, setLoadingLocations] = useState(false);
   const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [currentHashtag, setCurrentHashtag] = useState('');
   const [hashtagPopoverOpen, setHashtagPopoverOpen] = useState(false);
   const [mentionPopoverOpen, setMentionPopoverOpen] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
   const [mentions, setMentions] = useState<{id: string, name: string}[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Load user info
+  useEffect(() => {
+    const authenticated = isLoggedIn();
+    if (authenticated) {
+      const userInfo = getUserInfo();
+      setUser(userInfo);
+    } else {
+      // Redirect to login if not authenticated
+      router.push('/auth/sign-in?redirect=/');
+    }
+  }, [router]);
+
+  // Load locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        setLoadingLocations(true);
+        const response = await locationService.getLocations({ limit: 10 });
+        setLocations(response.data);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      } finally {
+        setLoadingLocations(false);
+      }
+    };
+
+    if (locationPopoverOpen) {
+      fetchLocations();
+    }
+  }, [locationPopoverOpen]);
 
   const handleAddHashtag = () => {
     if (currentHashtag && !hashtags.includes(currentHashtag)) {
@@ -46,7 +106,7 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
       const selectedFiles = Array.from(e.target.files);
       const maxFileSize = 5 * 1024 * 1024; // 5MB
 
-      // Kiểm tra số lượng ảnh
+      // Check if too many images
       if (images.length + selectedFiles.length > 6) {
         alert('Bạn chỉ có thể tải lên tối đa 6 ảnh cho một bài viết.');
         if (fileInputRef.current) {
@@ -55,41 +115,37 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
         return;
       }
 
-      // Xử lý từng file được chọn
+      // Process each selected file
       selectedFiles.forEach(file => {
-        // Kiểm tra kích thước file
+        // Check file size
         if (file.size > maxFileSize) {
           alert(`File "${file.name}" vượt quá kích thước cho phép (5MB).`);
           return;
         }
 
-        // Kiểm tra loại file
+        // Check file type
         if (!file.type.startsWith('image/')) {
           alert(`File "${file.name}" không phải là ảnh.`);
           return;
         }
 
-        // Sử dụng FileReader để chuyển file thành Data URL
-        // Data URL sẽ được lưu trữ trong bài đăng và không bị mất khi refresh trang
-        const reader = new FileReader();
+        // Add file to imageFiles state
+        setImageFiles(prevFiles => [...prevFiles, file]);
 
+        // Create preview
+        const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target && event.target.result) {
-            // Thêm ảnh vào danh sách ảnh
             setImages(prevImages => [...prevImages, event.target!.result as string]);
           }
         };
-
-        // Xử lý lỗi khi đọc file
         reader.onerror = () => {
           alert(`Không thể đọc file "${file.name}". Vui lòng thử lại.`);
         };
-
-        // Đọc file dưới dạng Data URL
         reader.readAsDataURL(file);
       });
 
-      // Reset input để có thể chọn cùng một file nhiều lần
+      // Reset input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -147,36 +203,44 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
     }
   };
 
-  const handleSubmit = () => {
-    if (content.trim()) {
-      const newPost = {
-        id: Date.now().toString(),
-        author: {
-          name: user?.fullName || 'Người dùng',
-          avatar: user?.imageUrl || 'https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
-        },
+  const handleSubmit = async () => {
+    if (!content.trim()) return;
+
+    try {
+      setIsSubmitting(true);
+
+      // Create post payload
+      const payload: CreatePostPayload = {
         content,
-        images: images.length > 0 ? [...images] : undefined,
-        likes: 0,
-        comments: 0,
-        shares: 0,
-        createdAt: 'Vừa xong',
         hashtags,
-        location,
-        mentions: mentions.length > 0 ? mentions : undefined,
+        mentions: mentions.map(m => m.id),
       };
 
-      onPostCreated(newPost);
+      // Add location if selected
+      if (location) {
+        payload.location_id = locationId || undefined;
+        payload.location_name = location;
+      }
 
-      // Không giải phóng URL object ngay lập tức để ảnh có thể hiển thị trong bài đăng
-      // Chúng ta sẽ để trình duyệt tự giải phóng khi trang được làm mới hoặc đóng
+      // Create post
+      const createdPost = await postService.createPost(payload, imageFiles);
 
-      // Reset các trạng thái
+      // Reset form
       setContent('');
       setImages([]);
+      setImageFiles([]);
       setHashtags([]);
       setLocation('');
+      setLocationId('');
       setMentions([]);
+
+      // Notify parent component
+      onPostCreated(createdPost);
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Có lỗi xảy ra khi đăng bài. Vui lòng thử lại sau.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -334,14 +398,22 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
                   <Command>
                     <CommandInput placeholder="Tìm địa điểm..." />
                     <CommandList>
-                      <CommandEmpty>Không tìm thấy địa điểm</CommandEmpty>
-                      {/* Xóa hoặc comment phần CommandGroup địa điểm phổ biến */}
-                      {/* <CommandGroup heading="Địa điểm phổ biến">
-                        {POPULAR_LOCATIONS.map((loc) => (
+                      <CommandEmpty>
+                        {loadingLocations ? (
+                          <div className="flex justify-center py-4">
+                            <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                          </div>
+                        ) : (
+                          'Không tìm thấy địa điểm'
+                        )}
+                      </CommandEmpty>
+                      <CommandGroup heading="Địa điểm">
+                        {locations.map((loc) => (
                           <CommandItem
-                            key={loc.id}
+                            key={loc.location_id || loc.city_id}
                             onSelect={() => {
                               setLocation(loc.name);
+                              setLocationId(loc.location_id || loc.city_id);
                               setLocationPopoverOpen(false);
                             }}
                           >
@@ -349,7 +421,7 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
                             {loc.name}
                           </CommandItem>
                         ))}
-                      </CommandGroup> */}
+                      </CommandGroup>
                     </CommandList>
                   </Command>
                 </PopoverContent>
@@ -445,9 +517,17 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
           <Button
             type="button"
             onClick={handleSubmit}
+            disabled={!content.trim() || isSubmitting}
             className="bg-purple-600 hover:bg-purple-700 text-white"
           >
-            Đăng
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Đang đăng...
+              </>
+            ) : (
+              'Đăng'
+            )}
           </Button>
         </div>
       </CardContent>
