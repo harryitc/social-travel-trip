@@ -17,6 +17,11 @@ import { PostModule } from '@modules/m_posts/post.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { UserModule } from '@modules/user/user.module';
 import { CommentModule } from '@modules/m_comments/comment.module';
+import { GroupModule } from '@modules/m_group/group.module';
+import { NotifyModule } from '@modules/m_notify/notify.module';
+import { PlanModule } from '@modules/m_plan/plan.module';
+import { UserRelaModule } from '@modules/m_user_rela/user-rela.module';
+import { MiniBlogModule } from '@modules/m_mini_blog/mini-blog.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
@@ -24,8 +29,13 @@ const FEATURES_MODULES = [
   AuthModule,
   UserModule,
   FileV2Module,
+  UserRelaModule,
   PostModule,
   CommentModule,
+  GroupModule,
+  PlanModule,
+  MiniBlogModule,
+  NotifyModule,
   LogModule,
   OtherModule,
 ];

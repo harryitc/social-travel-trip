@@ -3,16 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 4200 --turbopack",
+    "start": "next dev --port 4200 --turbopack",
     "build": "next build",
-    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.2",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
-    "@clerk/localizations": "^3.14.4",
-    "@clerk/nextjs": "^6.18.5",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.0.1",
     "@photo-sphere-viewer/core": "^5.13.2",

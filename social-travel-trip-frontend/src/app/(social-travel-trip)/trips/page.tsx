@@ -8,7 +8,6 @@ import { SearchTrips } from "@/features/trips/search-trips";
 import { TabMenu } from "@/components/common/TabMenu";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
 
 export default function TripsPage() {

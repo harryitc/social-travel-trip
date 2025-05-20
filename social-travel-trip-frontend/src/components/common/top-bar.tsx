@@ -12,8 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/radix-ui/dropdown-menu';
-import { SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
+import Link from 'next/link';
 
 export function TopbarNav() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,21 +77,18 @@ export function TopbarNav() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <UserButton afterSignOutUrl="/" />
-        <SignedOut>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <SignInButton>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm whitespace-nowrap">
+        <div className="flex gap-2">
+          {/* <SignInButton>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                 Đăng nhập
               </Button>
-            </SignInButton>
-            <a href="/auth/custom-auth" className="hidden sm:block">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 text-xs sm:text-sm whitespace-nowrap">
-                Đăng nhập đơn giản
-              </Button>
-            </a>
-          </div>
-        </SignedOut>
+            </SignInButton> */}
+          <Link href="/auth/custom-auth">
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+              Đăng nhập đơn giản
+            </Button>
+          </Link>
+        </div>
       </div>
     </header>
   );

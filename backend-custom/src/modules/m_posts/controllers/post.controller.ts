@@ -32,7 +32,7 @@ export class PostController {
   @HttpCode(200)
   async getPosts(@Body() getPostDTO: GetPostDTO, @Request() req: any) {
     const requestUID = req['user']?.user_id ?? 'test';
-    return this.service.getPosts(getPostDTO, requestUID);
+    return this.service.getPosts(getPostDTO, +requestUID);
   }
 
   @Post('create')
@@ -44,7 +44,7 @@ export class PostController {
   @HttpCode(201)
   async createPost(@Body() createPostDTO: CreatePostDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.create(createPostDTO, userId);
+    return this.service.create(createPostDTO, +userId);
   }
 
   @Post('like')
@@ -55,7 +55,7 @@ export class PostController {
   @HttpCode(200)
   async likePost(@Body() likePostDTO: LikePostDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.like(likePostDTO, userId);
+    return this.service.like(likePostDTO, +userId);
   }
 
   @Get('get-post-likes')
@@ -65,7 +65,7 @@ export class PostController {
   })
   async getPostLikes(@Query('postId') postId: string, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getLikes(+postId, userId);
+    return this.service.getLikes(+postId, +userId);
   }
 
   @Post('update')
@@ -76,6 +76,35 @@ export class PostController {
   @HttpCode(201)
   async updatePost(@Body() updatePostDTO: UpdatePostDTO, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.updatePost(updatePostDTO, userId);
+    return this.service.updatePost(updatePostDTO, +userId);
+  }
+
+  @Get('detail')
+  @ApiOperation({
+    summary: 'Get post detail',
+    description: 'Get detailed information about a specific post',
+  })
+  async getPostDetail(@Query('postId') postId: string, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getPostDetail(+postId, +userId);
+  }
+
+  @Get('reaction-users')
+  @ApiOperation({
+    summary: 'Get users who reacted to a post',
+    description:
+      'Get list of users who reacted to a specific post, optionally filtered by reaction type',
+  })
+  async getPostReactionUsers(
+    @Query('postId') postId: string,
+    @Query('reactionId') reactionId: string,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getPostReactionUsers(
+      +postId,
+      reactionId ? +reactionId : undefined,
+      +userId,
+    );
   }
 }

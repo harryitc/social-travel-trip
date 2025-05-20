@@ -3,13 +3,13 @@ import { IsNotEmpty } from 'class-validator';
 
 export class UpdatePostDTO {
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example postId' })
-  postId: string;
+  @ApiProperty({ default: 1 })
+  postId: number;
 
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example content' })
+  @ApiProperty({ default: 'Example content' })
   content: string;
 
-  @ApiProperty({ example: 'Example jsonData' })
+  @ApiProperty({ default: 'Example jsonData' })
   jsonData?: any;
 }

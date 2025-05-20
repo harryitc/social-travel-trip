@@ -1,118 +1,46 @@
 // Migration for table: activities
 module.exports = async (client, schema) => {
+  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."hashtags" (
+    "tag_id" bigserial PRIMARY KEY,
+    "name" varchar(255) UNIQUE NOT NULL,
+    "slug" varchar(255) UNIQUE NOT NULL
+  );`);
+  await client.query(
+    `INSERT INTO ${schema}."hashtags" ("name", "slug") VALUES ('Du lịch Việt Nam', 'du lich viet nam'), ('Phú Quốc', 'phu quoc'), ('Đà Nẵng', 'da nang'), ('Sapa', 'sapa'), ('Hạ Long', 'ha long'), ('Đà Lạt', 'da lat'), ('Hội An', 'hoi an'), ('Nha Trang', 'nha trang'), ('Hà Nội', 'ha noi'), ('TP. Hồ Chí Minh', 'tp ho chi minh'), ('Huế', 'hue'), ('Mũi Né', 'mui ne'), ('Quy Nhơn', 'quy nhon'), ('Vũng Tàu', 'vung tau'), ('Cần Thơ', 'can tho'), ('Đồng Xoài', 'dong xoai'), ('Bắc Kạn', 'bac kan'), ('Bắc Giang', 'bac giang'), ('Bạc Liêu', 'bac lieu'), ('Bắc Ninh', 'bac ninh'), ('Bến Tre', 'ben tre'), ('Bình Định', 'binh dinh'), ('Bình Dương', 'binh duong'), ('Bình Phước', 'binh phuoc'), ('Bình Thuận', 'binh thuan'), ('Cà Mau', 'ca mau'), ('Cao Bằng', 'cao bang'), ('Đắk Lắk', 'dak lak'), ('Đắk Nông', 'dak nong'), ('Điện Biên', 'dien bien'), ('Đồng Tháp', 'dong thap'), ('Gia Lai', 'gia lai'), ('Hà Giang', 'ha giang'), ('Hà Nam', 'ha nam'), ('Hà Tĩnh', 'ha tinh'), ('Hải Dương', 'hai duong'), ('Hậu Giang', 'hau giang'), ('Hòa Bình', 'hoa binh'), ('Hưng Yên', 'hung yen'), ('Khánh Hòa', 'khanh hoa'), ('Kiên Giang', 'kien giang'), ('Kon Tum', 'kon tum'), ('Lai Châu', 'lai chau'), ('Lâm Đồng', 'lam dong'), ('Lạng Sơn', 'lang son'), ('Lào Cai', 'lao cai'), ('Long An', 'long an'), ('Nam Định', 'nam dinh'), ('Nghệ An', 'nghhe an'), ('Ninh Bình', 'ninh binh'), ('Ninh Thuận', 'ninh thuan'), ('Phú Thọ', 'phu tho'), ('Phú Yên', 'phu yen'), ('Quảng Bình', 'quang binh'), ('Quảng Nam', 'quang nam'), ('Quảng Ngãi', 'quang ngai'), ('Quảng Ninh', 'quang ninh'), ('Quảng Trị', 'quang tri'), ('Sóc Trăng', 'soc trang'), ('Sơn La', 'son la'), ('Tây Ninh', 'tay ninh'), ('Thái Bình', 'thai binh'), ('Thái Nguyên', 'thai nguyen'), ('Thanh Hóa', 'thanh hoa'), ('Thừa Thiên Huế', 'thua thien hue'), ('Tiền Giang', 'tien giang'), ('Trà Vinh', 'tra vinh'), ('Tuyên Quang', 'tuyen quang'), ('Vĩnh Long', 'vinh long'), ('Vĩnh Phúc', 'vinh phuc'), ('Yên Bái', 'yen bai');`,
+  );
+
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."activities" (
     "activity_id" bigserial PRIMARY KEY,
-    "name" varchar(255)
-  );`);
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."activity_settings" (
-    "activity_setting_id" bigserial PRIMARY KEY,
+    "name" varchar(255) UNIQUE NOT NULL,
+    "slug" varchar(255) UNIQUE NOT NULL,
     "description" varchar(255),
-    "json_data" jsonb,
-    "activity_id" int8
+    "json_data" jsonb
   );`);
+  await client.query(
+    `INSERT INTO ${schema}."activities" ("name", "slug") VALUES ('Ăn sáng', 'an sang'), ('Ăn trưa', 'an trua'), ('Ăn tối', 'an toi'), ('Cà phê', 'ca phe'), ('Tham quan', 'tham quan'), ('Mua sắm', 'mua sam'), ('Nghỉ ngơi', 'nghi ngoi'), ('Di chuyển', 'di chuyen'), ('Khác', 'khac');`,
+  );
 
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."catetory" (
+  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."categories" (
     "category_id" bigserial PRIMARY KEY,
-    "name" varchar(255)
+    "name" varchar(255) UNIQUE NOT NULL,
+    "slug" varchar(255) UNIQUE NOT NULL
   );`);
+  await client.query(
+    `INSERT INTO ${schema}."categories" ("name", "slug") VALUES ('Du lịch', 'du lich'), ('Ẩm thực', 'am thuc'), ('Khách sạn', 'khach san'), ('Cafe', 'cafe'), ('Shopping', 'shopping'), ('Khác', 'khac');`,
+  );
+
+  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."provinces" (
+    "province_id" bigserial PRIMARY KEY,
+    "name" varchar(100)
+  );`);
+  await client.query(
+    `INSERT INTO ${schema}."provinces" ("name") VALUES ('Hà Nội'), ('Hồ Chí Minh'), ('Đà Nẵng'), ('Cần Thơ'), ('Bình Dương'), ('Đồng Nai'), ('Hải Phòng'), ('Bà Rịa - Vũng Tàu'), ('An Giang'), ('Bắc Giang'), ('Bắc Kạn'), ('Bạc Liêu'), ('Bắc Ninh'), ('Bến Tre'), ('Bình Định'), ('Bình Phước'), ('Bình Thuận'), ('Cà Mau'), ('Cao Bằng'), ('Đắk Lắk'), ('Đắk Nông'), ('Điện Biên'), ('Đồng Tháp'), ('Gia Lai'), ('Hà Giang'), ('Hà Nam'), ('Hà Tĩnh'), ('Hải Dương'), ('Hậu Giang'), ('Hòa Bình'), ('Hưng Yên'), ('Khánh Hòa'), ('Kiên Giang'), ('Kon Tum'), ('Lai Châu'), ('Lâm Đồng'), ('Lạng Sơn'), ('Lào Cai'), ('Long An'), ('Nam Định'), ('Nghệ An'), ('Ninh Bình'), ('Ninh Thuận'), ('Phú Thọ'), ('Phú Yên'), ('Quảng Bình'), ('Quảng Nam'), ('Quảng Ngãi'), ('Quảng Ninh'), ('Quảng Trị'), ('Sóc Trăng'), ('Sơn La'), ('Tây Ninh'), ('Thái Bình'), ('Thái Nguyên'), ('Thanh Hóa'), ('Thừa Thiên Huế'), ('Tiền Giang'), ('Trà Vinh'), ('Tuyên Quang'), ('Vĩnh Long'), ('Vĩnh Phúc'), ('Yên Bái');`,
+  );
+
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."cities" (
     "city_id" bigserial PRIMARY KEY,
     "name" varchar(100),
     "province_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."group_members" (
-    "group_member_id" bigserial PRIMARY KEY,
-    "nickname" varchar(100),
-    "role" varchar(50),
-    "join_at" timestamp(6),
-    "group_id" int8,
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."group_messages" (
-    "group_message_id" bigserial PRIMARY KEY,
-    "message" text,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "group_id" int8,
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."groups" (
-    "group_id" bigserial PRIMARY KEY,
-    "name" varchar(100),
-    "description" varchar(255),
-    "cover_url" varchar(255),
-    "status" varchar(50),
-    "json_data" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "plan_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."hashtags" (
-    "tag_id" bigserial PRIMARY KEY,
-    "name" varchar(100)
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_likes" (
-    "message_like_id" bigserial PRIMARY KEY,
-    "created_at" timestamp(6),
-    "group_message_id" int8,
-    "reaction_id" int8,
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_pins" (
-    "message_pin_id" bigserial PRIMARY KEY,
-    "created_at" timestamp(6),
-    "group_message_id" int8,
-    "group_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blog_comments" (
-    "mini_blog_comment_id" bigserial PRIMARY KEY,
-    "message" varchar(255),
-    "json_data" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "mini_blog_id" int8,
-    "user_id" int8,
-    "parent_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blog_shareable" (
-    "mini_blog_shareable_id" bigserial PRIMARY KEY,
-    "title" varchar(255),
-    "description" varchar(255),
-    "is_show_map" bit,
-    "is_show_timeline" bit,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "mini_blog_id" int8
-  );`);
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blogs" (
-    "mini_blog_id" bigserial PRIMARY KEY,
-    "title" varchar(255),
-    "slug" varchar(255),
-    "description" varchar(255),
-    "day_travel" timestamp(255),
-    "location" jsonb,
-    "thumbnail_url" varchar(255),
-    "json_data" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."notifications" (
-    "notify_id" bigserial PRIMARY KEY,
-    "json_data" jsonb,
-    "type" varchar(100),
-    "is_read" bit,
-    "created_at" timestamp(6),
-    "user_created" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."place_reviews" (
@@ -141,113 +69,11 @@ module.exports = async (client, schema) => {
     "city_id" int8
   );`);
 
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_places" (
-    "plan_place_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "schedules" jsonb,
-    "location" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "plan_travel_day_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_schedules" (
-    "plan_schedule_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "start_time" timestamp(6),
-    "end_time" timestamp(6),
-    "location" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "activity_id" int8,
-    "plan_place_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plan_travel_days" (
-    "plan_travel_day_id" bigserial PRIMARY KEY,
-    "ngay" varchar(32),
-    "plan_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."plans" (
-    "plan_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "thumbnail_url" varchar(255),
-    "day_travel" int4,
-    "json_data" jsonb,
-    "location" jsonb,
-    "status" varchar(255),
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "user_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comment_likes" (
-    "comment_id" int8,
-    "user_id" int8,
-    "reaction_id" int default 1,
-    PRIMARY KEY (comment_id, user_id)
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_comments" (
-    "post_comment_id" bigserial PRIMARY KEY,
-    "content" varchar(255),
-    "json_data" jsonb,
-    "comment_shared_id" int8,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "parent_id" int8,
-    "user_id" int8,
-    "post_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."post_likes" (
-    "user_id" int8,
-    "post_id" int8,
-    "reaction_id" int default 1,
-    PRIMARY KEY (post_id, user_id)
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."posts" (
-    "post_id" bigserial PRIMARY KEY,
-    "content" varchar(255),
-    "json_data" jsonb,
-    "post_shared_id" int8,
-    "is_hidden" bool,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "user_id" int8,
-    "place_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."provinces" (
-    "province_id" bigserial PRIMARY KEY,
-    "name" varchar(100)
-  );`);
-
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."reactions" (
     "reaction_id" bigserial PRIMARY KEY,
     "name" varchar(50)
   );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."schedule_activities" (
-    "schedule_activity_id" bigserial PRIMARY KEY,
-    "name" varchar(255),
-    "description" varchar(255),
-    "start_time" timestamp(6),
-    "end_time" timestamp(6),
-    "location" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
-    "activity_id" int8
-  );`);
-
-  await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."user_rela" (
-    "user_rela_id" bigserial PRIMARY KEY,
-    "user_id" int8,
-    "following" int8
-  );`);
+  await client.query(
+    `INSERT INTO ${schema}."reactions" ("name") VALUES ('default'), ('like'), ('love'), ('haha'), ('wow'), ('sad');`,
+  );
 };

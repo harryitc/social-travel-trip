@@ -32,7 +32,7 @@ export class CommentController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.createComment(createCommentDTO, userId);
+    return this.service.createComment(createCommentDTO, +userId);
   }
 
   @Get('get')
@@ -42,7 +42,7 @@ export class CommentController {
   })
   async getPostComments(@Query('postId') postId: string, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getComments(+postId, userId);
+    return this.service.getComments(+postId, +userId);
   }
 
   @Post('like')
@@ -56,7 +56,7 @@ export class CommentController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.likeComment(likeCommentDTO, userId);
+    return this.service.likeComment(likeCommentDTO, +userId);
   }
 
   @Get('get-likes')
@@ -69,6 +69,25 @@ export class CommentController {
     @Request() req: any,
   ) {
     const userId = req['user']?.user_id ?? 'test';
-    return this.service.getLikesComment(+commentId, userId);
+    return this.service.getLikesComment(+commentId, +userId);
+  }
+
+  @Get('reaction-users')
+  @ApiOperation({
+    summary: 'Get users who reacted to a comment',
+    description:
+      'Get list of users who reacted to a specific comment, optionally filtered by reaction type',
+  })
+  async getCommentReactionUsers(
+    @Query('commentId') commentId: string,
+    @Query('reactionId') reactionId: string,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getCommentReactionUsers(
+      +commentId,
+      reactionId ? +reactionId : undefined,
+      +userId,
+    );
   }
 }

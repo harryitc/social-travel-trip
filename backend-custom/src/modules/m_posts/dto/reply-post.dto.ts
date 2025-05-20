@@ -3,17 +3,17 @@ import { IsNotEmpty } from 'class-validator';
 
 export class ReplyPostDTO {
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example postId' })
-  postId: string;
+  @ApiProperty({ default: 1 })
+  postId: number;
 
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example content' })
+  @ApiProperty({ default: 'Example content' })
   content: string;
 
-  @ApiProperty({ example: 'Example jsonData' })
+  @ApiProperty({ default: {} })
   jsonData?: any;
 
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example parentId' })
-  parentId: string;
+  @ApiProperty({ default: 1 })
+  parentId: number;
 }

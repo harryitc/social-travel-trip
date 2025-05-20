@@ -15,28 +15,56 @@ export class CommentRepository {
    */
   async getComments(postId: number) {
     const query = `
-    SELECT 
+    SELECT
       c.post_comment_id AS id,
       c.content,
+      c.json_data,
       c.user_id,
       c.created_at,
+      u.username,
+      u.full_name,
+      u.avatar_url,
+      (
+        SELECT json_agg(json_build_object(
+          'reaction_id', cl.reaction_id,
+          'count', COUNT(*)
+        ))
+        FROM post_comment_likes cl
+        WHERE cl.comment_id = c.post_comment_id AND cl.reaction_id > 1
+        GROUP BY cl.comment_id
+      ) AS reactions,
       COALESCE(
         (
           SELECT json_agg(
             json_build_object(
               'id', r.post_comment_id,
               'content', r.content,
+              'json_data', r.json_data,
               'user_id', r.user_id,
-              'created_at', r.created_at
+              'username', ru.username,
+              'full_name', ru.full_name,
+              'avatar_url', ru.avatar_url,
+              'created_at', r.created_at,
+              'reactions', (
+                SELECT json_agg(json_build_object(
+                  'reaction_id', rcl.reaction_id,
+                  'count', COUNT(*)
+                ))
+                FROM post_comment_likes rcl
+                WHERE rcl.comment_id = r.post_comment_id AND rcl.reaction_id > 1
+                GROUP BY rcl.comment_id
+              )
             ) ORDER BY r.created_at
           )
           FROM post_comments r
+          LEFT JOIN users ru ON r.user_id = ru.user_id
           WHERE r.parent_id = c.post_comment_id
         ), '[]'
       ) AS replies
     FROM post_comments c
+    LEFT JOIN users u ON c.user_id = u.user_id
     WHERE c.post_id = $1 AND c.parent_id IS NULL
-    ORDER BY c.created_at
+    ORDER BY c.created_at DESC
   `;
     const params = [postId];
     return this.client.execute(query, params);
@@ -107,20 +135,57 @@ export class CommentRepository {
     const query = `
     SELECT reaction_id, COUNT(*) AS count
     FROM post_comment_likes
-    WHERE comment_id = $1 AND reaction_id != 1
+    WHERE comment_id = $1 AND reaction_id > 1
     GROUP BY reaction_id
   `;
     return this.client.execute(query, [commentId]);
   }
-  /** 
-    Trường họp transaction update nhiều dòng tên 1 bảng, 
+
+  async getCommentReactionUsers(commentId: number, reactionId?: number) {
+    let query = `
+    SELECT
+      cl.user_id,
+      cl.reaction_id,
+      u.username,
+      u.full_name,
+      u.avatar_url
+    FROM post_comment_likes cl
+    JOIN users u ON cl.user_id = u.user_id
+    WHERE cl.comment_id = $1 AND cl.reaction_id > 1
+    `;
+
+    const params = [commentId];
+
+    if (reactionId) {
+      query += ` AND cl.reaction_id = $2`;
+      params.push(reactionId);
+    }
+
+    query += ` ORDER BY u.full_name`;
+
+    return this.client.execute(query, params);
+  }
+
+  /**
+   * Get a comment by ID
+   */
+  async getCommentById(commentId: number) {
+    const query = `
+    SELECT *
+    FROM post_comments
+    WHERE post_comment_id = $1
+  `;
+    return this.client.execute(query, [commentId]);
+  }
+  /**
+    Trường họp transaction update nhiều dòng tên 1 bảng,
     hoặc có thể dùng pg-format để insert nhiều dòng trong 1 bảng cho 1 lần query (khong dung transaction)
     Ví dụ về postgres format để insert nhiều dòng dữ liệu cho 1 lần query:
     ...
     updateManyTransaction(data: Array<any>) {
       // Logic map your data to nested array.
       const myNestedArray = [['a', 1], ['b', 2]];
-      const queryString = format('INSERT INTO tableName (name, age) VALUES %L', myNestedArray); 
+      const queryString = format('INSERT INTO tableName (name, age) VALUES %L', myNestedArray);
       reutrn this.client.query(queryString);
     }
   */
@@ -172,7 +237,7 @@ export class CommentRepository {
 
       // Execute your query ...
       const productResult = await client.query(
-        `INSERT INTO posts(info, current_status, key, public_time) 
+        `INSERT INTO posts(info, current_status, key, public_time)
          VALUES($1, $2, $3, $4) RETURNING *`,
         [product.info, product.currentStatus, product.key, product.publicTime],
       );
@@ -181,7 +246,7 @@ export class CommentRepository {
 
       // Insert default variant
       await client.query(
-        `INSERT INTO ec_variants(info, current_status, is_default, public_time, id) 
+        `INSERT INTO ec_variants(info, current_status, is_default, public_time, id)
          VALUES($1, $2, $3, $4, $5)`,
         [
           variant.info,

@@ -14,7 +14,6 @@ import { Calendar, MapPin, Tag, ArrowLeft, Save, Plus, Trash2, Clock, Users, Che
 import { TravelPlanTemplate, Day, Activity } from './mock-data';
 import { TripGroup, getUserGroups } from './trip-groups-data';
 import { v4 as uuidv4 } from 'uuid';
-import { useUser } from '@clerk/nextjs';
 
 interface CreatePlanPageProps {
   onBack: () => void;
@@ -23,8 +22,7 @@ interface CreatePlanPageProps {
 }
 
 export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPageProps) {
-  // Get current user from Clerk
-  const { user } = useUser();
+  const user: any = null;
 
   // State for plan details
   const [planName, setPlanName] = useState('');

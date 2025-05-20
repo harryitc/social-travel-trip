@@ -5,7 +5,6 @@ import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Input } from '@/components/ui/radix-ui/input';
 import { Button } from '@/components/ui/radix-ui/button';
-import { useUser } from '@clerk/nextjs';
 import {
   SendHorizontal,
   Image as ImageIcon,
@@ -36,7 +35,7 @@ type TripChatProps = {
 };
 
 export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }: TripChatProps) {
-  const { user } = useUser();
+  const user: any = null;
   // Get messages for the specific trip group
   const [messages, setMessages] = useState<Message[]>(() => {
     // If messages exist for this trip, use them, otherwise return an empty array

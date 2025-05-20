@@ -1,8 +1,15 @@
-import { Logger } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
+import { Logger, NotFoundException } from '@nestjs/common';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 
 import { CommentRepository } from '../repositories/comment.repository';
 import { LikeCommentDTO } from '../dto/like-comment.dto';
+import { UserService } from '@modules/user/user.service';
+import { CommentLikeEvent } from '@modules/m_notify/events/comment-like.event';
 
 export class LikeCommentCommand implements ICommand {
   constructor(
@@ -17,16 +24,64 @@ export class LikeCommentCommandHandler
 {
   private readonly logger = new Logger(LikeCommentCommand.name);
 
-  constructor(private readonly repository: CommentRepository) {}
+  constructor(
+    private readonly repository: CommentRepository,
+    private readonly eventBus: EventBus,
+    private readonly userService: UserService,
+  ) {}
 
   execute = async (command: LikeCommentCommand): Promise<any> => {
-    const insertResult = await this.repository.likeComment(
-      command.data,
-      command.userId,
-    );
+    const { data, userId } = command;
 
-    const idCreated = insertResult.rows[0];
+    try {
+      // First, check if the comment exists
+      const commentResult = await this.repository.getCommentById(
+        data.commentId,
+      );
 
-    return Promise.resolve(idCreated);
+      if (
+        !commentResult ||
+        !commentResult.rows ||
+        commentResult.rows.length == 0
+      ) {
+        throw new NotFoundException(
+          `Comment with ID ${data.commentId} not found`,
+        );
+      }
+
+      // Get the comment owner details
+      const comment = commentResult.rows[0];
+      const commentOwnerId = comment.user_id;
+      const postId = comment.post_id;
+
+      // Like the comment
+      const insertResult = await this.repository.likeComment(data, userId);
+      const likeResult = insertResult.rows[0];
+
+      // Don't notify if the user is liking their own comment or if reaction_id is 1 (no like)
+      if (commentOwnerId != userId && data.reactionId > 1) {
+        // Get user details for notification
+        const liker = await this.userService.findById(userId);
+
+        if (liker) {
+          // Notify comment owner about the like by publishing an event
+          await this.eventBus.publish(
+            new CommentLikeEvent(
+              commentOwnerId,
+              postId,
+              data.commentId,
+              userId,
+              liker.full_name || liker.username || 'A user',
+            ),
+          );
+        }
+      }
+
+      return Promise.resolve(likeResult);
+    } catch (error) {
+      // Log error and rethrow
+      this.logger.error(`Failed to like comment: ${error.message}`);
+      throw error;
+    }
   };
 }

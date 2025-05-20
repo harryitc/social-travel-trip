@@ -1,3 +1,4 @@
+import { UserMock } from '@configs/app/dev-mocks';
 import { UserService } from '@modules/user/user.service';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
@@ -14,7 +15,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     const user = await this.userService.findById(payload.sub);
-    console.log("user = ", user);
-    return user; // attach vào request.user
+    return user ?? UserMock; // attach vào request.user
   }
 }

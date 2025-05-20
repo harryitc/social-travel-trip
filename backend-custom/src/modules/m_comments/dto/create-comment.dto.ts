@@ -3,16 +3,16 @@ import { IsNotEmpty } from 'class-validator';
 
 export class CreateCommentDTO {
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example postId' })
-  postId: string;
+  @ApiProperty({ default: 1 })
+  postId: number;
 
-  @ApiProperty({ example: 'Example parentId' })
-  parentId: string | null;
+  @ApiProperty({ default: 1 })
+  parentId: number | null;
 
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example content' })
+  @ApiProperty({ default: 'Example content' })
   content: string;
 
-  @ApiProperty({ example: 'Example jsonData' })
+  @ApiProperty({ default: {} })
   jsonData?: any;
 }

@@ -22,7 +22,7 @@ export class FileGetListInfoQueryHandler
   async execute(query: FileGetListInfoQuery): Promise<File[]> {
     let result = await this.repo.getList(query.file_ids);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       return [];
     }
 

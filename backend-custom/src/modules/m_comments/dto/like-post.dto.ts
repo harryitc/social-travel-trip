@@ -3,9 +3,9 @@ import { IsNotEmpty } from 'class-validator';
 
 export class LikePostDTO {
   @IsNotEmpty()
-  @ApiProperty({ example: 'Example postId' })
-  postId: string;
+  @ApiProperty({ default: 1 })
+  postId: number;
 
-  @ApiProperty({ example: 'Example reactionId' })
-  reactionId?: string;
+  @ApiProperty({ default: 1 })
+  reactionId?: number;
 }

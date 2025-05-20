@@ -33,7 +33,7 @@ export class FileUploadCommandHandler
   ) { }
 
   async execute(command: FileUploadCommand): Promise<{ files: any[] }> {
-    if (command.files.length === 0) {
+    if (command.files.length == 0) {
       throw new ForbiddenException('FILE IS EMPTY');
     }
 
@@ -70,7 +70,7 @@ export class FileUploadCommandHandler
       switch (viewType) {
         case FILE_TYPE.IMAGE:
           fileHash = await getBlurHash(getFile(file.destination, file.filename));
-          if (fileExt !== ImageExt.WEBP) {
+          if (fileExt != ImageExt.WEBP) {
             await convertWebp(getFile(file.destination, file.filename), file.destination, file.filename)
             file.filename = file.filename.replace(fileExt, ImageExt.WEBP)
           }
