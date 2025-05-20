@@ -1,4 +1,4 @@
-import { get } from "lodash";
+import { get } from 'lodash';
 
 /**
  * Post author model
@@ -30,6 +30,42 @@ export class PostMention {
   }
 }
 
+export class Location {
+  name: string;
+  description: string;
+  lon: number;
+  lat: number;
+
+  constructor(data: any) {
+    this.name = get(data, 'name', '');
+    this.description = get(data, 'description', '');
+    this.lon = get(data, 'lon', 0);
+    this.lat = get(data, 'lat', 0);
+  }
+}
+
+export class ReactionCountModel {
+  reaction_id: number;
+  count: number;
+  constructor(data: any) {
+    this.reaction_id = get(data, 'reaction_id', 1);
+    this.count = get(data, 'count', 0);
+  }
+}
+
+export class PostStats {
+  total_likes: number;
+  total_comments: number;
+  reactions: ReactionCountModel[];
+  constructor(data: any) {
+    this.total_likes = get(data, 'total_likes', 0);
+    this.total_comments = get(data, 'total_comments', 0);
+    this.reactions = get(data, 'reactions', [])?.map(
+      (reaction: any) => new ReactionCountModel(reaction),
+    );
+  }
+}
+
 /**
  * Post model
  */
@@ -37,31 +73,25 @@ export class Post {
   post_id: string;
   content: string;
   images: string[];
-  location_id?: string;
-  location_name?: string;
+  location!: Location;
   hashtags: string[];
   mentions: PostMention[];
   created_at: string;
   updated_at: string;
   author: PostAuthor;
-  likes_count: number;
-  comments_count: number;
-  is_liked: boolean;
+  stats: PostStats;
 
   constructor(data: any) {
     this.post_id = get(data, 'post_id', -1);
     this.content = get(data, 'content', '');
     this.images = get(data, 'images', []);
-    this.location_id = get(data, 'location_id', -1);
-    this.location_name = get(data, 'location_name', '');
     this.hashtags = get(data, 'hashtags', []);
     this.mentions = get(data, 'mentions', [])?.map((mention: any) => new PostMention(mention));
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
-    this.author = new PostAuthor(data.user);
-    this.likes_count = data.likes_count || 0;
-    this.comments_count = data.comments_count || 0;
-    this.is_liked = data.is_liked || false;
+    this.author = new PostAuthor(data?.user);
+    this.location = new Location(data?.location);
+    this.stats = new PostStats(data?.stats);
   }
 
   /**
@@ -79,7 +109,7 @@ export class Post {
    * @returns Array of Post instances
    */
   static fromResponseArray(data: any[]): Post[] {
-    return data.map(item => Post.fromResponse(item));
+    return data.map((item) => Post.fromResponse(item));
   }
 }
 
@@ -94,7 +124,7 @@ export class PostQueryResponse {
 
   constructor(data: any) {
     console.log(data);
-    this.data = Array.isArray(data.data) 
+    this.data = Array.isArray(data.data)
       ? data.data.map((post: any) => Post.fromResponse(post))
       : [];
     this.total = data.total || 0;
