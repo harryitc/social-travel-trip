@@ -23,7 +23,7 @@ export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
 
     try {
       const [queryResult, count] = await Promise.all([
-        this.repository.getPosts(page, limit, userId),
+        this.repository.getPosts(page, limit),
         this.repository.getCountPosts(),
       ]);
 

@@ -10,7 +10,7 @@ export class PostRepository {
     private readonly client: PgSQLConnectionPool,
   ) {}
 
-  async getPosts(page = 1, limit = 10, userId = null) {
+  async getPosts(page = 1, limit = 10) {
     const offset = (page - 1) * limit;
     const params = [limit, offset];
 
@@ -31,18 +31,21 @@ export class PostRepository {
         WHERE post_id = p.post_id
       ) AS comment_count,
       (
-        SELECT json_agg(json_build_object(
-          'reaction_id', pl.reaction_id,
-          'count', COUNT(*)
-        ))
-        FROM post_likes pl
-        WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
-        GROUP BY pl.post_id
+        SELECT json_agg(row)
+        FROM (
+          SELECT 
+            pl.reaction_id,
+            COUNT(*) AS count
+          FROM post_likes pl
+          WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
+          GROUP BY pl.reaction_id
+        ) AS row
       ) AS reactions
     FROM posts p
     LEFT JOIN users u ON p.user_id = u.user_id
     ORDER BY p.created_at DESC
     LIMIT $1 OFFSET $2
+
   `;
     return this.client.execute(query, params);
   }
@@ -74,13 +77,15 @@ export class PostRepository {
         WHERE post_id = p.post_id
       ) AS comment_count,
       (
-        SELECT json_agg(json_build_object(
-          'reaction_id', pl.reaction_id,
-          'count', COUNT(*)
-        ))
-        FROM post_likes pl
-        WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
-        GROUP BY pl.post_id
+        SELECT json_agg(row)
+        FROM (
+          SELECT 
+            pl.reaction_id,
+            COUNT(*) AS count
+          FROM post_likes pl
+          WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
+          GROUP BY pl.reaction_id
+        ) AS row
       ) AS reactions
     FROM posts p
     LEFT JOIN users u ON p.user_id = u.user_id
