@@ -18,25 +18,53 @@ export class CommentRepository {
     SELECT
       c.post_comment_id AS id,
       c.content,
+      c.json_data,
       c.user_id,
       c.created_at,
+      u.username,
+      u.full_name,
+      u.avatar_url,
+      (
+        SELECT json_agg(json_build_object(
+          'reaction_id', cl.reaction_id,
+          'count', COUNT(*)
+        ))
+        FROM post_comment_likes cl
+        WHERE cl.comment_id = c.post_comment_id AND cl.reaction_id > 1
+        GROUP BY cl.comment_id
+      ) AS reactions,
       COALESCE(
         (
           SELECT json_agg(
             json_build_object(
               'id', r.post_comment_id,
               'content', r.content,
+              'json_data', r.json_data,
               'user_id', r.user_id,
-              'created_at', r.created_at
+              'username', ru.username,
+              'full_name', ru.full_name,
+              'avatar_url', ru.avatar_url,
+              'created_at', r.created_at,
+              'reactions', (
+                SELECT json_agg(json_build_object(
+                  'reaction_id', rcl.reaction_id,
+                  'count', COUNT(*)
+                ))
+                FROM post_comment_likes rcl
+                WHERE rcl.comment_id = r.post_comment_id AND rcl.reaction_id > 1
+                GROUP BY rcl.comment_id
+              )
             ) ORDER BY r.created_at
           )
           FROM post_comments r
+          LEFT JOIN users ru ON r.user_id = ru.user_id
           WHERE r.parent_id = c.post_comment_id
         ), '[]'
       ) AS replies
     FROM post_comments c
+    LEFT JOIN users u ON c.user_id = u.user_id
     WHERE c.post_id = $1 AND c.parent_id IS NULL
-    ORDER BY c.created_at
+    ORDER BY c.created_at DESC
   `;
     const params = [postId];
     return this.client.execute(query, params);
@@ -111,6 +139,31 @@ export class CommentRepository {
     GROUP BY reaction_id
   `;
     return this.client.execute(query, [commentId]);
+  }
+
+  async getCommentReactionUsers(commentId: number, reactionId?: number) {
+    let query = `
+    SELECT
+      cl.user_id,
+      cl.reaction_id,
+      u.username,
+      u.full_name,
+      u.avatar_url
+    FROM post_comment_likes cl
+    JOIN users u ON cl.user_id = u.user_id
+    WHERE cl.comment_id = $1 AND cl.reaction_id > 1
+    `;
+
+    const params = [commentId];
+
+    if (reactionId) {
+      query += ` AND cl.reaction_id = $2`;
+      params.push(reactionId);
+    }
+
+    query += ` ORDER BY u.full_name`;
+
+    return this.client.execute(query, params);
   }
 
   /**

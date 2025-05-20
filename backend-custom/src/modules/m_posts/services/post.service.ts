@@ -9,6 +9,8 @@ import { UpdatePostCommand } from '../commands/update-post.command';
 import { GetPostsQuery } from '../queries/get-post.query';
 import { GetPostDTO } from '../dto/get-post.dto';
 import { GetLikesPostQuery } from '../queries/get-like-post.query';
+import { GetPostDetailQuery } from '../queries/get-post-detail.query';
+import { GetPostReactionUsersQuery } from '../queries/get-post-reaction-users.query';
 
 @Injectable()
 export class PostService {
@@ -39,5 +41,19 @@ export class PostService {
 
   async getLikes(postId: number, userId: number) {
     return this.queryBus.execute(new GetLikesPostQuery(postId, userId));
+  }
+
+  async getPostDetail(postId: number, userId: number) {
+    return this.queryBus.execute(new GetPostDetailQuery(postId, userId));
+  }
+
+  async getPostReactionUsers(
+    postId: number,
+    reactionId?: number,
+    userId?: number,
+  ) {
+    return this.queryBus.execute(
+      new GetPostReactionUsersQuery(postId, reactionId, userId),
+    );
   }
 }

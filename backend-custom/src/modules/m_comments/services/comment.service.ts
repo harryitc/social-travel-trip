@@ -6,6 +6,7 @@ import { CreateCommentCommand } from '../commands/create-comment.command';
 import { LikeCommentCommand } from '../commands/like-comment.command';
 import { LikeCommentDTO } from '../dto/like-comment.dto';
 import { GetLikesCommentQuery } from '../queries/get-likes-comment.query';
+import { GetCommentReactionUsersQuery } from '../queries/get-comment-reaction-users.query';
 
 @Injectable()
 export class CommentService {
@@ -31,5 +32,15 @@ export class CommentService {
   }
   async getLikesComment(commentId: number, userId: number) {
     return this.queryBus.execute(new GetLikesCommentQuery(commentId, userId));
+  }
+
+  async getCommentReactionUsers(
+    commentId: number,
+    reactionId?: number,
+    userId?: number,
+  ) {
+    return this.queryBus.execute(
+      new GetCommentReactionUsersQuery(commentId, reactionId, userId),
+    );
   }
 }

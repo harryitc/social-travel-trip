@@ -10,12 +10,39 @@ export class PostRepository {
     private readonly client: PgSQLConnectionPool,
   ) {}
 
-  async getPosts() {
-    const params = [];
+  async getPosts(page = 1, limit = 10, userId = null) {
+    const offset = (page - 1) * limit;
+    const params = [limit, offset];
+
     const query = `
-    SELECT *
+    SELECT
+      p.post_id,
+      p.content,
+      p.json_data,
+      p.created_at,
+      p.updated_at,
+      p.user_id,
+      u.username,
+      u.full_name,
+      u.avatar_url,
+      (
+        SELECT COUNT(*)
+        FROM post_comments
+        WHERE post_id = p.post_id
+      ) AS comment_count,
+      (
+        SELECT json_agg(json_build_object(
+          'reaction_id', pl.reaction_id,
+          'count', COUNT(*)
+        ))
+        FROM post_likes pl
+        WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
+        GROUP BY pl.post_id
+      ) AS reactions
     FROM posts p
+    LEFT JOIN users u ON p.user_id = u.user_id
     ORDER BY p.created_at DESC
+    LIMIT $1 OFFSET $2
   `;
     return this.client.execute(query, params);
   }
@@ -25,6 +52,39 @@ export class PostRepository {
     SELECT *
     FROM posts
     WHERE post_id = $1
+  `;
+    return this.client.execute(query, [postId]);
+  }
+
+  async getPostDetail(postId: number) {
+    const query = `
+    SELECT
+      p.post_id,
+      p.content,
+      p.json_data,
+      p.created_at,
+      p.updated_at,
+      p.user_id,
+      u.username,
+      u.full_name,
+      u.avatar_url,
+      (
+        SELECT COUNT(*)
+        FROM post_comments
+        WHERE post_id = p.post_id
+      ) AS comment_count,
+      (
+        SELECT json_agg(json_build_object(
+          'reaction_id', pl.reaction_id,
+          'count', COUNT(*)
+        ))
+        FROM post_likes pl
+        WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
+        GROUP BY pl.post_id
+      ) AS reactions
+    FROM posts p
+    LEFT JOIN users u ON p.user_id = u.user_id
+    WHERE p.post_id = $1
   `;
     return this.client.execute(query, [postId]);
   }
@@ -47,6 +107,31 @@ export class PostRepository {
     return this.client.execute(query, [postId]);
   }
 
+  async getPostReactionUsers(postId: number, reactionId?: number) {
+    let query = `
+    SELECT
+      pl.user_id,
+      pl.reaction_id,
+      u.username,
+      u.full_name,
+      u.avatar_url
+    FROM post_likes pl
+    JOIN users u ON pl.user_id = u.user_id
+    WHERE pl.post_id = $1 AND pl.reaction_id > 1
+    `;
+
+    const params = [postId];
+
+    if (reactionId) {
+      query += ` AND pl.reaction_id = $2`;
+      params.push(reactionId);
+    }
+
+    query += ` ORDER BY u.full_name`;
+
+    return this.client.execute(query, params);
+  }
+
   async updatePost(data) {
     const { postId, content, jsonData } = data;
     const params = [content, jsonData, postId];
@@ -61,11 +146,21 @@ export class PostRepository {
   }
 
   async createPost(data, userId) {
-    const { content, jsonData } = data;
-    const params = [content, jsonData, userId];
+    const { content, mentions, hashtags, location, images, jsonData } = data;
+
+    // Prepare JSON data with all the new fields
+    const postJsonData = {
+      ...(jsonData || {}),
+      ...(mentions && { mentions }),
+      ...(hashtags && { hashtags }),
+      ...(location && { location }),
+      ...(images && { images }),
+    };
+
+    const params = [content, postJsonData, userId];
     const query = `
     INSERT INTO posts (content, json_data, user_id, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, NOW(), NOW())
+    VALUES ($1, $2, $3, NOW(), NOW())
     RETURNING *
   `;
     return this.client.execute(query, params);

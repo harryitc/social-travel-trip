@@ -78,4 +78,33 @@ export class PostController {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.updatePost(updatePostDTO, +userId);
   }
+
+  @Get('detail')
+  @ApiOperation({
+    summary: 'Get post detail',
+    description: 'Get detailed information about a specific post',
+  })
+  async getPostDetail(@Query('postId') postId: string, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getPostDetail(+postId, +userId);
+  }
+
+  @Get('reaction-users')
+  @ApiOperation({
+    summary: 'Get users who reacted to a post',
+    description:
+      'Get list of users who reacted to a specific post, optionally filtered by reaction type',
+  })
+  async getPostReactionUsers(
+    @Query('postId') postId: string,
+    @Query('reactionId') reactionId: string,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getPostReactionUsers(
+      +postId,
+      reactionId ? +reactionId : undefined,
+      +userId,
+    );
+  }
 }
