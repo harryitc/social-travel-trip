@@ -24,9 +24,7 @@ export default function AntdProviderLayout({
           },
         }}
       >
-        <App>
           {children}
-        </App>
       </ConfigProvider>
     </AntdRegistry>
   );
