@@ -3,7 +3,11 @@ import { AUTH } from './config/environment';
 import { CookieConfigKeys } from './config/app-storage/cookie.config';
 
 // List of public routes
-const publicRoutes = [AUTH.login_route, AUTH.register_route];
+const publicRoutes = [
+  AUTH.login_route, 
+  AUTH.register_route,
+  AUTH.reset_password,
+];
 
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {

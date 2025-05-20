@@ -27,4 +27,5 @@ export const environment = {
 export const AUTH = {
   login_route: '/auth/sign-in',
   register_route: '/auth/sign-up',
+  reset_password: '/auth/reset-password',
 };
