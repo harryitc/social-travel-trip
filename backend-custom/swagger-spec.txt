@@ -29,10 +29,13 @@ posts/create
 posts/like
 posts/get-post-likes
 posts/update
+posts/detail
+posts/reaction-users
 comments/create
 comments/get
 comments/like
 comments/get-likes
+comments/reaction-users
 group/get-list
 group/get-details
 group/update
@@ -48,6 +51,8 @@ group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
 group/messages/get-pinned
+group/generate-join-qrcode
+group/join-by-code
 plan/query
 plan/details
 plan/create
