@@ -1,6 +1,8 @@
 health
 auth/login
 auth/register
+auth/reset-password
+auth/reset-password/confirm
 user/register
 user/details
 user/update
