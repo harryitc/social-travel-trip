@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@/styles/google-maps-override.css"; // Import CSS để ẩn UI của Google Maps
 import { ClerkProviders } from "@/lib/providers/clerk.provider";
 import { SidebarNav } from "@/components/common/side-bar";
 import { TopbarNav } from "@/components/common/top-bar";
@@ -19,10 +20,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'TripTribe - Mạng xã hội du lịch',
   description: 'Kết nối những người đam mê du lịch',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
 };
 
 import 'dayjs/locale/vi';
 import AntdProviderLayout from "@/lib/providers/antd.provider";
+import { ThemeProvider } from "next-themes";
 
 export default function RootLayout({
   children,
@@ -32,30 +39,28 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 min-h-screen`}>
-        <ClerkProviders>
-          <AntdProviderLayout>
+        <AntdProviderLayout>
+          <ThemeProvider attribute="class" defaultTheme="light">
             <div className="flex min-h-screen">
-              <div className="fixed inset-y-0 z-50 w-64 hidden lg:block">
-                <SidebarNav />
-              </div>
-              <div className="flex-1 lg:pl-64">
+              <SidebarNav />
+              <div className="flex-1 w-full lg:pl-80">
                 <TopbarNav />
-                <main className="px-4 sm:px-6 md:px-8 py-6">
+                <main className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 max-w-[1600px] mx-auto">
                   {children}
                 </main>
               </div>
             </div>
-          </AntdProviderLayout>
-          {/* <ConfigProvider theme={{
+          </ThemeProvider>
+        </AntdProviderLayout>
+        {/* <ConfigProvider theme={{
             inherit: true,
           }} locale={viVN}>
             <App >
-              
+
             </App>
             <Toaster />
           </ConfigProvider> */}
-          <Toaster />
-        </ClerkProviders>
+        <Toaster />
       </body>
     </html>
   );

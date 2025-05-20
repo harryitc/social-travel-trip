@@ -12,8 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/radix-ui/dropdown-menu';
-import { SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
 import { useTheme } from 'next-themes';
+import Link from 'next/link';
 
 export function TopbarNav() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,7 +21,7 @@ export function TopbarNav() {
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-purple-100 dark:border-purple-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8">
-      <div className="flex-1 lg:ml-64 flex items-center">
+      <div className="flex-1 lg:ml-80 flex items-center">
         <form className="hidden md:flex items-center w-full max-w-md">
           <div className="relative w-full">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -38,7 +38,7 @@ export function TopbarNav() {
           <SearchIcon className="h-5 w-5" />
         </Button>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -76,11 +76,19 @@ export function TopbarNav() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
-        <UserButton afterSignOutUrl="/" />
-        <SignedOut>
-          <SignInButton></SignInButton>
-        </SignedOut>
+
+        <div className="flex gap-2">
+          {/* <SignInButton>
+              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                Đăng nhập
+              </Button>
+            </SignInButton> */}
+          <Link href="/auth/custom-auth">
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+              Đăng nhập đơn giản
+            </Button>
+          </Link>
+        </div>
       </div>
     </header>
   );

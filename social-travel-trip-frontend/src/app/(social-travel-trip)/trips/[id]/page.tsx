@@ -30,8 +30,8 @@ export default function TripPage() {
   });
 
   return (
-    <div className="container mx-auto">
-      <div className="h-[calc(100vh-8rem)]">
+    <div className="w-full overflow-hidden">
+      <div className="h-[calc(100vh-7rem)]">
         <TripChatLayout initialTripId={trip.id} />
       </div>
     </div>

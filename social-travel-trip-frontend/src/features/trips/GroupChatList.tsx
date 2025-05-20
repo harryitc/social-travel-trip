@@ -25,25 +25,30 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with back button */}
-      <div className="p-3 border-b border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 flex items-center justify-between">
+      {/* Header with back button - Hiển thị đầy đủ trên desktop, ẩn trên tablet */}
+      <div className="p-3 border-b border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10 flex items-center justify-between md:hidden lg:flex">
         <div className="flex items-center gap-2">
           <Link href="/trips">
             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h2 className="font-semibold">Nhóm của tôi</h2>
+          <h2 className="font-semibold truncate">Nhóm của tôi</h2>
         </div>
         <Link href="/trips">
-          <Button variant="ghost" size="sm" className="text-xs h-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20">
+          <Button variant="ghost" size="sm" className="text-xs h-8 whitespace-nowrap text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20">
             Tất cả nhóm
           </Button>
         </Link>
       </div>
 
-      {/* Search bar */}
-      <div className="p-3">
+      {/* Header thu gọn cho tablet */}
+      <div className="hidden md:flex lg:hidden items-center justify-center p-3 border-b border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10">
+        <h2 className="font-semibold text-center">Nhóm</h2>
+      </div>
+
+      {/* Search bar - Hiển thị đầy đủ trên desktop, ẩn trên tablet */}
+      <div className="p-3 md:hidden lg:block">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -56,38 +61,67 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
         </div>
       </div>
 
-      {/* Group list */}
-      <ScrollArea className="flex-1">
+      {/* Group list - Hiển thị đầy đủ trên desktop */}
+      <ScrollArea className="flex-1 hidden md:hidden lg:block">
         <div className="p-2 space-y-1">
           {filteredGroups.map((group) => (
             <button
               key={group.id}
-              className={`w-full flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+              className={`w-full flex items-center gap-2 p-2 rounded-lg transition-colors overflow-hidden ${
                 group.id === selectedGroupId
                   ? 'bg-purple-100 dark:bg-purple-900/30'
                   : 'hover:bg-purple-50 dark:hover:bg-purple-900/10'
               }`}
               onClick={() => onSelectGroup(group)}
             >
-              <Avatar className="h-10 w-10 shrink-0 border border-purple-100 dark:border-purple-800 shadow-xs">
+              <Avatar className="h-9 w-9 shrink-0 border border-purple-100 dark:border-purple-800 shadow-xs">
                 <AvatarImage src={group.image} alt={group.title} />
                 <AvatarFallback>{group.title[0]}</AvatarFallback>
               </Avatar>
 
               <div className="flex-1 text-left overflow-hidden">
                 <div className="font-medium truncate text-sm">{group.title}</div>
-                <div className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                  <Users className="h-3 w-3" />
-                  <span>{group.members.count} thành viên</span>
-                  <span className="mx-1">•</span>
-                  <MapPin className="h-3 w-3" />
-                  <span>{group.location.split(',')[0]}</span>
+                <div className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5 max-w-full">
+                  <Users className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{group.members.count} thành viên</span>
+                  <span className="mx-1 flex-shrink-0">•</span>
+                  <MapPin className="h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">{group.location.split(',')[0]}</span>
                 </div>
               </div>
 
               {group.hasPlan && (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-5 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px] h-5 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 flex-shrink-0">
                   Có KH
+                </Badge>
+              )}
+            </button>
+          ))}
+        </div>
+      </ScrollArea>
+
+      {/* Group list thu gọn cho tablet - Chỉ hiển thị avatar */}
+      <ScrollArea className="flex-1 hidden md:block lg:hidden">
+        <div className="p-2 flex flex-col items-center space-y-3">
+          {filteredGroups.map((group) => (
+            <button
+              key={group.id}
+              className={`flex flex-col items-center p-2 rounded-lg transition-colors ${
+                group.id === selectedGroupId
+                  ? 'bg-purple-100 dark:bg-purple-900/30'
+                  : 'hover:bg-purple-50 dark:hover:bg-purple-900/10'
+              }`}
+              onClick={() => onSelectGroup(group)}
+              title={group.title}
+            >
+              <Avatar className="h-10 w-10 shrink-0 border border-purple-100 dark:border-purple-800 shadow-xs">
+                <AvatarImage src={group.image} alt={group.title} />
+                <AvatarFallback>{group.title[0]}</AvatarFallback>
+              </Avatar>
+
+              {group.hasPlan && (
+                <Badge variant="outline" className="mt-1 bg-green-50 text-green-700 border-green-200 text-[8px] h-4 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800 flex-shrink-0">
+                  KH
                 </Badge>
               )}
             </button>

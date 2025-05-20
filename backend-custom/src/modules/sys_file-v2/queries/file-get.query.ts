@@ -23,7 +23,7 @@ export class FileGetInfoQueryHandler
   async execute(query: FileGetInfoQuery): Promise<File> {
     let result = await this.repo.getOne(query.file_id);
 
-    if (result.rowCount === 0) {
+    if (result.rowCount == 0) {
       throw new NotFoundException('File not found')
     }
 

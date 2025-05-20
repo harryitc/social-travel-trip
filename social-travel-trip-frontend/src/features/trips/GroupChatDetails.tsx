@@ -18,9 +18,10 @@ import { getTripPlanByGroupId, updateTripPlan } from './mock-trip-plans';
 
 type GroupChatDetailsProps = {
   group: TripGroup;
+  isCollapsed?: boolean;
 };
 
-export function GroupChatDetails({ group }: GroupChatDetailsProps) {
+export function GroupChatDetails({ group, isCollapsed = false }: GroupChatDetailsProps) {
   const [members, setMembers] = useState<TripMember[]>(group.members.list);
   const [memberCount, setMemberCount] = useState(group.members.count);
   const [showPlanDetails, setShowPlanDetails] = useState(false);
@@ -64,161 +65,259 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Group info header */}
-      <div className="p-3 border-b border-purple-100 dark:border-purple-900 bg-purple-50/50 dark:bg-purple-900/10">
+      <div className="p-2 border-b border-purple-100 dark:border-purple-900 bg-teal-50/50 dark:bg-teal-900/10">
         <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-12 w-12 border border-purple-100 dark:border-purple-800 shadow-xs">
+          <Avatar className="h-12 w-12 border border-teal-100 dark:border-teal-800 shadow-xs">
             <AvatarImage src={group.image} alt={group.title} />
             <AvatarFallback>{group.title[0]}</AvatarFallback>
           </Avatar>
-          <div>
-            <h2 className="font-semibold">{group.title}</h2>
-            <div className="flex items-center gap-1 text-xs mt-1">
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold text-base truncate">{group.title}</h2>
+            <div className="flex items-center gap-1.5 text-xs mt-1">
               {group.isPrivate ? (
-                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                <Badge variant="secondary" className="flex items-center gap-1 text-xs h-5">
                   <Lock className="h-3 w-3" />
-                  Riêng tư
+                  {!isCollapsed && "Riêng tư"}
                 </Badge>
               ) : (
-                <Badge className="bg-green-500 flex items-center gap-1 text-xs">
+                <Badge className="bg-green-500 flex items-center gap-1 text-xs h-5">
                   <Globe className="h-3 w-3" />
-                  Công khai
+                  {!isCollapsed && "Công khai"}
                 </Badge>
               )}
             </div>
           </div>
         </div>
 
-        <p className="text-sm text-muted-foreground mb-3">{group.description}</p>
+        {!isCollapsed && <p className="text-sm text-muted-foreground mb-3 line-clamp-3">{group.description}</p>}
 
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="h-3.5 w-3.5 text-purple-500" />
-            <span>{group.location}</span>
+        <div className={`${isCollapsed ? 'grid grid-cols-2' : 'grid grid-cols-2'} gap-2 text-sm`}>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <MapPin className="h-4 w-4 text-teal-500" />
+            <span className="truncate">{group.location.split(',')[0]}</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5 text-purple-500" />
-            <span>{group.date}</span>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-3.5 w-3.5 text-purple-500" />
-            <span>{group.duration}</span>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Users className="h-3.5 w-3.5 text-purple-500" />
-            <span>{memberCount}/{group.members.max} thành viên</span>
+          {!isCollapsed && (
+            <>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Calendar className="h-4 w-4 text-teal-500" />
+                <span>{group.date}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Clock className="h-4 w-4 text-teal-500" />
+                <span>{group.duration}</span>
+              </div>
+            </>
+          )}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Users className="h-4 w-4 text-teal-500" />
+            <span>{memberCount}/{group.members.max}</span>
           </div>
         </div>
       </div>
 
-      {/* Members section */}
-      <div className="p-3 border-b border-purple-100 dark:border-purple-900">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-sm">Thành viên</h3>
-            <Badge variant="outline" className="text-xs">{memberCount}/{group.members.max}</Badge>
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs gap-1 hover:bg-purple-100 dark:hover:bg-purple-900/20"
-              onClick={() => setShowMemberList(true)}
-            >
-              <Users className="h-3.5 w-3.5 text-purple-500" />
-              <span>Xem tất cả</span>
-              <ChevronRight className="h-3 w-3 ml-1 text-muted-foreground" />
-            </Button>
-
-            {memberCount < group.members.max && (
+      {/* Members section - Simplified for vertical layout */}
+      {isCollapsed ? (
+        <div className="p-1 border-b border-teal-100 dark:border-teal-900">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <h3 className="font-medium text-xs">Thành viên</h3>
+              <Badge variant="outline" className="text-[10px] h-4">{memberCount}/{group.members.max}</Badge>
+            </div>
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-xs gap-1 hover:bg-purple-100 dark:hover:bg-purple-900/20"
-                onClick={() => setShowInviteDialog(true)}
+                className="h-6 p-0 w-6 hover:bg-teal-100 dark:hover:bg-teal-900/20"
+                onClick={() => setShowMemberList(true)}
               >
-                <UserPlus className="h-3.5 w-3.5 text-purple-500" />
-                <span>Mời</span>
+                <Users className="h-3 w-3 text-teal-500" />
+              </Button>
+
+              {memberCount < group.members.max && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 p-0 w-6 hover:bg-teal-100 dark:hover:bg-teal-900/20"
+                  onClick={() => setShowInviteDialog(true)}
+                >
+                  <UserPlus className="h-3 w-3 text-teal-500" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Chế độ thu gọn: chỉ hiển thị avatar */}
+          <div className="flex flex-wrap gap-1 mt-1">
+            {members.slice(0, 8).map((member) => (
+              <Avatar key={member.id} className="h-6 w-6 border border-teal-100 dark:border-teal-800" title={member.name}>
+                <AvatarImage src={member.avatar} alt={member.name} />
+                <AvatarFallback>{member.name[0]}</AvatarFallback>
+              </Avatar>
+            ))}
+            {members.length > 8 && (
+              <div
+                className="h-6 w-6 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-[10px] text-teal-700 dark:text-teal-300 cursor-pointer"
+                onClick={() => setShowMemberList(true)}
+              >
+                +{members.length - 8}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="p-3 border-b border-teal-100 dark:border-teal-900">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-medium text-sm">Thành viên</h3>
+              <Badge variant="outline" className="text-xs h-5">{memberCount}/{group.members.max}</Badge>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/20"
+                onClick={() => setShowMemberList(true)}
+              >
+                <Users className="h-3.5 w-3.5 text-teal-500" />
+                <span>Xem tất cả</span>
+                <ChevronRight className="h-3.5 w-3.5 ml-0.5 text-muted-foreground" />
+              </Button>
+
+              {memberCount < group.members.max && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/20"
+                  onClick={() => setShowInviteDialog(true)}
+                >
+                  <UserPlus className="h-3.5 w-3.5 text-teal-500" />
+                  <span>Mời</span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Chế độ đầy đủ */}
+          <div className="space-y-1">
+            {members.slice(0, 5).map((member) => (
+              <div key={member.id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
+                <Avatar className="h-7 w-7">
+                  <AvatarImage src={member.avatar} alt={member.name} />
+                  <AvatarFallback>{member.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm">{member.name}</span>
+                  {member.role === 'admin' && (
+                    <Badge variant="outline" className="text-xs h-5 bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800">Admin</Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Hiển thị số thành viên còn lại nếu có nhiều hơn 5 */}
+            {members.length > 5 && (
+              <Button
+                variant="ghost"
+                className="w-full h-8 text-sm text-muted-foreground hover:bg-secondary/50"
+                onClick={() => setShowMemberList(true)}
+              >
+                Xem thêm {members.length - 5} thành viên khác
               </Button>
             )}
           </div>
         </div>
+      )}
 
-        {/* Hiển thị tối đa 5 thành viên trong danh sách nhỏ */}
-        <div className="space-y-1">
-          {members.slice(0, 5).map((member) => (
-            <div key={member.id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={member.avatar} alt={member.name} />
-                <AvatarFallback>{member.name[0]}</AvatarFallback>
-              </Avatar>
-              <div className="flex items-center justify-between w-full">
-                <span className="text-xs">{member.name}</span>
-                {member.role === 'admin' && (
-                  <Badge variant="outline" className="text-[9px] h-4 bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800">Admin</Badge>
-                )}
-              </div>
-            </div>
-          ))}
+      {/* Dialog hiển thị đầy đủ danh sách thành viên */}
+      <MemberListDialog
+        members={members}
+        maxMembers={group.members.max}
+        isOpen={showMemberList}
+        onClose={() => setShowMemberList(false)}
+        onInvite={handleOpenInviteDialog}
+      />
 
-          {/* Hiển thị số thành viên còn lại nếu có nhiều hơn 5 */}
-          {members.length > 5 && (
-            <Button
-              variant="ghost"
-              className="w-full h-8 text-xs text-muted-foreground hover:bg-secondary/50"
-              onClick={() => setShowMemberList(true)}
-            >
-              Xem thêm {members.length - 5} thành viên khác
-            </Button>
-          )}
-        </div>
+      {/* Dialog mời thành viên */}
+      <InviteMembersDialog
+        tripId={group.id}
+        currentMembers={members}
+        maxMembers={group.members.max}
+        onInvite={handleInviteMembers}
+        open={showInviteDialog}
+        onOpenChange={setShowInviteDialog}
+      />
 
-        {/* Dialog hiển thị đầy đủ danh sách thành viên */}
-        <MemberListDialog
-          members={members}
-          maxMembers={group.members.max}
-          isOpen={showMemberList}
-          onClose={() => setShowMemberList(false)}
-          onInvite={handleOpenInviteDialog}
-        />
-
-        {/* Dialog mời thành viên */}
-        <InviteMembersDialog
-          tripId={group.id}
-          currentMembers={members}
-          maxMembers={group.members.max}
-          onInvite={handleInviteMembers}
-          open={showInviteDialog}
-          onOpenChange={setShowInviteDialog}
-        />
-      </div>
-
-      {/* Plan section */}
-      {(tripPlan || matchingTemplate) && (
-        <div className="p-3 flex-1 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <h3 className="font-medium text-sm">Kế hoạch chuyến đi</h3>
-              <Badge variant="outline" className="text-[9px] h-4 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">Đã áp dụng</Badge>
+      {/* Plan section - Simplified for vertical layout */}
+      {(tripPlan || matchingTemplate) && isCollapsed ? (
+        <div className="p-1 flex-shrink-0 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <h3 className="font-medium text-xs">Kế hoạch</h3>
             </div>
             {tripPlan && (
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 px-2 text-xs gap-1 hover:bg-purple-100 dark:hover:bg-purple-900/20"
+                className="h-6 p-0 w-6 hover:bg-teal-100 dark:hover:bg-teal-900/20"
                 onClick={() => setShowTripPlanEditor(true)}
               >
-                <Pencil className="h-3.5 w-3.5 text-purple-500" />
+                <Pencil className="h-3 w-3 text-teal-500" />
+              </Button>
+            )}
+          </div>
+
+          {/* Chế độ thu gọn */}
+          <div className="flex items-center gap-2 mt-1">
+            <Button
+              variant="outline"
+              className="flex items-center justify-center p-1 hover:bg-teal-50 dark:hover:bg-teal-900/20 group rounded-lg"
+              onClick={() => tripPlan ? setShowTripPlanEditor(true) : setShowPlanDetails(true)}
+            >
+              <div className="h-8 w-8 rounded-md overflow-hidden shrink-0 border border-teal-100 dark:border-teal-800 shadow-xs">
+                {/* eslint-disable-next-line */}
+                <img
+                  src={(tripPlan || matchingTemplate)?.image}
+                  alt={(tripPlan || matchingTemplate)?.name}
+                  className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                />
+              </div>
+            </Button>
+            <div className="text-left flex-1 min-w-0">
+              <div className="font-medium text-xs truncate">{(tripPlan || matchingTemplate)?.name}</div>
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-2.5 w-2.5 text-teal-500 flex-shrink-0" />
+                <span className="truncate">{(tripPlan || matchingTemplate)?.duration} ngày</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (tripPlan || matchingTemplate) && (
+        <div className="p-3 flex-1 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-medium text-sm">Kế hoạch</h3>
+              <Badge variant="outline" className="text-xs h-5 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">Đã áp dụng</Badge>
+            </div>
+            {tripPlan && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/20"
+                onClick={() => setShowTripPlanEditor(true)}
+              >
+                <Pencil className="h-3.5 w-3.5 text-teal-500" />
                 <span>Chỉnh sửa</span>
               </Button>
             )}
           </div>
 
+          {/* Chế độ đầy đủ */}
           <Button
             variant="outline"
-            className="w-full flex items-center gap-2 h-auto p-2 justify-start hover:bg-purple-50 dark:hover:bg-purple-900/20 group rounded-lg"
+            className="w-full flex items-center gap-3 h-auto p-3 justify-start hover:bg-teal-50 dark:hover:bg-teal-900/20 group rounded-lg"
             onClick={() => tripPlan ? setShowTripPlanEditor(true) : setShowPlanDetails(true)}
           >
-            <div className="h-14 w-14 rounded-md overflow-hidden shrink-0 border border-purple-100 dark:border-purple-800 shadow-xs">
+            <div className="h-16 w-16 rounded-md overflow-hidden shrink-0 border border-teal-100 dark:border-teal-800 shadow-xs">
               {/* eslint-disable-next-line */}
               <img
                 src={(tripPlan || matchingTemplate)?.image}
@@ -226,13 +325,13 @@ export function GroupChatDetails({ group }: GroupChatDetailsProps) {
                 className="h-full w-full object-cover transition-transform group-hover:scale-105"
               />
             </div>
-            <div className="text-left ml-1">
+            <div className="text-left">
               <div className="font-medium text-sm">{(tripPlan || matchingTemplate)?.name}</div>
-              <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                <Clock className="h-3 w-3 text-purple-500" />
+              <div className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-teal-500" />
                 <span>{(tripPlan || matchingTemplate)?.duration} ngày</span>
                 <span className="mx-1">•</span>
-                <MapPin className="h-3 w-3 text-purple-500" />
+                <MapPin className="h-3.5 w-3.5 text-teal-500" />
                 <span>{(tripPlan || matchingTemplate)?.destination.split(',')[0]}</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1">

@@ -4,10 +4,17 @@ import { authMiddleware } from "@clerk/nextjs";
  
 export default authMiddleware({
   // Routes that can be accessed while signed out
-  publicRoutes: ["/", "/explore", "/blog"],
-  // Routes that can always be accessed, and have
-  // no authentication information
-  ignoredRoutes: ["/api/webhook"],
+  // publicRoutes: [
+  //   "/", 
+  //   "/explore", 
+  //   "/blog",
+  //   "/planning",
+  //   "/settings",
+  //   "/trips"
+  // ],
+  // // Routes that can always be accessed, and have
+  // // no authentication information
+  // ignoredRoutes: ["/api/webhook"],
 });
 
 // // This function can be marked `async` if using `await` inside
