@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/radix-ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/radix-ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Heart, MessageCircle, Share, MoreHorizontal, Bookmark, MapPin } from 'lucide-react';
@@ -17,6 +17,8 @@ import ReactMarkdown from 'react-markdown';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import { postService } from '../services/post.service';
 import { Post } from '../models/post.model';
+import { API_ENDPOINT } from '@/config/api.config';
+import CustomImage from '@/components/ui/custom-image';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -74,7 +76,7 @@ export function PostItem({ post, onHidePost }: PostItemProps) {
       const newLikedStatus = !isLiked;
       setIsLiked(newLikedStatus);
       setLikesCount(prevCount => newLikedStatus ? prevCount + 1 : prevCount - 1);
-      
+
       // Call API to like/unlike post
       await postService.likePost(post.post_id);
     } catch (error) {
@@ -188,19 +190,18 @@ export function PostItem({ post, onHidePost }: PostItemProps) {
         {post.images && post.images.length > 0 && (
           <div className={`grid ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
             {post.images.map((image, index) => (
-              <div 
-                key={index} 
-                className={`relative rounded-md overflow-hidden ${
-                  post.images.length === 1 ? 'col-span-1' : 
-                  index === 0 && post.images.length === 3 ? 'col-span-2' : 'col-span-1'
-                }`}
+              <div
+                key={index}
+                className={`relative rounded-md overflow-hidden ${post.images.length === 1 ? 'col-span-1' :
+                    index === 0 && post.images.length === 3 ? 'col-span-2' : 'col-span-1'
+                  }`}
               >
-                <img
-                  src={image}
-                  alt={`Image ${index + 1}`}
+                <CustomImage src={API_ENDPOINT.file_image_v2 + image} alt={`Image ${index + 1}`}
                   className="w-full h-full object-cover"
                   style={{ maxHeight: post.images.length === 1 ? '400px' : '200px' }}
-                />
+                  width={100}
+                  height={100}
+                ></CustomImage>
               </div>
             ))}
           </div>

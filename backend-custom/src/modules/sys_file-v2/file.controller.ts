@@ -35,7 +35,7 @@ export class FileController {
   @HttpCode(200)
   @Post('get-list')
   public async getListById(@Body() body: FileGetListDto, @Request() req: any) {
-    body['userId'] = req['user'].id;
+    body['userId'] = req['user']?.user_id ?? 'test';
     if (body.session_id) {
       this.fileService.fileGetListInfo(
         body.list_server_file_name,
@@ -70,7 +70,7 @@ export class FileController {
     @Body() body: FileUploadDto,
     @Request() req: any,
   ) {
-    body['userId'] = req['user'].id;
+    body['userId'] = req['user']?.user_id ?? 'test';
     return this.fileService.fileUpload(body, files);
   }
 

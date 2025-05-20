@@ -10,10 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/radix-ui/command';
 import { getUserInfo, isLoggedIn } from '@/features/auth/auth.service';
-import { postService, CreatePostPayload } from '../services/post.service';
+import { postService } from '../services/post.service';
 import { fileService } from '@/features/file/file.service';
 import { locationService } from '@/features/explore/services/location.service';
 import { useRouter } from 'next/navigation';
+import { CreatePostPayload } from '../models/post.model';
 
 // Mock data for users and hashtags until API is available
 const USERS = [
@@ -54,7 +55,7 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
   const [hashtagPopoverOpen, setHashtagPopoverOpen] = useState(false);
   const [mentionPopoverOpen, setMentionPopoverOpen] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
-  const [mentions, setMentions] = useState<{id: string, name: string}[]>([]);
+  const [mentions, setMentions] = useState<{ id: string, name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -188,7 +189,7 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
           content.substring(cursorPosition);
 
         setContent(newContent);
-        setMentions([...mentions, {id: Date.now().toString(), name: userName}]);
+        setMentions([...mentions, { id: Date.now().toString(), name: userName }]);
         setMentionPopoverOpen(false);
 
         // Set cursor position after the inserted mention
@@ -222,8 +223,18 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
         payload.location_name = location;
       }
 
+      // If files are provided, upload them first
+      if (imageFiles && imageFiles.length > 0) {
+        console.log('Uploading files:', imageFiles);
+        const uploadedFiles = await fileService.uploadMultipleFiles(imageFiles);
+
+        // Add file URLs to payload
+        payload.images = uploadedFiles.map(file => file.files[0].file_url);
+      }
+
+
       // Create post
-      const createdPost = await postService.createPost(payload, imageFiles);
+      const createdPost = await postService.createPost(payload);
 
       // Reset form
       setContent('');

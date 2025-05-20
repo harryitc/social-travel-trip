@@ -10,6 +10,7 @@ export const environment = {
     permission_v2: process.env.NEXT_PUBLIC_PERMISSION_V2 ?? '',
     social_travel_trip: process.env.NEXT_PUBLIC_API_SOCIAL_TRAVEL_TRIP ?? '',
     file_v2: process.env.NEXT_PUBLIC_API_FILE_V2 ?? '',
+    file_image_v2: process.env.NEXT_PUBLIC_API_FILE_IMAGE_V2 ?? '',
     image_root_path_quilljs: process.env.NEXT_PUBLIC_IMAGE_ROOT_FILE_QUILL ?? '',
   },
   aplication: {

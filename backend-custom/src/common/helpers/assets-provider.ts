@@ -15,6 +15,7 @@ export class AssetsProvider {
   // don't forget add __dirname if u want exec to 'dist' folder.
   setBasePath = (basePath: string[]) => {
     this.basePath = path.join(...basePath);
+    console.log(this.basePath)
   };
 
   public getSqlFile(fileName: string) {

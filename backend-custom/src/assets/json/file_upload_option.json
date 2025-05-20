@@ -1,0 +1,22 @@
+{
+    "resize": {
+        "1": {
+            "width": 800,
+            "height": 600,
+            "fit": "cover"
+        },
+        "2": {
+            "width": 1024,
+            "height": 960,
+            "fit": "contain"
+        }
+    },
+    "scale": {
+        "500": {
+            "width": 500
+        },
+        "half": {
+            "ratio": 0.5
+        }
+    }
+}

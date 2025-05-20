@@ -19,16 +19,8 @@ export const postService = {
    * @param files Optional files to upload
    * @returns Promise with created post
    */
-  async createPost(payload: CreatePostPayload, files?: File[]): Promise<Post> {
+  async createPost(payload: CreatePostPayload): Promise<Post> {
     try {
-      // If files are provided, upload them first
-      if (files && files.length > 0) {
-        const uploadedFiles = await fileService.uploadMultipleFiles(files);
-
-        // Add file URLs to payload
-        payload.images = uploadedFiles.map(file => file.file_url);
-      }
-
       // Create post
       const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/create`, payload);
       return Post.fromResponse(response);
