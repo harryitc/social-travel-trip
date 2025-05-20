@@ -12,12 +12,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/radix-ui/dropdown-menu';
-import { useTheme } from 'next-themes';
-import Link from 'next/link';
+import UserProfile from '@/components/auth/UserProfile';
 
 export function TopbarNav() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { theme } = useTheme();
 
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-purple-100 dark:border-purple-900 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl px-4 sm:px-6 lg:px-8">
@@ -78,16 +76,8 @@ export function TopbarNav() {
         </DropdownMenu>
 
         <div className="flex gap-2">
-          {/* <SignInButton>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                Đăng nhập
-              </Button>
-            </SignInButton> */}
-          <Link href="/auth/custom-auth">
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
-              Đăng nhập đơn giản
-            </Button>
-          </Link>
+          {/* Component hiển thị thông tin người dùng hoặc nút đăng nhập */}
+          <UserProfile />
         </div>
       </div>
     </header>

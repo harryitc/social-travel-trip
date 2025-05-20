@@ -40,13 +40,20 @@ export class AuthService {
    * Login user and generate JWT token
    * @param username Username
    * @param password Password
-   * @returns JWT token
+   * @returns JWT token and user info
    */
   async login(username: string, password: string) {
     const user = await this.validateUser(username, password);
     const payload = { sub: user.user_id };
     const token = this.jwt.sign(payload);
-    return { access_token: token };
+
+    // Trả về thông tin người dùng (loại bỏ mật khẩu)
+    const { password: _, ...userInfo } = user;
+
+    return {
+      access_token: token,
+      user: userInfo,
+    };
   }
 
   /**
@@ -125,7 +132,9 @@ export class AuthService {
 
     // In a real app, you would find the user by email and update their password
     // For demo purposes, we'll just log the action
-    console.log(`Password reset for ${resetData.email}`);
+    console.log(
+      `Password reset for ${resetData.email} with new password: ${password.substring(0, 1)}***`,
+    );
 
     // Remove the used token
     this.resetTokens.delete(token);

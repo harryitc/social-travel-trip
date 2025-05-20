@@ -6,7 +6,7 @@ import { APIS, TConfirmResetPasswordPayload, TLoginPayload, TRegisterPayload, TR
 /**
  * Login user with username and password
  * @param payload Login credentials
- * @returns Authentication response with access token
+ * @returns Authentication response with access token and user info
  */
 export const loginService = async (payload: TLoginPayload) => {
   try {
@@ -15,7 +15,14 @@ export const loginService = async (payload: TLoginPayload) => {
     if (!response.access_token) {
       return response;
     }
+
+    // Lưu token vào cookie
     setCookieToken(response.access_token);
+
+    // Lưu thông tin người dùng vào cookie
+    if (response.user) {
+      setUserInfo(response.user);
+    }
 
     return response;
   } catch (error) {
@@ -76,6 +83,16 @@ const setCookieToken = (token: string) => {
 };
 
 /**
+ * Set user information in cookies
+ * @param user User information
+ */
+const setUserInfo = (user: any) => {
+  CoreAppStorageService.setItem(CookieConfigKeys.features.auth.user, JSON.stringify(user), {
+    location: StorageLocation.COOKIES,
+  });
+};
+
+/**
  * Get authentication token from cookies
  * @returns JWT token or null
  */
@@ -105,10 +122,32 @@ export const getAuthorizationHeader = (type = 'Bearer') => {
 };
 
 /**
- * Logout user by removing token
+ * Get user information from cookies
+ * @returns User information or null
+ */
+export const getUserInfo = () => {
+  const userJson = CoreAppStorageService.getItem<string>(CookieConfigKeys.features.auth.user, {
+    location: StorageLocation.COOKIES,
+  });
+
+  if (!userJson) return null;
+
+  try {
+    return JSON.parse(userJson);
+  } catch (error) {
+    console.error('Error parsing user info:', error);
+    return null;
+  }
+};
+
+/**
+ * Logout user by removing token and user info
  */
 export const logoutService = () => {
-  CoreAppStorageService.removeItems([CookieConfigKeys.features.auth.token], {
+  CoreAppStorageService.removeItems([
+    CookieConfigKeys.features.auth.token,
+    CookieConfigKeys.features.auth.user
+  ], {
     location: StorageLocation.COOKIES,
   });
   window.location.href = '/auth/sign-in';
