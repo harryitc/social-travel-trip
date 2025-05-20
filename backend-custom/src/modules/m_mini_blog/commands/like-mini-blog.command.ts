@@ -52,8 +52,8 @@ export class LikeMiniBlogCommandHandler
       const miniBlog = miniBlogResult.rows[0];
       const miniBlogOwnerId = miniBlog.user_id;
 
-      // Don't notify if the user is liking their own mini blog
-      if (miniBlogOwnerId != userId) {
+      // Don't notify if the user is liking their own mini blog or if reaction_id is 1 (no like)
+      if (miniBlogOwnerId != userId && data.reactionId > 1) {
         // Get user details for notification
         const liker = await this.userService.findById(userId);
 

@@ -58,8 +58,8 @@ export class LikeCommentCommandHandler
       const insertResult = await this.repository.likeComment(data, userId);
       const likeResult = insertResult.rows[0];
 
-      // Don't notify if the user is liking their own comment
-      if (commentOwnerId != userId) {
+      // Don't notify if the user is liking their own comment or if reaction_id is 1 (no like)
+      if (commentOwnerId != userId && data.reactionId > 1) {
         // Get user details for notification
         const liker = await this.userService.findById(userId);
 

@@ -49,8 +49,8 @@ export class LikePostCommandHandler
       const insertResult = await this.repository.likePost(data, userId);
       const likeResult = insertResult.rows[0];
 
-      // Don't notify if the user is liking their own post
-      if (postOwnerId != userId) {
+      // Don't notify if the user is liking their own post or if reaction_id is 1 (no like)
+      if (postOwnerId != userId && data.reactionId > 1) {
         // Get user details for notification
         const liker = await this.userService.findById(userId);
 
