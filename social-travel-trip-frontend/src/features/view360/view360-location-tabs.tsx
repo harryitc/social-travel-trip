@@ -38,20 +38,20 @@ export function View360LocationTabs({ defaultLocation = 'bai-sao', className = '
       <div className="bg-white rounded-xl shadow-md border border-purple-200">
         <View360Search
           onSelectLocation={handleSelectLocation}
-          className="p-4"
+          className="p-3 sm:p-4"
         />
       </div>
 
       {/* Location details panel - thiết kế đẹp hơn */}
       {selectedLocation && (
-        <div className="bg-white rounded-xl shadow-md border border-purple-200 p-4">
-          <div className="flex items-center space-x-3">
-            <div className="bg-purple-100 p-2 rounded-full">
-              <MapPin className="h-5 w-5 text-purple-600" />
+        <div className="bg-white rounded-xl shadow-md border border-purple-200 p-3 sm:p-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="bg-purple-100 p-1.5 sm:p-2 rounded-full">
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-purple-800">{selectedLocation.name}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-base sm:text-lg font-semibold text-purple-800">{selectedLocation.name}</h3>
+              <p className="text-xs sm:text-sm text-gray-600">
                 {selectedLocation.city}, {selectedLocation.region}
               </p>
             </div>
@@ -69,16 +69,16 @@ export function View360LocationTabs({ defaultLocation = 'bai-sao', className = '
               </TabsTrigger>
             ))}
           </TabsList>
-          
+
           {VIEW_360_LOCATIONS.map(location => (
             <TabsContent key={location.id} value={location.id} className="p-0">
               <GoogleMapsView
                 mapUrl={location.googleMapsUrl}
-                height="600px"
+                height="400px"
                 title={location.name}
                 showInfoCard={showInfoCard}
                 reloadButton={true}
-                className="rounded-none border-0"
+                className="rounded-none border-0 h-[400px] sm:h-[500px] md:h-[600px]"
               />
             </TabsContent>
           ))}

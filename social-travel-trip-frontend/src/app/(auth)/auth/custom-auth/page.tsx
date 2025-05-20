@@ -17,12 +17,7 @@ export default function CustomAuthPage() {
             Quay lại trang chủ
           </Link>
           
-          <Link 
-            href="/auth/sign-in" 
-            className="text-sm text-gray-600 hover:text-primary transition-colors"
-          >
-            Đăng nhập với Clerk
-          </Link>
+         
         </div>
         
         <CustomAuthForm />

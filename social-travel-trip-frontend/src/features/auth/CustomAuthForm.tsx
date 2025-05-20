@@ -163,13 +163,13 @@ export default function CustomAuthForm() {
 
   return (
     <div className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-      <div className="bg-primary p-6 text-white">
-        <h2 className="text-2xl font-bold text-center">
+      <div className="bg-primary p-4 sm:p-6 text-white">
+        <h2 className="text-xl sm:text-2xl font-bold text-center">
           {isLogin ? 'Đăng nhập' : 'Đăng ký tài khoản'}
         </h2>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-3 sm:space-y-4">
         {!isLogin && (
           <div className="space-y-1">
             <label htmlFor="name" className="block text-sm font-medium">
@@ -303,21 +303,21 @@ export default function CustomAuthForm() {
         )}
       </form>
 
-      <div className="px-6 pb-6">
-        <div className="relative flex items-center justify-center my-4">
+      <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+        <div className="relative flex items-center justify-center my-3 sm:my-4">
           <div className="border-t border-gray-300 dark:border-gray-700 w-full"></div>
-          <div className="bg-white dark:bg-gray-800 px-4 text-sm text-gray-500">hoặc</div>
+          <div className="bg-white dark:bg-gray-800 px-2 sm:px-4 text-xs sm:text-sm text-gray-500">hoặc</div>
           <div className="border-t border-gray-300 dark:border-gray-700 w-full"></div>
         </div>
 
         <Button
           type="button"
           variant="outline"
-          className="w-full flex items-center justify-center gap-2"
+          className="w-full flex items-center justify-center gap-2 text-sm"
           onClick={handleGoogleSignIn}
           disabled={isLoading}
         >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               fill="#4285F4"
@@ -335,7 +335,7 @@ export default function CustomAuthForm() {
               fill="#EA4335"
             />
           </svg>
-          {isLoading ? 'Đang xử lý...' : 'Đăng nhập với Google'}
+          <span className="text-xs sm:text-sm">{isLoading ? 'Đang xử lý...' : 'Đăng nhập với Google'}</span>
         </Button>
       </div>
     </div>

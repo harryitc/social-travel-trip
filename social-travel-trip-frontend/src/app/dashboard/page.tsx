@@ -56,11 +56,11 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
             {authProvider === 'google' && userPicture ? (
-              <div className="relative h-16 w-16 rounded-full overflow-hidden">
+              <div className="relative h-12 w-12 sm:h-16 sm:w-16 rounded-full overflow-hidden">
                 <img
                   src={userPicture}
                   alt="Profile"
@@ -68,14 +68,14 @@ export default function DashboardPage() {
                 />
               </div>
             ) : (
-              <div className="bg-primary/10 p-3 rounded-full">
-                <UserCircle className="h-10 w-10 text-primary" />
+              <div className="bg-primary/10 p-2 sm:p-3 rounded-full">
+                <UserCircle className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
               </div>
             )}
             <div>
-              <h1 className="text-2xl font-bold">Xin chào!</h1>
-              <p className="text-xl font-medium">{userName || 'Người dùng'}</p>
-              <p className="text-gray-600 dark:text-gray-400">{userEmail}</p>
+              <h1 className="text-xl sm:text-2xl font-bold">Xin chào!</h1>
+              <p className="text-lg sm:text-xl font-medium">{userName || 'Người dùng'}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{userEmail}</p>
               {authProvider && (
                 <div className="mt-1 text-xs inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary/10 text-primary">
                   Đăng nhập qua {authProvider === 'google' ? 'Google' : 'Email'}
@@ -85,7 +85,7 @@ export default function DashboardPage() {
           </div>
           <Button
             variant="outline"
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
@@ -94,29 +94,29 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Chuyến đi gần đây</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">Chuyến đi gần đây</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Bạn chưa có chuyến đi nào. Hãy tạo chuyến đi mới!
           </p>
-          <Button className="mt-4 w-full">Tạo chuyến đi</Button>
+          <Button className="mt-3 sm:mt-4 w-full">Tạo chuyến đi</Button>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Bạn bè</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">Bạn bè</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Kết nối với bạn bè để cùng nhau khám phá những điểm đến mới.
           </p>
-          <Button className="mt-4 w-full">Tìm bạn bè</Button>
+          <Button className="mt-3 sm:mt-4 w-full">Tìm bạn bè</Button>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Khám phá</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
+          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">Khám phá</h2>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Khám phá những điểm đến hấp dẫn và phổ biến nhất.
           </p>
-          <Button className="mt-4 w-full">Khám phá ngay</Button>
+          <Button className="mt-3 sm:mt-4 w-full">Khám phá ngay</Button>
         </div>
       </div>
     </div>
