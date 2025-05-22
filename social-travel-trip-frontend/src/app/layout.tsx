@@ -30,7 +30,7 @@ import 'dayjs/locale/vi';
 import AntdProviderLayout from "@/lib/providers/antd.provider";
 import { ThemeProvider } from "next-themes";
 import { WebSocketProvider } from "@/lib/providers/websocket.provider";
-import { NotificationListener } from "@/features/notifications/notification-listener";
+// import { NotificationListener } from "@/features/notifications/notification-listener";
 
 export default function RootLayout({
   children,
@@ -43,7 +43,7 @@ export default function RootLayout({
         <AntdProviderLayout>
           <ThemeProvider attribute="class" defaultTheme="light">
             <WebSocketProvider>
-              <NotificationListener />
+              {/* <NotificationListener /> */}
               <div className="flex min-h-screen">
                 <SidebarNav />
                 <div className="flex-1 w-full lg:pl-80">

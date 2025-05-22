@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { CreatePostPayload } from '../models/post.model';
 import { useWebSocket } from '@/lib/providers/websocket.provider';
 import { WebsocketEvent } from '@/lib/services/websocket.service';
+import { notification } from 'antd';
 
 // Mock data for users and hashtags until API is available
 const USERS = [
@@ -37,11 +38,8 @@ const POPULAR_HASHTAGS = [
   { tag: 'HoiAn', posts: 521 },
 ];
 
-interface PostCreatorProps {
-  onPostCreated: (newPost: any) => void;
-}
 
-export function PostCreator({ onPostCreated }: PostCreatorProps) {
+export function PostCreator() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [content, setContent] = useState('');
@@ -269,12 +267,15 @@ export function PostCreator({ onPostCreated }: PostCreatorProps) {
         }
       }
 
-      // Notify parent component
-      onPostCreated(createdPost);
+      setIsSubmitting(false);
+
     } catch (error) {
       console.error('Error creating post:', error);
-      alert('Có lỗi xảy ra khi đăng bài. Vui lòng thử lại sau.');
-    } finally {
+      notification.error({
+        message: 'Lỗi',
+        description: 'Có lỗi xảy ra khi đăng bài. Vui lòng thử lại sau.',
+        type: 'error',
+      });
       setIsSubmitting(false);
     }
   };

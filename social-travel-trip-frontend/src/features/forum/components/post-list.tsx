@@ -11,7 +11,7 @@ import { HashtagTrending } from './hashtag-trending';
 import { Post, PostQueryParams } from '../models/post.model';
 import { useWebSocket } from '@/lib/providers/websocket.provider';
 import { WebsocketEvent } from '@/lib/services/websocket.service';
-import { App } from 'antd';
+import { App, notification } from 'antd';
 
 export function PostList() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -22,19 +22,7 @@ export function PostList() {
   const [hasMore, setHasMore] = useState(true);
   const [hiddenPosts, setHiddenPosts] = useState<string[]>([]);
   const { on, off, isConnected } = useWebSocket();
-  const { notification } = App.useApp();
 
-  // Load posts
-  useEffect(() => {
-    fetchPosts();
-    // Load hidden posts from localStorage
-    try {
-      const storedHiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
-      setHiddenPosts(storedHiddenPosts);
-    } catch (error) {
-      console.error('Error loading hidden posts from localStorage:', error);
-    }
-  }, [activeTab]);
 
   // WebSocket event listeners
   useEffect(() => {
@@ -42,84 +30,11 @@ export function PostList() {
       console.log('WebSocket not connected, skipping event registration');
       return;
     }
-
-    console.log('Setting up WebSocket event listeners');
-
-    // Handler for new posts
-    const handleNewPost = (data: any) => {
-      console.log('Received WebSocket event:', WebsocketEvent.POST_CREATED, data);
-
-      // Check if data.post exists
-      if (!data || !data.post) {
-        console.error('Invalid post data received:', data);
-        return;
-      }
-
-      // Check if the post is already in the list
-      if (posts.some(post => post.post_id === data.post.post_id)) {
-        console.log('Post already exists in the list, skipping');
-        return;
-      }
-
-      console.log('Adding new post to the list:', data.post);
-
-      // Add new post to the beginning of the list
-      setPosts(prevPosts => [data.post, ...prevPosts]);
-
-      // Show notification
-      notification.info({
-        message: 'Bài viết mới',
-        description: `${data.authorName || 'Một người dùng'} vừa đăng một bài viết mới`,
-        placement: 'topRight',
-      });
-    };
-
-    // Handler for post likes
-    const handlePostLiked = (data: any) => {
-      // Update post likes count
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.post_id === data.postId
-            ? {
-                ...post,
-                stats: {
-                  ...post.stats,
-                  total_likes: post.stats.total_likes + 1
-                }
-              }
-            : post
-        )
-      );
-    };
-
-    // Handler for new comments
-    const handleNewComment = (data: any) => {
-      // Update post comments count
-      setPosts(prevPosts =>
-        prevPosts.map(post =>
-          post.post_id === data.postId
-            ? {
-                ...post,
-                stats: {
-                  ...post.stats,
-                  total_comments: post.stats.total_comments + 1
-                }
-              }
-            : post
-        )
-      );
-    };
-
     // Register event handlers
     console.log('Registering WebSocket event handlers');
     on(WebsocketEvent.POST_CREATED, handleNewPost);
     on(WebsocketEvent.POST_LIKED, handlePostLiked);
     on(WebsocketEvent.COMMENT_CREATED, handleNewComment);
-
-    // Also register for the raw event names
-    on('post:created' as WebsocketEvent, handleNewPost);
-    on('post:liked' as WebsocketEvent, handlePostLiked);
-    on('comment:created' as WebsocketEvent, handleNewComment);
 
     // Cleanup function
     return () => {
@@ -127,13 +42,64 @@ export function PostList() {
       off(WebsocketEvent.POST_CREATED, handleNewPost);
       off(WebsocketEvent.POST_LIKED, handlePostLiked);
       off(WebsocketEvent.COMMENT_CREATED, handleNewComment);
-
-      // Also unregister the raw event names
-      off('post:created' as WebsocketEvent, handleNewPost);
-      off('post:liked' as WebsocketEvent, handlePostLiked);
-      off('comment:created' as WebsocketEvent, handleNewComment);
     };
-  }, [isConnected, posts, on, off, notification]);
+  }, [])
+
+  // Init data
+  useEffect(() => {
+    fetchPosts();
+  }, [activeTab]);
+
+  // Handler for new posts
+  const handleNewPost = (data: any) => {
+    console.log('Received WebSocket event:', WebsocketEvent.POST_CREATED, data);
+
+    // Add new post to the beginning of the list
+    fetchPosts();
+
+    // Show notification
+    notification.info({
+      message: 'Bài viết mới',
+      description: `${data.authorName || 'Một người dùng'} vừa đăng một bài viết mới`,
+      placement: 'topRight',
+    });
+  };
+
+  // Handler for post likes
+  const handlePostLiked = (data: any) => {
+    // Update post likes count
+    setPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.post_id === data.postId
+          ? {
+            ...post,
+            stats: {
+              ...post.stats,
+              total_likes: post.stats.total_likes + 1
+            }
+          }
+          : post
+      )
+    );
+  };
+
+  // Handler for new comments
+  const handleNewComment = (data: any) => {
+    // Update post comments count
+    setPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.post_id === data.postId
+          ? {
+            ...post,
+            stats: {
+              ...post.stats,
+              total_comments: post.stats.total_comments + 1
+            }
+          }
+          : post
+      )
+    );
+  };
 
   const fetchPosts = async (loadMore = false) => {
     try {
@@ -181,9 +147,9 @@ export function PostList() {
     setActiveTab(value as 'newest' | 'trending' | 'following');
   };
 
-  const handleAddPost = (newPost: Post) => {
-    setPosts([newPost, ...posts]);
-  };
+  // const handleAddPost = (newPost: Post) => {
+  //   setPosts([newPost, ...posts]);
+  // };
 
   // const handleHidePost = (postId: string) => {
   //   // Add post to hidden posts list
@@ -205,7 +171,7 @@ export function PostList() {
 
   return (
     <div className="space-y-6">
-      <PostCreator onPostCreated={handleAddPost} />
+      <PostCreator />
 
       <div className="flex items-center justify-between">
         <Tabs defaultValue="newest" className="w-auto" onValueChange={handleTabChange}>
