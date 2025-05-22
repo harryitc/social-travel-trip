@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { environment } from '@/config/environment';
+import { getAccessToken } from '@/features/auth/auth.service';
 
 // WebSocket event types
 export enum WebsocketEvent {
@@ -9,18 +10,18 @@ export enum WebsocketEvent {
   POST_DELETED = 'post:deleted',
   POST_LIKED = 'post:liked',
   POST_UNLIKED = 'post:unliked',
-  
+
   // Comment events
   COMMENT_CREATED = 'comment:created',
   COMMENT_UPDATED = 'comment:updated',
   COMMENT_DELETED = 'comment:deleted',
   COMMENT_LIKED = 'comment:liked',
   COMMENT_UNLIKED = 'comment:unliked',
-  
+
   // User events
   USER_FOLLOWED = 'user:followed',
   USER_UNFOLLOWED = 'user:unfollowed',
-  
+
   // Notification events
   NOTIFICATION_CREATED = 'notification:created',
   NOTIFICATION_READ = 'notification:read',
@@ -41,9 +42,14 @@ class WebSocketService {
 
   /**
    * Initialize WebSocket connection
-   * @param token JWT token for authentication
    */
-  connect(token: string): Promise<void> {
+  connect(): Promise<void> {
+    const token = getAccessToken();
+
+    if (!token) {
+      return Promise.reject(new Error('No authentication token available'));
+    }
+
     if (this.socket?.connected || this.isConnecting) {
       return Promise.resolve();
     }
@@ -52,7 +58,7 @@ class WebSocketService {
 
     return new Promise((resolve, reject) => {
       try {
-        this.socket = io(`${environment.apiUrl}/social`, {
+        this.socket = io(`${environment.apiUrl || 'http://localhost:3000'}/social`, {
           extraHeaders: {
             Authorization: `Bearer ${token}`,
           },
@@ -120,15 +126,11 @@ class WebSocketService {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-      
+
       this.reconnectTimer = setTimeout(() => {
-        // Get token from localStorage
-        const token = localStorage.getItem('token');
-        if (token) {
-          this.connect(token).catch(() => {
-            // Error handling is done in connect method
-          });
-        }
+        this.connect().catch(() => {
+          // Error handling is done in connect method
+        });
       }, this.reconnectInterval);
     } else {
       console.error('Max reconnection attempts reached');
@@ -174,7 +176,7 @@ class WebSocketService {
   off(event: WebsocketEvent, handler: EventHandler): void {
     const handlers = this.eventHandlers.get(event) || [];
     const index = handlers.indexOf(handler);
-    
+
     if (index !== -1) {
       handlers.splice(index, 1);
       this.eventHandlers.set(event, handlers);
@@ -197,6 +199,13 @@ class WebSocketService {
     } else {
       console.error('Cannot emit event: WebSocket not connected');
     }
+  }
+
+  /**
+   * Check if socket is connected
+   */
+  isConnected(): boolean {
+    return this.socket?.connected || false;
   }
 }
 

@@ -23,7 +23,7 @@ export class WebsocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private readonly logger = new Logger(WebsocketGateway.name);
-  
+
   @WebSocketServer()
   server: Server;
 
@@ -53,11 +53,13 @@ export class WebsocketGateway
 
         // Store user information in socket
         client.data.user = payload;
-        
+
         // Join user to their personal room
         client.join(`user-${payload.sub}`);
-        
-        this.logger.log(`Client connected: ${client.id}, User ID: ${payload.sub}`);
+
+        this.logger.log(
+          `Client connected: ${client.id}, User ID: ${payload.sub}`,
+        );
       } catch (error) {
         this.disconnect(client, 'Unauthorized: Invalid token');
       }
@@ -73,7 +75,7 @@ export class WebsocketGateway
   private extractTokenFromHeader(client: Socket): string | undefined {
     const { authorization } = client.handshake.headers;
     if (!authorization) return undefined;
-    
+
     const [type, token] = authorization.split(' ');
     return type === 'Bearer' ? token : undefined;
   }

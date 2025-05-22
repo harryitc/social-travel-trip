@@ -9,6 +9,9 @@ import { postService } from '../services/post.service';
 import { Skeleton } from '@/components/ui/radix-ui/skeleton';
 import { HashtagTrending } from './hashtag-trending';
 import { Post, PostQueryParams } from '../models/post.model';
+import { useWebSocket } from '@/lib/providers/websocket.provider';
+import { WebsocketEvent } from '@/lib/services/websocket.service';
+import { App } from 'antd';
 
 export function PostList() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -18,6 +21,8 @@ export function PostList() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [hiddenPosts, setHiddenPosts] = useState<string[]>([]);
+  const { on, off, isConnected } = useWebSocket();
+  const { notification } = App.useApp();
 
   // Load posts
   useEffect(() => {
@@ -30,6 +35,77 @@ export function PostList() {
       console.error('Error loading hidden posts from localStorage:', error);
     }
   }, [activeTab]);
+
+  // WebSocket event listeners
+  useEffect(() => {
+    if (!isConnected) return;
+
+    // Handler for new posts
+    const handleNewPost = (data: any) => {
+      // Check if the post is already in the list
+      if (posts.some(post => post.post_id === data.post.post_id)) {
+        return;
+      }
+
+      // Add new post to the beginning of the list
+      setPosts(prevPosts => [data.post, ...prevPosts]);
+
+      // Show notification
+      notification.info({
+        message: 'Bài viết mới',
+        description: `${data.authorName || 'Một người dùng'} vừa đăng một bài viết mới`,
+        placement: 'topRight',
+      });
+    };
+
+    // Handler for post likes
+    const handlePostLiked = (data: any) => {
+      // Update post likes count
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.post_id === data.postId
+            ? {
+                ...post,
+                stats: {
+                  ...post.stats,
+                  total_likes: post.stats.total_likes + 1
+                }
+              }
+            : post
+        )
+      );
+    };
+
+    // Handler for new comments
+    const handleNewComment = (data: any) => {
+      // Update post comments count
+      setPosts(prevPosts =>
+        prevPosts.map(post =>
+          post.post_id === data.postId
+            ? {
+                ...post,
+                stats: {
+                  ...post.stats,
+                  total_comments: post.stats.total_comments + 1
+                }
+              }
+            : post
+        )
+      );
+    };
+
+    // Register event handlers
+    on(WebsocketEvent.POST_CREATED, handleNewPost);
+    on(WebsocketEvent.POST_LIKED, handlePostLiked);
+    on(WebsocketEvent.COMMENT_CREATED, handleNewComment);
+
+    // Cleanup function
+    return () => {
+      off(WebsocketEvent.POST_CREATED, handleNewPost);
+      off(WebsocketEvent.POST_LIKED, handlePostLiked);
+      off(WebsocketEvent.COMMENT_CREATED, handleNewComment);
+    };
+  }, [isConnected, posts, on, off, notification]);
 
   const fetchPosts = async (loadMore = false) => {
     try {

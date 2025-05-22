@@ -8,18 +8,18 @@ export enum WebsocketEvent {
   POST_DELETED = 'post:deleted',
   POST_LIKED = 'post:liked',
   POST_UNLIKED = 'post:unliked',
-  
+
   // Comment events
   COMMENT_CREATED = 'comment:created',
   COMMENT_UPDATED = 'comment:updated',
   COMMENT_DELETED = 'comment:deleted',
   COMMENT_LIKED = 'comment:liked',
   COMMENT_UNLIKED = 'comment:unliked',
-  
+
   // User events
   USER_FOLLOWED = 'user:followed',
   USER_UNFOLLOWED = 'user:unfollowed',
-  
+
   // Notification events
   NOTIFICATION_CREATED = 'notification:created',
   NOTIFICATION_READ = 'notification:read',
@@ -46,7 +46,7 @@ export class WebsocketService {
       this.logger.error('WebSocket server not initialized');
       return;
     }
-    
+
     this.logger.debug(`Sending ${event} to user ${userId}`);
     this.server.to(`user-${userId}`).emit(event, data);
   }
@@ -62,8 +62,8 @@ export class WebsocketService {
       this.logger.error('WebSocket server not initialized');
       return;
     }
-    
-    userIds.forEach(userId => {
+
+    userIds.forEach((userId) => {
       this.sendToUser(userId, event, data);
     });
   }
@@ -78,7 +78,7 @@ export class WebsocketService {
       this.logger.error('WebSocket server not initialized');
       return;
     }
-    
+
     this.logger.debug(`Broadcasting ${event} to all users`);
     this.server.emit(event, data);
   }
@@ -103,7 +103,12 @@ export class WebsocketService {
    * @param likerId User ID who liked the post
    * @param likerData User data who liked the post
    */
-  notifyPostLiked(postId: number, postAuthorId: number, likerId: number, likerData: any) {
+  notifyPostLiked(
+    postId: number,
+    postAuthorId: number,
+    likerId: number,
+    likerData: any,
+  ) {
     this.sendToUser(postAuthorId, WebsocketEvent.POST_LIKED, {
       postId,
       likerId,
@@ -140,7 +145,11 @@ export class WebsocketService {
    * @param followedId User ID who was followed
    * @param followerData User data who followed
    */
-  notifyUserFollowed(followerId: number, followedId: number, followerData: any) {
+  notifyUserFollowed(
+    followerId: number,
+    followedId: number,
+    followerData: any,
+  ) {
     this.sendToUser(followedId, WebsocketEvent.USER_FOLLOWED, {
       followerId,
       followerData,

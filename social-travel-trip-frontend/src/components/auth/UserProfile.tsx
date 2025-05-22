@@ -18,12 +18,10 @@ export default function UserProfile() {
   useEffect(() => {
     const checkAuth = () => {
       const authenticated = isLoggedIn();
-      console.log('UserProfile - isAuthenticated:', authenticated);
       setIsAuthenticated(authenticated);
 
       if (authenticated) {
         const userInfo = getUserInfo();
-        console.log('UserProfile - userInfo:', userInfo);
         setUser(userInfo);
       }
     };

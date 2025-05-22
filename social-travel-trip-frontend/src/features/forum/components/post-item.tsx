@@ -19,6 +19,9 @@ import { postService } from '../services/post.service';
 import { Post } from '../models/post.model';
 import { API_ENDPOINT } from '@/config/api.config';
 import CustomImage from '@/components/ui/custom-image';
+import { useWebSocket } from '@/lib/providers/websocket.provider';
+import { WebsocketEvent } from '@/lib/services/websocket.service';
+import { getUserInfo } from '@/features/auth/auth.service';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -34,17 +37,21 @@ interface PostItemProps {
 }
 
 export function PostItem({ post }: PostItemProps) {
-  const [isLiked, setIsLiked] = useState(post.is_liked);
-  const [likesCount, setLikesCount] = useState(post.likes_count);
+  // Determine if post is liked based on stats
+  const isPostLiked = post.stats?.reactions?.some(r => r.reaction_id === 1) || false;
+
+  const [isLiked, setIsLiked] = useState(isPostLiked);
+  const [likesCount, setLikesCount] = useState(post.stats?.total_likes || 0);
+  const [commentsCount, setCommentsCount] = useState(post.stats?.total_comments || 0);
   const [isSaved, setIsSaved] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
-  const [isReported, setIsReported] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [showReactions, setShowReactions] = useState(false);
   const [currentReaction, setCurrentReaction] = useState<string | null>(null);
-  const [showShareOptions, setShowShareOptions] = useState(false);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
+
+  // Get WebSocket context
+  const { emit, isConnected } = useWebSocket();
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -78,6 +85,22 @@ export function PostItem({ post }: PostItemProps) {
 
       // Call API to like/unlike post
       await postService.likePost(post.post_id);
+
+      // Emit WebSocket event if connected
+      if (isConnected) {
+        const currentUser = getUserInfo();
+
+        // Emit like event
+        emit(newLikedStatus ? WebsocketEvent.POST_LIKED : WebsocketEvent.POST_UNLIKED, {
+          postId: post.post_id,
+          likerId: currentUser?.user_id,
+          likerData: {
+            id: currentUser?.user_id,
+            username: currentUser?.username,
+            avatar: currentUser?.avatar_url
+          }
+        });
+      }
     } catch (error) {
       console.error('Error liking post:', error);
       // Revert UI changes if API call fails
@@ -118,10 +141,10 @@ export function PostItem({ post }: PostItemProps) {
             <div className="font-semibold">{post.author.full_name}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <span>{formatDate(post.created_at)}</span>
-              {post.location_name && (
+              {post.location && post.location.name && (
                 <span className="flex items-center ml-2">
                   <MapPin className="h-3 w-3 mr-1" />
-                  {post.location_name.split(',')[0]}
+                  {post.location.name.split(',')[0]}
                 </span>
               )}
             </div>
@@ -236,7 +259,7 @@ export function PostItem({ post }: PostItemProps) {
               onClick={() => setShowComments(!showComments)}
             >
               <MessageCircle className="h-4 w-4 mr-1" />
-              <span>{post.comments_count}</span>
+              <span>{commentsCount}</span>
             </Button>
             {/* <Popover open={showShareOptions} onOpenChange={setShowShareOptions}>
               <PopoverTrigger asChild>
@@ -301,7 +324,7 @@ export function PostItem({ post }: PostItemProps) {
               <Button size="sm">Gửi</Button>
             </div>
             <div className="text-center text-sm text-muted-foreground">
-              <Button variant="link" className="p-0 h-auto">Xem tất cả {post.comments_count} bình luận</Button>
+              <Button variant="link" className="p-0 h-auto">Xem tất cả {commentsCount} bình luận</Button>
             </div>
           </div>
         )}

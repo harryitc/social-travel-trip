@@ -23,7 +23,7 @@ export const NotificationListener = () => {
         message: 'Bài viết mới',
         description: `${data.authorName || 'Một người dùng'} vừa đăng một bài viết mới`,
         placement: 'topRight',
-        onClick: () => router.push(`/post/${data.post.id}`),
+        onClick: () => router.push(`/post/${data.post.post_id}`),
       });
     };
 

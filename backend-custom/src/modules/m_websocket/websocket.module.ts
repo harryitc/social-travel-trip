@@ -8,15 +8,13 @@ import { AuthModule } from '@modules/auth/auth.module';
 @Module({
   imports: [
     CqrsModule,
-    JwtModule.register({}),
+    JwtModule.register({
+      secret: 'CAK_HARRYITC', // nên dùng .env
+      signOptions: { expiresIn: '7d' },
+    }),
     AuthModule,
   ],
-  providers: [
-    WebsocketGateway,
-    WebsocketService,
-  ],
-  exports: [
-    WebsocketService,
-  ],
+  providers: [WebsocketGateway, WebsocketService],
+  exports: [WebsocketService],
 })
 export class WebsocketModule {}

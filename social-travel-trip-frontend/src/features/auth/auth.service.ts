@@ -140,9 +140,6 @@ export const getUserInfo = () => {
     location: StorageLocation.COOKIES,
   });
 
-  console.log('getUserInfo - userJson:', userJson);
-  console.log('getUserInfo - resultJson:', resultJson);
-
   if (!userJson && !resultJson) return null;
 
   try {

@@ -30,11 +30,11 @@ export const useWebSocket = () => useContext(WebSocketContext);
 // WebSocket provider component
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Connect to WebSocket when authenticated
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       connect();
     } else {
       disconnect();
@@ -43,14 +43,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return () => {
       disconnect();
     };
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated]);
 
   // Connect to WebSocket
   const connect = async () => {
-    if (!token) return;
-
     try {
-      await websocketService.connect(token);
+      await websocketService.connect();
       setIsConnected(true);
     } catch (error) {
       console.error('Failed to connect to WebSocket:', error);
