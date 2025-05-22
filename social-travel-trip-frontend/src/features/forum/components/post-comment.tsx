@@ -2,8 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/radix-ui/input';
+import { Button } from '@/components/ui/radix-ui/button';
 import { SendIcon, Heart, Reply, MoreHorizontal } from 'lucide-react';
 import {
   DropdownMenu,

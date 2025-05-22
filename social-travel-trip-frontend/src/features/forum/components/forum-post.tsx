@@ -250,7 +250,7 @@ export function ForumPost({ post, onHidePost }: ForumPostProps) {
           </div>
         )}
       </CardContent>
-      <CardFooter className="px-4 py-3 border-t border-purple-100 dark:border-purple-900 flex flex-col space-y-3">
+      <CardFooter className="w-full px-4 py-3 border-t border-purple-100 dark:border-purple-900 flex flex-col space-y-3">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-2">
             <div className="relative" ref={reactionsMenuRef}>

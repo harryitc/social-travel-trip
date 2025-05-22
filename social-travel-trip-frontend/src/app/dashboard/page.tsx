@@ -96,7 +96,7 @@ export default function DashboardPage() {
             Quản lý các bài viết bạn đã đăng
           </p>
           <Link
-            href="/my-posts"
+            href="/"
             className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
           >
             Xem bài viết &rarr;

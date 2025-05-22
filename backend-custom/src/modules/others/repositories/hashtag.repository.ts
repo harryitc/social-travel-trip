@@ -17,8 +17,8 @@ export class HashtagRepository {
   ) {}
 
   async create(data: CreateHashtagDto) {
-    const { name, slug } = data;
-    const finalSlug = slug || this.generateSlug(name);
+    const { name } = data;
+    const finalSlug = this.generateSlug(name);
 
     const query = `
       INSERT INTO hashtags (name, slug)
@@ -29,8 +29,8 @@ export class HashtagRepository {
   }
 
   async update(data: UpdateHashtagDto) {
-    const { tag_id, name, slug } = data;
-    const finalSlug = slug || this.generateSlug(name);
+    const { tag_id, name } = data;
+    const finalSlug = this.generateSlug(name);
 
     const query = `
       UPDATE hashtags
@@ -78,7 +78,7 @@ export class HashtagRepository {
     return this.client.execute(query, [name, slug]);
   }
 
-  async findAll(queryDto: QueryHashtagDto) {
+  async findAll(queryDto) {
     const { page = 1, limit = 10, search } = queryDto;
     const offset = (page - 1) * limit;
 
@@ -101,8 +101,8 @@ export class HashtagRepository {
     const countQuery = `SELECT COUNT(*) FROM (${query}) AS count_query`;
 
     // Add pagination
-    query += ` ORDER BY tag_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(limit, offset);
+    // query += ` ORDER BY tag_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    // params.push(limit, offset);
 
     const data = await this.client.execute(query, params);
     const count = await this.client.execute(

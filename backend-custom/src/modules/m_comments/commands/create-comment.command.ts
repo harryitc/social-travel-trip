@@ -12,7 +12,7 @@ import { UserService } from '@modules/user/user.service';
 import { PostRepository } from '@modules/m_posts/repositories/post.repository';
 import { CommentReplyEvent } from '@modules/m_notify/events/comment-reply.event';
 import { PostCommentEvent } from '@modules/m_notify/events/post-comment.event';
-import { WebsocketService, WebsocketEvent } from '@modules/m_websocket/websocket.service';
+import { WebsocketService } from '@modules/m_websocket/websocket.service';
 
 export class CreateCommentCommand implements ICommand {
   constructor(
@@ -69,21 +69,56 @@ export class CreateCommentCommandHandler
       const commenter = await this.userService.findById(user_id);
 
       if (commenter && createdComment) {
-        // Emit WebSocket event for new comment
+        // Get comment thread participants for targeted WebSocket notification
+        let threadParticipantIds: number[] = [];
         try {
-          const eventData = {
-            comment: createdComment,
-            postId: data.postId,
+          const participantsResult =
+            await this.repository.getCommentThreadParticipants(data.postId);
+          if (participantsResult && participantsResult.rows) {
+            threadParticipantIds = participantsResult.rows.map(
+              (row: any) => row.user_id,
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to get thread participants: ${error.message}`,
+          );
+        }
+
+        // Emit WebSocket event for new comment to relevant users only
+        try {
+          const commenterData = {
             userId: user_id,
             userName: commenter.full_name || commenter.username || 'A user',
             userAvatar: commenter.avatar_url || null,
+          };
+
+          const commentData = {
+            ...createdComment,
             parentId: data.parentId || null,
           };
 
-          this.logger.log(`Emitting WebSocket event for new comment on post: ${data.postId}`);
-          this.websocketService.sendToAll(WebsocketEvent.COMMENT_CREATED, eventData);
+          // Get post details to find post author
+          const postResult = await this.postRepository.getPostById(data.postId);
+          const postAuthorId = postResult?.rows?.[0]?.user_id;
+
+          this.logger.log(
+            `Emitting WebSocket event for new comment on post: ${data.postId} to relevant users`,
+          );
+
+          // Use the improved notifyNewComment method that targets specific users
+          // this.websocketService.notifyNewComment(
+          //   data.postId,
+          //   postAuthorId,
+          //   user_id,
+          //   commenterData,
+          //   commentData,
+          //   threadParticipantIds,
+          // );
         } catch (wsError) {
-          this.logger.error(`Failed to emit WebSocket event: ${wsError.message}`);
+          this.logger.error(
+            `Failed to emit WebSocket event: ${wsError.message}`,
+          );
         }
       }
 

@@ -1,27 +1,23 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import Image from 'next/image';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/radix-ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
-import { Heart, MessageCircle, Share, MoreHorizontal, Bookmark, MapPin } from 'lucide-react';
+import { Heart, MessageCircle, MoreHorizontal, Bookmark, MapPin, SendIcon } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/radix-ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
 import ReactMarkdown from 'react-markdown';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import { postService } from '../services/post.service';
 import { Post } from '../models/post.model';
 import { API_ENDPOINT } from '@/config/api.config';
 import CustomImage from '@/components/ui/custom-image';
-import { useWebSocket } from '@/lib/providers/websocket.provider';
-import { WebsocketEvent } from '@/lib/services/websocket.service';
-import { getUserInfo } from '@/features/auth/auth.service';
+import { FollowButton } from './follow-button';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -39,19 +35,23 @@ interface PostItemProps {
 export function PostItem({ post }: PostItemProps) {
   // Determine if post is liked based on stats
   const isPostLiked = post.stats?.reactions?.some(r => r.reaction_id === 1) || false;
-
+  const [comment, setComment] = useState('');
   const [isLiked, setIsLiked] = useState(isPostLiked);
   const [likesCount, setLikesCount] = useState(post.stats?.total_likes || 0);
   const [commentsCount, setCommentsCount] = useState(post.stats?.total_comments || 0);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [currentReaction, setCurrentReaction] = useState<string | null>(null);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Get WebSocket context
-  const { emit, isConnected } = useWebSocket();
+
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [showComments])
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -96,10 +96,14 @@ export function PostItem({ post }: PostItemProps) {
     }
   };
 
-  const handleSave = () => {
-    setIsSaved(!isSaved);
-    // TODO: Implement save functionality
+  const handleSubmitComment = () => {
+
   };
+
+  // const handleSave = () => {
+  //   setIsSaved(!isSaved);
+  //   // TODO: Implement save functionality
+  // };
 
   // const handleShare = () => {
   //   setShowShareOptions(!showShareOptions);
@@ -137,52 +141,36 @@ export function PostItem({ post }: PostItemProps) {
             </div>
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {/* <DropdownMenuItem
-              onClick={handleSave}
-              className="flex items-center cursor-pointer"
-            >
-              <Bookmark className="h-4 w-4 mr-2" />
-              {isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết'}
-            </DropdownMenuItem> */}
-            {/* <DropdownMenuItem
-              onClick={handleHidePost}
-              className="flex items-center cursor-pointer"
-            >
-              <span className="mr-2">🙈</span>
-              Ẩn bài viết
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleReport}
-              className="flex items-center cursor-pointer text-red-500"
-              disabled={isReported}
-            >
-              <span className="mr-2">⚠️</span>
-              {isReported ? 'Đã báo cáo' : 'Báo cáo bài viết'}
-            </DropdownMenuItem> */}
-            <DropdownMenuItem
-              onClick={() => {
-                setIsFollowing(!isFollowing);
-                // Show notification
-                if (isFollowing) {
-                  alert(`Bạn đã bỏ theo dõi ${post.author.full_name}.`);
-                } else {
-                  alert(`Bạn đã bắt đầu theo dõi ${post.author.full_name}. Bạn sẽ nhận được thông báo khi họ đăng bài viết mới.`);
-                }
-              }}
-              className="flex items-center cursor-pointer"
-            >
-              <span className="mr-2">{isFollowing ? '👎' : '👍'}</span>
-              {isFollowing ? 'Bỏ theo dõi ' : 'Theo dõi '} {post.author.full_name}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center space-x-2">
+          <FollowButton
+            userId={post.author.user_id.toString()}
+            username={post.author.username}
+            fullName={post.author.full_name}
+            variant="outline"
+            size="sm"
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="flex items-center cursor-pointer">
+                <Bookmark className="h-4 w-4 mr-2" />
+                Lưu bài viết
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center cursor-pointer">
+                <span className="mr-2">🙈</span>
+                Ẩn bài viết
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center cursor-pointer text-red-500">
+                <span className="mr-2">⚠️</span>
+                Báo cáo bài viết
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent className="px-4 py-2 space-y-3">
         <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -195,7 +183,7 @@ export function PostItem({ post }: PostItemProps) {
               <div
                 key={index}
                 className={`relative rounded-md overflow-hidden ${post.images.length === 1 ? 'col-span-1' :
-                    index === 0 && post.images.length === 3 ? 'col-span-2' : 'col-span-1'
+                  index === 0 && post.images.length === 3 ? 'col-span-2' : 'col-span-1'
                   }`}
               >
                 <CustomImage src={API_ENDPOINT.file_image_v2 + image} alt={`Image ${index + 1}`}
@@ -284,36 +272,73 @@ export function PostItem({ post }: PostItemProps) {
               </PopoverContent>
             </Popover> */}
           </div>
-          <Button
+          {/* <Button
             variant="ghost"
             size="sm"
             className={`flex items-center ${isSaved ? 'text-purple-600 dark:text-purple-400' : ''}`}
             onClick={handleSave}
           >
             <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-purple-600 dark:fill-purple-400' : ''}`} />
-          </Button>
+          </Button> */}
         </div>
 
         {showComments && (
-          <div className="space-y-4 pt-2">
+
+          <div className="space-y-4 pt-2 w-full">
             <div className="flex items-center space-x-2">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={post.author.avatar} alt={post.author.full_name} />
                 <AvatarFallback>{post.author.full_name?.charAt(0)}</AvatarFallback>
               </Avatar>
-              <div className="flex-1">
+              <div className="flex-1 relative">
+                {/* <Input
+                placeholder={replyingToName ? `Trả lời ${replyingToName}...` : "Viết bình luận..."}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="flex-1"
+              /> */}
                 <input
+                  ref={inputRef}
                   type="text"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
                   placeholder="Viết bình luận..."
                   className="w-full rounded-full bg-muted px-3 py-2 text-sm"
                 />
               </div>
-              <Button size="sm">Gửi</Button>
+              <Button
+                size="icon"
+                onClick={handleSubmitComment}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                disabled={!comment.trim()}
+              >
+                <SendIcon className="h-4 w-4" />
+              </Button>
             </div>
             <div className="text-center text-sm text-muted-foreground">
               <Button variant="link" className="p-0 h-auto">Xem tất cả {commentsCount} bình luận</Button>
             </div>
           </div>
+
+          // <div className="space-y-4 pt-2">
+          //   <div className="flex items-center space-x-2">
+          //     <Avatar className="h-8 w-8">
+          //       <AvatarImage src={post.author.avatar} alt={post.author.full_name} />
+          //       <AvatarFallback>{post.author.full_name?.charAt(0)}</AvatarFallback>
+          //     </Avatar>
+          //     <div className="flex-1">
+          //       <input
+          //         type="text"
+          //         placeholder="Viết bình luận..."
+          //         className="w-full rounded-full bg-muted px-3 py-2 text-sm"
+          //       />
+          //     </div>
+          //     <Button size="sm">Gửi</Button>
+          //   </div>
+          //   <div className="text-center text-sm text-muted-foreground">
+          //     <Button variant="link" className="p-0 h-auto">Xem tất cả {commentsCount} bình luận</Button>
+          //   </div>
+          // </div>
         )}
       </CardFooter>
     </Card>

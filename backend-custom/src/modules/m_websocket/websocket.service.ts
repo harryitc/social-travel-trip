@@ -84,12 +84,22 @@ export class WebsocketService {
   }
 
   /**
-   * Send post created event to followers
+   * Send post created event to followers only
    * @param authorId Author ID
    * @param followerIds Array of follower IDs
    * @param postData Post data
    */
   notifyNewPost(authorId: number, followerIds: number[], postData: any) {
+    if (!followerIds || followerIds.length === 0) {
+      this.logger.debug(
+        `No followers to notify for post from user ${authorId}`,
+      );
+      return;
+    }
+
+    this.logger.debug(
+      `Notifying ${followerIds.length} followers about new post from user ${authorId}`,
+    );
     this.sendToUsers(followerIds, WebsocketEvent.POST_CREATED, {
       authorId,
       post: postData,
@@ -97,32 +107,56 @@ export class WebsocketService {
   }
 
   /**
-   * Send post liked event to post author
+   * Send post liked event to relevant users (post author and users who interacted with the post)
    * @param postId Post ID
    * @param postAuthorId Post author ID
    * @param likerId User ID who liked the post
    * @param likerData User data who liked the post
+   * @param interestedUserIds Array of user IDs who have interacted with this post
    */
   notifyPostLiked(
     postId: number,
     postAuthorId: number,
     likerId: number,
     likerData: any,
+    interestedUserIds: number[] = [],
   ) {
-    this.sendToUser(postAuthorId, WebsocketEvent.POST_LIKED, {
+    const eventData = {
       postId,
       likerId,
       likerData,
-    });
+    };
+
+    // Always notify the post author (unless they liked their own post)
+    if (postAuthorId !== likerId) {
+      this.sendToUser(postAuthorId, WebsocketEvent.POST_LIKED, eventData);
+    }
+
+    // Notify other users who have interacted with this post (commented, liked, etc.)
+    const uniqueInterestedUsers = [...new Set(interestedUserIds)].filter(
+      (userId) => userId !== likerId && userId !== postAuthorId,
+    );
+
+    if (uniqueInterestedUsers.length > 0) {
+      this.logger.debug(
+        `Notifying ${uniqueInterestedUsers.length} interested users about post like`,
+      );
+      this.sendToUsers(
+        uniqueInterestedUsers,
+        WebsocketEvent.POST_LIKED,
+        eventData,
+      );
+    }
   }
 
   /**
-   * Send comment created event to post author
+   * Send comment created event to relevant users (post author, comment thread participants)
    * @param postId Post ID
    * @param postAuthorId Post author ID
    * @param commenterId User ID who commented
    * @param commenterData User data who commented
    * @param commentData Comment data
+   * @param threadParticipantIds Array of user IDs who participated in this comment thread
    */
   notifyNewComment(
     postId: number,
@@ -130,13 +164,71 @@ export class WebsocketService {
     commenterId: number,
     commenterData: any,
     commentData: any,
+    threadParticipantIds: number[] = [],
   ) {
-    this.sendToUser(postAuthorId, WebsocketEvent.COMMENT_CREATED, {
+    const eventData = {
       postId,
       commenterId,
       commenterData,
       comment: commentData,
-    });
+    };
+
+    // Always notify the post author (unless they commented on their own post)
+    if (postAuthorId !== commenterId) {
+      this.sendToUser(postAuthorId, WebsocketEvent.COMMENT_CREATED, eventData);
+    }
+
+    // Notify other users who participated in this comment thread
+    const uniqueParticipants = [...new Set(threadParticipantIds)].filter(
+      (userId) => userId !== commenterId && userId !== postAuthorId,
+    );
+
+    if (uniqueParticipants.length > 0) {
+      this.logger.debug(
+        `Notifying ${uniqueParticipants.length} thread participants about new comment`,
+      );
+      this.sendToUsers(
+        uniqueParticipants,
+        WebsocketEvent.COMMENT_CREATED,
+        eventData,
+      );
+    }
+  }
+
+  /**
+   * Send comment liked event to relevant users
+   * @param commentId Comment ID
+   * @param commentAuthorId Comment author ID
+   * @param likerId User ID who liked the comment
+   * @param likerData User data who liked the comment
+   * @param postAuthorId Post author ID (to notify them too)
+   */
+  notifyCommentLiked(
+    commentId: number,
+    commentAuthorId: number,
+    likerId: number,
+    likerData: any,
+    postAuthorId?: number,
+  ) {
+    const eventData = {
+      commentId,
+      likerId,
+      likerData,
+    };
+
+    // Notify the comment author (unless they liked their own comment)
+    if (commentAuthorId !== likerId) {
+      this.sendToUser(commentAuthorId, WebsocketEvent.COMMENT_LIKED, eventData);
+    }
+
+    // Also notify the post author if different from comment author and liker
+    if (
+      postAuthorId &&
+      postAuthorId !== commentAuthorId &&
+      postAuthorId !== likerId
+    ) {
+      this.sendToUser(postAuthorId, WebsocketEvent.COMMENT_LIKED, eventData);
+    }
   }
 
   /**
@@ -154,5 +246,41 @@ export class WebsocketService {
       followerId,
       followerData,
     });
+  }
+
+  /**
+   * Send notification event to specific user
+   * @param userId User ID to notify
+   * @param notificationData Notification data
+   */
+  notifyUser(userId: number, notificationData: any) {
+    this.sendToUser(
+      userId,
+      WebsocketEvent.NOTIFICATION_CREATED,
+      notificationData,
+    );
+  }
+
+  /**
+   * Get connected users count for debugging
+   */
+  getConnectedUsersCount(): number {
+    if (!this.server) {
+      return 0;
+    }
+    return this.server.sockets.sockets.size;
+  }
+
+  /**
+   * Check if a specific user is connected
+   * @param userId User ID to check
+   */
+  isUserConnected(userId: number): boolean {
+    if (!this.server) {
+      return false;
+    }
+
+    const room = this.server.sockets.adapter.rooms.get(`user-${userId}`);
+    return room && room.size > 0;
   }
 }

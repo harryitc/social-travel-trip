@@ -11,10 +11,7 @@ import { CreatePostDTO } from '../dto/create-post.dto';
 import { UserService } from '@modules/user/user.service';
 import { UserRelaService } from '@modules/m_user_rela/services/user-rela.service';
 import { NewPostFromFollowingEvent } from '@modules/m_notify/events/new-post-from-following.event';
-import {
-  WebsocketService,
-  WebsocketEvent,
-} from '@modules/m_websocket/websocket.service';
+import { WebsocketService } from '@modules/m_websocket/websocket.service';
 
 export class CreatePostCommand implements ICommand {
   constructor(
@@ -49,44 +46,43 @@ export class CreatePostCommandHandler
       const postCreator = await this.userService.findById(user_id);
 
       if (postCreator && createdPost) {
-        // Emit WebSocket event for new post
+        // Get all followers of the post creator first
+        const followersResult =
+          await this.userRelaService.getAllFollowers(user_id);
+
+        let followerIds: number[] = [];
+        if (followersResult && followersResult.length > 0) {
+          // Extract follower IDs
+          followerIds = followersResult.map(
+            (follower: any) => follower.user_id,
+          );
+        }
+
+        // Emit WebSocket event for new post to followers only (not broadcast to all)
         try {
-          const eventData = {
-            post: createdPost,
-            authorId: user_id,
+          const postData = {
+            ...createdPost,
             authorName:
               postCreator.full_name || postCreator.username || 'A user',
             authorAvatar: postCreator.avatar_url || null,
           };
 
           this.logger.log(
-            `Emitting WebSocket event for new post: ${createdPost.post_id}`,
-          );
-          this.logger.log(`Event data: ${JSON.stringify(eventData)}`);
-
-          this.websocketService.sendToAll(
-            WebsocketEvent.POST_CREATED,
-            eventData,
+            `Emitting WebSocket event for new post: ${createdPost.post_id} to ${followerIds.length} followers`,
           );
 
-          this.logger.log('WebSocket event emitted successfully');
+          // Use the improved notifyNewPost method that only sends to followers
+          // this.websocketService.notifyNewPost(user_id, followerIds, postData);
+
+          this.logger.log('WebSocket event emitted successfully to followers');
         } catch (wsError) {
           this.logger.error(
             `Failed to emit WebSocket event: ${wsError.message}`,
           );
         }
 
-        // Get all followers of the post creator
-        const followersResult =
-          await this.userRelaService.getAllFollowers(user_id);
-
-        if (followersResult && followersResult.length > 0) {
-          // Extract follower IDs
-          const followerIds = followersResult.map(
-            (follower: any) => follower.user_id,
-          );
-
-          // Notify all followers about the new post by publishing an event
+        // Also publish event for notification system
+        if (followerIds.length > 0) {
           await this.eventBus.publish(
             new NewPostFromFollowingEvent(
               followerIds,

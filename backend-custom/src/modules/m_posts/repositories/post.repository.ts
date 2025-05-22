@@ -33,7 +33,7 @@ export class PostRepository {
       (
         SELECT json_agg(row)
         FROM (
-          SELECT 
+          SELECT
             pl.reaction_id,
             COUNT(*) AS count
           FROM post_likes pl
@@ -79,7 +79,7 @@ export class PostRepository {
       (
         SELECT json_agg(row)
         FROM (
-          SELECT 
+          SELECT
             pl.reaction_id,
             COUNT(*) AS count
           FROM post_likes pl
@@ -182,6 +182,32 @@ export class PostRepository {
   `;
 
     return this.client.execute(query, [postId, userId, reactionId]);
+  }
+
+  /**
+   * Get users who have interacted with a post (liked or commented)
+   * @param postId Post ID
+   * @returns Array of user IDs who have interacted with the post
+   */
+  async getPostInterestedUsers(postId: number) {
+    const query = `
+    SELECT DISTINCT user_id
+    FROM (
+      -- Users who liked the post
+      SELECT user_id
+      FROM post_likes
+      WHERE post_id = $1 AND reaction_id > 1
+
+      UNION
+
+      -- Users who commented on the post
+      SELECT user_id
+      FROM post_comments
+      WHERE post_id = $1
+    ) AS interested_users
+    `;
+
+    return this.client.execute(query, [postId]);
   }
 
   /**

@@ -10,10 +10,7 @@ import { PostRepository } from '../repositories/post.repository';
 import { LikePostDTO } from '../dto/like-post.dto';
 import { UserService } from '@modules/user/user.service';
 import { PostLikeEvent } from '@modules/m_notify/events/post-like.event';
-import {
-  WebsocketService,
-  WebsocketEvent,
-} from '@modules/m_websocket/websocket.service';
+import { WebsocketService } from '@modules/m_websocket/websocket.service';
 
 export class LikePostCommand implements ICommand {
   constructor(
@@ -58,10 +55,20 @@ export class LikePostCommandHandler
       const liker = await this.userService.findById(userId);
 
       if (liker) {
-        // Emit WebSocket event for post like
+        // Get users who have interacted with this post for targeted WebSocket notification
+        let interestedUserIds: number[] = [];
         try {
-          const eventData = {
-            postId: data.postId,
+          const interestedUsersResult = await this.repository.getPostInterestedUsers(data.postId);
+          if (interestedUsersResult && interestedUsersResult.rows) {
+            interestedUserIds = interestedUsersResult.rows.map((row: any) => row.user_id);
+          }
+        } catch (error) {
+          this.logger.error(`Failed to get interested users: ${error.message}`);
+        }
+
+        // Emit WebSocket event for post like to relevant users only
+        try {
+          const likerData = {
             userId: userId,
             userName: liker.full_name || liker.username || 'A user',
             userAvatar: liker.avatar_url || null,
@@ -69,9 +76,17 @@ export class LikePostCommandHandler
           };
 
           this.logger.log(
-            `Emitting WebSocket event for post like: ${data.postId}`,
+            `Emitting WebSocket event for post like: ${data.postId} to relevant users`,
           );
-          this.websocketService.sendToAll(WebsocketEvent.POST_LIKED, eventData);
+
+          // Use the improved notifyPostLiked method that targets specific users
+          // this.websocketService.notifyPostLiked(
+          //   data.postId,
+          //   postOwnerId,
+          //   userId,
+          //   likerData,
+          //   interestedUserIds,
+          // );
         } catch (wsError) {
           this.logger.error(
             `Failed to emit WebSocket event: ${wsError.message}`,

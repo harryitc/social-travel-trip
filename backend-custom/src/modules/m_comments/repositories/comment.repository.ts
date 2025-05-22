@@ -177,6 +177,21 @@ export class CommentRepository {
   `;
     return this.client.execute(query, [commentId]);
   }
+
+  /**
+   * Get users who have participated in a comment thread (commented on the same post)
+   * @param postId Post ID
+   * @returns Array of user IDs who have commented on the post
+   */
+  async getCommentThreadParticipants(postId: number) {
+    const query = `
+    SELECT DISTINCT user_id
+    FROM post_comments
+    WHERE post_id = $1
+    `;
+
+    return this.client.execute(query, [postId]);
+  }
   /**
     Trường họp transaction update nhiều dòng tên 1 bảng,
     hoặc có thể dùng pg-format để insert nhiều dòng trong 1 bảng cho 1 lần query (khong dung transaction)

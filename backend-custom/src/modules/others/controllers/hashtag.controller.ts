@@ -57,7 +57,7 @@ export class HashtagController {
   }
 
   @Post('query')
-  @ApiOperation({ summary: 'Query hashtags with pagination' })
+  @ApiOperation({ summary: 'Query hashtags' })
   @HttpCode(200)
   async query(@Body() dto: QueryHashtagDto, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
