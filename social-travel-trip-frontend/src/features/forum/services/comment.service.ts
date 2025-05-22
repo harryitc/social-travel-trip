@@ -14,8 +14,11 @@ export const commentService = {
    */
   async createComment(payload: CreateCommentPayload): Promise<Comment> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/comments/create`, payload);
-      return Comment.fromResponse(response);
+      const response: any = await Http.post(
+        `${API_ENDPOINT.social_travel_trip}/comments/create`,
+        payload,
+      );
+      return new Comment(response);
     } catch (error) {
       console.error('Error creating comment:', error);
       throw error;
@@ -29,10 +32,10 @@ export const commentService = {
    */
   async getComments(postId: string): Promise<Comment[]> {
     try {
-      const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/comments/get`, {
-        params: { post_id: postId }
+      const response: any = await Http.get(`${API_ENDPOINT.social_travel_trip}/comments/get`, {
+        params: { post_id: postId },
       });
-      return Comment.fromResponseArray(Array.isArray(response) ? response : []);
+      return response.map((item: Comment) => new Comment(item));
     } catch (error) {
       console.error('Error getting comments:', error);
       throw error;
@@ -46,7 +49,9 @@ export const commentService = {
    */
   async likeComment(commentId: string): Promise<{ success: boolean }> {
     try {
-      await Http.post(`${API_ENDPOINT.social_travel_trip}/comments/like`, { comment_id: commentId });
+      await Http.post(`${API_ENDPOINT.social_travel_trip}/comments/like`, {
+        comment_id: commentId,
+      });
       return { success: true };
     } catch (error) {
       console.error('Error liking comment:', error);
@@ -61,12 +66,13 @@ export const commentService = {
    */
   async getCommentLikes(commentId: string): Promise<PostAuthor[]> {
     try {
-      const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/comments/get-likes`, {
-        params: { comment_id: commentId }
-      });
-      return Array.isArray(response)
-        ? response.map((user: any) => new PostAuthor(user))
-        : [];
+      const response: any = await Http.get(
+        `${API_ENDPOINT.social_travel_trip}/comments/get-likes`,
+        {
+          params: { comment_id: commentId },
+        },
+      );
+      return response.map((item: PostAuthor) => new PostAuthor(item));
     } catch (error) {
       console.error('Error getting comment likes:', error);
       throw error;
@@ -80,13 +86,16 @@ export const commentService = {
    */
   async getCommentReactionUsers(commentId: string): Promise<CommentReactionUser[]> {
     try {
-      const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/comments/reaction-users`, {
-        params: { comment_id: commentId }
-      });
-      return CommentReactionUser.fromResponseArray(Array.isArray(response) ? response : []);
+      const response: any = await Http.get(
+        `${API_ENDPOINT.social_travel_trip}/comments/reaction-users`,
+        {
+          params: { comment_id: commentId },
+        },
+      );
+      return response.map((item: CommentReactionUser) => new CommentReactionUser(item));
     } catch (error) {
       console.error('Error getting comment reaction users:', error);
       throw error;
     }
-  }
+  },
 };
