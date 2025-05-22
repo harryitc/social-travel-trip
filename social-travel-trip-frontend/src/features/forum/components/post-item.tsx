@@ -550,7 +550,7 @@ export function PostItem({ post }: PostItemProps) {
                                   <span className="text-lg">{reactionType?.icon}</span>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  @{user.username} • {'2222'}
+                                  @{user.username} • {'...'}
                                 </div>
                               </div>
                               {user.user_id.toString() !== currentUser?.user_id?.toString() && (
