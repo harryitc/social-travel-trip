@@ -1,122 +1,129 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { UserCircle, LogOut } from 'lucide-react';
-import Image from 'next/image';
+import { getUserInfo } from '@/features/auth/auth.service';
+import { PageHeader } from '@/components/ui/page-header';
+import Link from 'next/link';
 
+/**
+ * Trang dashboard cho người dùng đã đăng nhập
+ */
 export default function DashboardPage() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userPicture, setUserPicture] = useState<string | null>(null);
-  const [authProvider, setAuthProvider] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Kiểm tra xem người dùng đã đăng nhập chưa
-    const token = localStorage.getItem('auth_token');
-    const email = localStorage.getItem('user_email');
-    const name = localStorage.getItem('user_name');
-    const picture = localStorage.getItem('user_picture');
-    const provider = localStorage.getItem('auth_provider');
+    const fetchUserInfo = () => {
+      try {
+        const userInfo = getUserInfo();
+        console.log('Dashboard page - userInfo:', userInfo);
+        setUser(userInfo);
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (!token) {
-      // Nếu chưa đăng nhập, chuyển hướng về trang đăng nhập
-      router.push('/auth/custom-auth');
-    } else {
-      setUserEmail(email);
-      setUserName(name);
-      setUserPicture(picture);
-      setAuthProvider(provider);
-      setIsLoading(false);
-    }
-  }, [router]);
+    fetchUserInfo();
 
-  const handleLogout = () => {
-    // Xóa thông tin đăng nhập
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_email');
-    localStorage.removeItem('user_name');
-    localStorage.removeItem('user_picture');
-    localStorage.removeItem('auth_provider');
+    // Lắng nghe sự kiện storage để cập nhật khi có thay đổi
+    window.addEventListener('storage', fetchUserInfo);
+    
+    return () => {
+      window.removeEventListener('storage', fetchUserInfo);
+    };
+  }, []);
 
-    // Chuyển hướng về trang chủ
-    router.push('/');
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader
+          title="Bảng điều khiển"
+          description="Quản lý tài khoản và hoạt động của bạn"
+        />
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+          <p className="text-center text-gray-600 dark:text-gray-300">
+            Bạn chưa đăng nhập. Vui lòng đăng nhập để xem bảng điều khiển.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <Link
+              href="/auth/sign-in?redirect=/dashboard"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Đăng nhập
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            {authProvider === 'google' && userPicture ? (
-              <div className="relative h-12 w-12 sm:h-16 sm:w-16 rounded-full overflow-hidden">
-                <img
-                  src={userPicture}
-                  alt="Profile"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ) : (
-              <div className="bg-primary/10 p-2 sm:p-3 rounded-full">
-                <UserCircle className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
-              </div>
-            )}
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Xin chào!</h1>
-              <p className="text-lg sm:text-xl font-medium">{userName || 'Người dùng'}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{userEmail}</p>
-              {authProvider && (
-                <div className="mt-1 text-xs inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                  Đăng nhập qua {authProvider === 'google' ? 'Google' : 'Email'}
-                </div>
-              )}
-            </div>
-          </div>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2 w-full sm:w-auto"
-            onClick={handleLogout}
+      <PageHeader
+        title={`Xin chào, ${user.full_name || user.username}!`}
+        description="Quản lý tài khoản và hoạt động của bạn"
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Thông tin cá nhân</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            Xem và cập nhật thông tin cá nhân của bạn
+          </p>
+          <Link
+            href="/profile"
+            className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
           >
-            <LogOut className="h-4 w-4" />
-            Đăng xuất
-          </Button>
+            Xem hồ sơ &rarr;
+          </Link>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Bài viết của tôi</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            Quản lý các bài viết bạn đã đăng
+          </p>
+          <Link
+            href="/my-posts"
+            className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
+          >
+            Xem bài viết &rarr;
+          </Link>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Lịch trình của tôi</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            Quản lý các lịch trình du lịch của bạn
+          </p>
+          <Link
+            href="/my-schedules"
+            className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium"
+          >
+            Xem lịch trình &rarr;
+          </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">Chuyến đi gần đây</h2>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Bạn chưa có chuyến đi nào. Hãy tạo chuyến đi mới!
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Hoạt động gần đây</h3>
+        
+        <div className="space-y-4">
+          <p className="text-gray-600 dark:text-gray-300">
+            Chưa có hoạt động nào gần đây.
           </p>
-          <Button className="mt-3 sm:mt-4 w-full">Tạo chuyến đi</Button>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
-          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">Bạn bè</h2>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Kết nối với bạn bè để cùng nhau khám phá những điểm đến mới.
-          </p>
-          <Button className="mt-3 sm:mt-4 w-full">Tìm bạn bè</Button>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
-          <h2 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-4">Khám phá</h2>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Khám phá những điểm đến hấp dẫn và phổ biến nhất.
-          </p>
-          <Button className="mt-3 sm:mt-4 w-full">Khám phá ngay</Button>
         </div>
       </div>
     </div>

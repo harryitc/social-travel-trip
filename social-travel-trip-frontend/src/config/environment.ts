@@ -8,8 +8,9 @@ export const environment = {
   domain: {
     api_auth: process.env.NEXT_PUBLIC_API_AUTH ?? '',
     permission_v2: process.env.NEXT_PUBLIC_PERMISSION_V2 ?? '',
-    eduzaa: process.env.NEXT_PUBLIC_API_EDUZAA ?? '',
+    social_travel_trip: process.env.NEXT_PUBLIC_API_SOCIAL_TRAVEL_TRIP ?? '',
     file_v2: process.env.NEXT_PUBLIC_API_FILE_V2 ?? '',
+    file_image_v2: process.env.NEXT_PUBLIC_API_FILE_IMAGE_V2 ?? '',
     image_root_path_quilljs: process.env.NEXT_PUBLIC_IMAGE_ROOT_FILE_QUILL ?? '',
   },
   aplication: {
@@ -22,8 +23,11 @@ export const environment = {
       },
     },
   },
+  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000',
 };
 
 export const AUTH = {
-  login_route: '/login',
+  login_route: '/auth/sign-in',
+  register_route: '/auth/sign-up',
+  reset_password: '/auth/reset-password',
 };

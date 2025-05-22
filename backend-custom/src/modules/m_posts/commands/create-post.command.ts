@@ -11,6 +11,10 @@ import { CreatePostDTO } from '../dto/create-post.dto';
 import { UserService } from '@modules/user/user.service';
 import { UserRelaService } from '@modules/m_user_rela/services/user-rela.service';
 import { NewPostFromFollowingEvent } from '@modules/m_notify/events/new-post-from-following.event';
+import {
+  WebsocketService,
+  WebsocketEvent,
+} from '@modules/m_websocket/websocket.service';
 
 export class CreatePostCommand implements ICommand {
   constructor(
@@ -30,6 +34,7 @@ export class CreatePostCommandHandler
     private readonly eventBus: EventBus,
     private readonly userService: UserService,
     private readonly userRelaService: UserRelaService,
+    private readonly websocketService: WebsocketService,
   ) {}
 
   execute = async (command: CreatePostCommand): Promise<any> => {
@@ -44,6 +49,33 @@ export class CreatePostCommandHandler
       const postCreator = await this.userService.findById(user_id);
 
       if (postCreator && createdPost) {
+        // Emit WebSocket event for new post
+        try {
+          const eventData = {
+            post: createdPost,
+            authorId: user_id,
+            authorName:
+              postCreator.full_name || postCreator.username || 'A user',
+            authorAvatar: postCreator.avatar_url || null,
+          };
+
+          this.logger.log(
+            `Emitting WebSocket event for new post: ${createdPost.post_id}`,
+          );
+          this.logger.log(`Event data: ${JSON.stringify(eventData)}`);
+
+          this.websocketService.sendToAll(
+            WebsocketEvent.POST_CREATED,
+            eventData,
+          );
+
+          this.logger.log('WebSocket event emitted successfully');
+        } catch (wsError) {
+          this.logger.error(
+            `Failed to emit WebSocket event: ${wsError.message}`,
+          );
+        }
+
         // Get all followers of the post creator
         const followersResult =
           await this.userRelaService.getAllFollowers(user_id);
@@ -51,7 +83,7 @@ export class CreatePostCommandHandler
         if (followersResult && followersResult.length > 0) {
           // Extract follower IDs
           const followerIds = followersResult.map(
-            (follower) => follower.user_id,
+            (follower: any) => follower.user_id,
           );
 
           // Notify all followers about the new post by publishing an event

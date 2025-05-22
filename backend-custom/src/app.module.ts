@@ -22,6 +22,7 @@ import { NotifyModule } from '@modules/m_notify/notify.module';
 import { PlanModule } from '@modules/m_plan/plan.module';
 import { UserRelaModule } from '@modules/m_user_rela/user-rela.module';
 import { MiniBlogModule } from '@modules/m_mini_blog/mini-blog.module';
+import { WebsocketModule } from '@modules/m_websocket/websocket.module';
 
 const CORE_MODULES = [CqrsModule, HealthcheckModule];
 
@@ -38,6 +39,7 @@ const FEATURES_MODULES = [
   NotifyModule,
   LogModule,
   OtherModule,
+  WebsocketModule,
 ];
 
 @Module({

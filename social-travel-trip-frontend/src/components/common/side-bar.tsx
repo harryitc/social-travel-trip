@@ -59,11 +59,11 @@ const sidebarItems: SidebarItem[] = [
     path: '/blog',
     icon: <BookText className="h-5 w-5" />,
   },
-  {
-    name: 'Memories',
-    path: '/memories',
-    icon: <MemoryStick className="h-5 w-5" />,
-  },
+  // {
+  //   name: 'Memories',
+  //   path: '/memories',
+  //   icon: <MemoryStick className="h-5 w-5" />,
+  // },
   {
     name: 'Cài đặt',
     path: '/settings',
