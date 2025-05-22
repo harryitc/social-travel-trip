@@ -100,17 +100,31 @@ export const commentService = {
   /**
    * Get users who reacted to a comment
    * @param commentId Comment ID
+   * @param reactionId Optional reaction ID to filter by
    * @returns Promise with users who reacted to the comment
    */
-  async getCommentReactionUsers(commentId: string): Promise<CommentReactionUser[]> {
+  async getCommentReactionUsers(commentId: string, reactionId?: number): Promise<{
+    data: (PostAuthor & { reaction_id: number })[];
+    meta: { total: number };
+  }> {
     try {
+      const params: any = { commentId: parseInt(commentId) };
+      if (reactionId) {
+        params.reactionId = reactionId;
+      }
+
       const response: any = await Http.get(
         `${API_ENDPOINT.social_travel_trip}/comments/reaction-users`,
-        {
-          params: { comment_id: commentId },
-        },
+        { params }
       );
-      return response.map((item: CommentReactionUser) => new CommentReactionUser(item));
+
+      return {
+        data: response.data?.map((item: any) => ({
+          ...new PostAuthor(item),
+          reaction_id: item.reaction_id
+        })) || [],
+        meta: response.meta || { total: 0 }
+      };
     } catch (error) {
       console.error('Error getting comment reaction users:', error);
       throw error;
