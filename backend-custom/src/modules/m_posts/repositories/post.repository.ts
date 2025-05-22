@@ -161,8 +161,6 @@ export class PostRepository {
       params.push(reactionId);
     }
 
-    query += ` ORDER BY u.full_name`;
-
     return this.client.execute(query, params);
   }
 

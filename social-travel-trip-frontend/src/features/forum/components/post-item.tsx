@@ -29,11 +29,12 @@ import { notification } from 'antd';
 
 // Reaction types
 const REACTION_TYPES = [
-  { id: 'like', icon: '👍', label: 'Thích' },
-  { id: 'love', icon: '❤️', label: 'Yêu thích' },
-  { id: 'haha', icon: '😄', label: 'Haha' },
-  { id: 'wow', icon: '😮', label: 'Wow' },
-  { id: 'sad', icon: '😢', label: 'Buồn' },
+  { id: 1, icon: '🚫', label: 'Không like' }, // reaction_id = 1
+  { id: 2, icon: '👍', label: 'Thích' },
+  { id: 3, icon: '❤️', label: 'Yêu thích' },
+  { id: 4, icon: '😄', label: 'Haha' },
+  { id: 5, icon: '😮', label: 'Wow' },
+  { id: 6, icon: '😢', label: 'Buồn' },
 ];
 
 interface PostItemProps {
@@ -53,11 +54,16 @@ export function PostItem({ post }: PostItemProps) {
   const [commentsCount] = useState(post.stats?.total_comments || 0);
   const [isHidden] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [currentReaction] = useState<string | null>(null);
+  const [currentReaction] = useState<number | null>(null);
   const [isLiking, setIsLiking] = useState(false);
   const [showLikesModal, setShowLikesModal] = useState(false);
-  const [likedUsers, setLikedUsers] = useState<PostAuthor[]>([]);
+  const [likesData, setLikesData] = useState<{
+    total: number;
+    reactions: { reaction_id: number; count: number }[];
+    users: (PostAuthor & { reaction_id: number })[];
+  }>({ total: 0, reactions: [], users: [] });
   const [loadingLikes, setLoadingLikes] = useState(false);
+  const [selectedReaction, setSelectedReaction] = useState<number | null>(null);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -128,8 +134,8 @@ export function PostItem({ post }: PostItemProps) {
     try {
       setLoadingLikes(true);
       setShowLikesModal(true);
-      const users = await postService.getPostLikes(post.post_id);
-      setLikedUsers(users);
+      const data = await postService.getPostLikes(post.post_id);
+      setLikesData(data);
     } catch (error) {
       console.error('Error fetching liked users:', error);
     } finally {
@@ -259,8 +265,8 @@ export function PostItem({ post }: PostItemProps) {
                       variant="ghost"
                       size="sm"
                       className={`flex items-center transition-all duration-200 ${isLiked
-                          ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
-                          : 'hover:text-purple-600 dark:hover:text-purple-400'
+                        ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
+                        : 'hover:text-purple-600 dark:hover:text-purple-400'
                         } ${isLiking ? 'scale-110' : ''}`}
                       onClick={handleLike}
                       disabled={isLiking}
@@ -408,11 +414,11 @@ export function PostItem({ post }: PostItemProps) {
 
         {/* Likes Modal */}
         <Dialog open={showLikesModal} onOpenChange={setShowLikesModal}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Heart className="h-5 w-5 text-purple-600" />
-                Người đã thích ({likesCount})
+                Reactions ({likesData.total})
               </DialogTitle>
             </DialogHeader>
             <div className="max-h-96 overflow-y-auto">
@@ -420,33 +426,79 @@ export function PostItem({ post }: PostItemProps) {
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
                 </div>
-              ) : likedUsers.length > 0 ? (
-                <div className="space-y-3">
-                  {likedUsers.map((user) => (
-                    <div key={user.user_id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar} alt={user.full_name} />
-                        <AvatarFallback>{user.full_name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="font-medium">{user.full_name}</div>
-                        <div className="text-sm text-muted-foreground">@{user.username}</div>
-                      </div>
-                      {user.user_id.toString() !== currentUser?.user_id?.toString() && (
-                        <FollowButton
-                          userId={user.user_id.toString()}
-                          username={user.username}
-                          fullName={user.full_name}
-                          variant="outline"
-                          size="sm"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Chưa có ai thích bài viết này
+                <div>
+                  {/* Reaction Tabs */}
+                  <div className="flex gap-2 mb-4 border-b">
+                    <button
+                      className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${selectedReaction === null
+                          ? 'border-purple-600 text-purple-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                      onClick={() => setSelectedReaction(null)}
+                    >
+                      Tất cả ({likesData.total})
+                    </button>
+                    {likesData.reactions.map((reaction) => {
+                      const reactionType = REACTION_TYPES.find(r => r.id === reaction.reaction_id);
+                      return (
+                        <button
+                          key={reaction.reaction_id}
+                          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${selectedReaction === reaction.reaction_id
+                              ? 'border-purple-600 text-purple-600'
+                              : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                          onClick={() => setSelectedReaction(reaction.reaction_id)}
+                        >
+                          <span>{reactionType?.icon}</span>
+                          <span>({reaction.count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Users List */}
+                  {likesData.users.length > 0 ? (
+                    <div className="space-y-3">
+                      {likesData.users
+                        .filter(user => selectedReaction === null || user.reaction_id === selectedReaction)
+                        .map((user) => {
+                          const reactionType = REACTION_TYPES.find(r => r.id === user.reaction_id);
+                          // const timeAgo = new Date(user.created_at).toLocaleString('vi-VN');
+
+                          return (
+                            <div key={`${user.user_id}-${user.reaction_id}`} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={user.avatar} alt={user.full_name} />
+                                <AvatarFallback>{user.full_name?.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{user.full_name}</span>
+                                  <span className="text-lg">{reactionType?.icon}</span>
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  @{user.username} • {'2222'}
+                                </div>
+                              </div>
+                              {user.user_id.toString() !== currentUser?.user_id?.toString() && (
+                                <FollowButton
+                                  userId={user.user_id.toString()}
+                                  username={user.username}
+                                  fullName={user.full_name}
+                                  variant="outline"
+                                  size="sm"
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Chưa có ai thích bài viết này
+                    </div>
+                  )}
                 </div>
               )}
             </div>

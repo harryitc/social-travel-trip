@@ -82,16 +82,30 @@ export const postService = {
   },
 
   /**
-   * Get users who liked a post
+   * Get users who liked a post with detailed reaction info
    * @param postId Post ID
-   * @returns Promise with users who liked the post
+   * @returns Promise with detailed likes data
    */
-  async getPostLikes(postId: string): Promise<PostAuthor[]> {
+  async getPostLikes(postId: string): Promise<{
+    total: number;
+    reactions: { reaction_id: number; count: number }[];
+    users: (PostAuthor & { reaction_id: number})[];
+  }> {
     try {
-      const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/get-post-likes`, {
+      const response: any = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/get-post-likes`, {
         params: { postId: postId },
       });
-      return Array.isArray(response) ? response.map((user: any) => new PostAuthor(user)) : [];
+
+      return {
+        total: response.total || 0,
+        reactions: response.reactions || [],
+        users: Array.isArray(response.users)
+          ? response.users.map((user: any) => ({
+              ...new PostAuthor(user),
+              reaction_id: user.reaction_id,
+            }))
+          : []
+      };
     } catch (error) {
       console.error('Error getting post likes:', error);
       throw error;
