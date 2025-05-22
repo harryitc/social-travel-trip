@@ -58,7 +58,7 @@ export default function LoginForm() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Đăng nhập không thành công. Vui lòng thử lại.');
+      setError(err?.response?.data?.reasons?.message || 'Đăng nhập không thành công. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +117,9 @@ export default function LoginForm() {
               id="remember-me"
               name="remember-me"
               type="checkbox"
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              readOnly
+              disabled
+              className=" h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
             />
             <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
               Ghi nhớ đăng nhập
@@ -126,8 +128,8 @@ export default function LoginForm() {
 
           <div className="text-sm">
             <Link
-              href="/auth/reset-password"
-              className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+              href="javascript:void(0)"
+              className="hover:underline font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
               Quên mật khẩu?
             </Link>
@@ -145,7 +147,7 @@ export default function LoginForm() {
         </div>
       </form>
 
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
@@ -171,7 +173,7 @@ export default function LoginForm() {
             <span>Facebook</span>
           </button>
         </div>
-      </div>
+      </div> */}
 
       <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
         Chưa có tài khoản?{' '}

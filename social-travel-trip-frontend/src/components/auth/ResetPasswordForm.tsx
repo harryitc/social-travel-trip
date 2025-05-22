@@ -61,7 +61,7 @@ export default function ResetPasswordForm() {
       setSuccess('Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn.');
     } catch (err: any) {
       console.error('Reset password error:', err);
-      setError(err.response?.data?.message || 'Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại.');
+      setError(err?.response?.data?.reasons?.message || 'Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +88,7 @@ export default function ResetPasswordForm() {
       }, 2000);
     } catch (err: any) {
       console.error('Confirm reset password error:', err);
-      setError(err.response?.data?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
+      setError(err?.response?.data?.reasons?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }

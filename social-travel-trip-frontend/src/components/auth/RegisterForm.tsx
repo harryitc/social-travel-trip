@@ -54,7 +54,7 @@ export default function RegisterForm() {
       router.push('/auth/sign-in?registered=true');
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.message || 'Đăng ký không thành công. Vui lòng thử lại.');
+      setError(err?.response?.data?.reasons?.message || 'Đăng ký không thành công. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
