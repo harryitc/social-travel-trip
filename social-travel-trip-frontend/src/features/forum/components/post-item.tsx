@@ -47,14 +47,16 @@ export function PostItem({ post }: PostItemProps) {
   // Determine if post is liked based on user_reaction from backend
   // user_reaction = null or 1 means "not liked", user_reaction > 1 means "liked"
   const isPostLiked = post.stats?.user_reaction && post.stats.user_reaction > 1;
+  const userReactionId = post.stats?.user_reaction || null;
 
   const [comment, setComment] = useState('');
   const [isLiked, setIsLiked] = useState(isPostLiked || false);
+  const [currentUserReaction, setCurrentUserReaction] = useState<number | null>(userReactionId);
   const [likesCount, setLikesCount] = useState(post.stats?.total_likes || 0);
   const [commentsCount] = useState(post.stats?.total_comments || 0);
   const [isHidden] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [currentReaction] = useState<number | null>(null);
+
   const [isLiking, setIsLiking] = useState(false);
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [likesData, setLikesData] = useState<{
@@ -64,6 +66,7 @@ export function PostItem({ post }: PostItemProps) {
   }>({ total: 0, reactions: [], users: [] });
   const [loadingLikes, setLoadingLikes] = useState(false);
   const [selectedReaction, setSelectedReaction] = useState<number | null>(null);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -71,7 +74,24 @@ export function PostItem({ post }: PostItemProps) {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, [showComments])
+  }, [showComments]);
+
+  // Close reaction picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (reactionsMenuRef.current && !reactionsMenuRef.current.contains(event.target as Node)) {
+        setShowReactionPicker(false);
+      }
+    };
+
+    if (showReactionPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showReactionPicker]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -96,37 +116,55 @@ export function PostItem({ post }: PostItemProps) {
     }
   };
 
-  const handleLike = async () => {
+  const handleReaction = async (reactionId: number) => {
     if (isLiking) return; // Prevent double clicks
 
     try {
       setIsLiking(true);
 
-      // Toggle like status optimistically
-      const newLikedStatus = !isLiked;
-      setIsLiked(newLikedStatus);
-      setLikesCount(prevCount => newLikedStatus ? prevCount + 1 : prevCount - 1);
+      // Determine if this is a new reaction or removing current reaction
+      const isRemovingReaction = currentUserReaction === reactionId;
+      const newReactionId = isRemovingReaction ? 1 : reactionId; // 1 = no reaction
 
-      // Call API to like/unlike post
-      await postService.likePost(post.post_id, newLikedStatus ? 2 : 1);
+      // Update UI optimistically
+      const wasLiked = currentUserReaction && currentUserReaction > 1;
+      const willBeLiked = newReactionId > 1;
 
-      // WebSocket event will be emitted by server after like operation
-      console.log('Post liked/unliked, server will emit WebSocket event');
+      setCurrentUserReaction(willBeLiked ? newReactionId : null);
+      setIsLiked(willBeLiked);
+
+      // Update like count
+      if (wasLiked && !willBeLiked) {
+        setLikesCount(prev => prev - 1);
+      } else if (!wasLiked && willBeLiked) {
+        setLikesCount(prev => prev + 1);
+      }
+
+      // Call API
+      await postService.likePost(post.post_id, newReactionId);
+
+      // Close reaction picker
+      setShowReactionPicker(false);
+
+      console.log('Post reaction updated, server will emit WebSocket event');
     } catch (error: any) {
-      console.error('Error liking post:', error);
+      console.error('Error reacting to post:', error);
       notification.error({
         message: 'Lỗi',
-        description: error?.response?.data?.reasons?.message || 'Không thể thích bài viết. Vui lòng thử lại sau.',
+        description: error?.response?.data?.reasons?.message || 'Không thể react bài viết. Vui lòng thử lại sau.',
         placement: 'topRight',
       });
 
       // Revert UI changes if API call fails
-      setIsLiked(!isLiked);
-      setLikesCount(prevCount => !isLiked ? prevCount - 1 : prevCount + 1);
+      setCurrentUserReaction(userReactionId);
+      setIsLiked(isPostLiked || false);
+      setLikesCount(post.stats?.total_likes || 0);
     } finally {
       setIsLiking(false);
     }
   };
+
+  const handleLike = () => handleReaction(2); // Default like reaction
 
   const handleShowLikes = async () => {
     if (likesCount === 0) return;
@@ -261,42 +299,76 @@ export function PostItem({ post }: PostItemProps) {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={`flex items-center transition-all duration-200 ${isLiked
-                        ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
-                        : 'hover:text-purple-600 dark:hover:text-purple-400'
-                        } ${isLiking ? 'scale-110' : ''}`}
-                      onClick={handleLike}
-                      disabled={isLiking}
-                    >
-                      {currentReaction ? (
-                        <span className="mr-1 text-lg">
-                          {REACTION_TYPES.find(r => r.id === currentReaction)?.icon || '👍'}
-                        </span>
-                      ) : (
-                        <Heart
-                          className={`h-4 w-4 mr-1 transition-all duration-200 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''
-                            } ${isLiking ? 'animate-pulse' : ''}`}
-                        />
-                      )}
-                      <span
-                        className={`cursor-pointer ${likesCount > 0 ? 'hover:underline' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowLikes();
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center transition-all duration-200 ${isLiked
+                          ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
+                          : 'hover:text-purple-600 dark:hover:text-purple-400'
+                          } ${isLiking ? 'scale-110' : ''}`}
+                        onClick={handleLike}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setShowReactionPicker(!showReactionPicker);
                         }}
+                        disabled={isLiking}
                       >
-                        {likesCount}
-                      </span>
-                    </Button>
+                        {currentUserReaction && currentUserReaction > 1 ? (
+                          <span className="mr-1 text-lg">
+                            {REACTION_TYPES.find(r => r.id === currentUserReaction)?.icon || '👍'}
+                          </span>
+                        ) : (
+                          <Heart
+                            className={`h-4 w-4 mr-1 transition-all duration-200 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''
+                              } ${isLiking ? 'animate-pulse' : ''}`}
+                          />
+                        )}
+                        <span
+                          className={`cursor-pointer ${likesCount > 0 ? 'hover:underline' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowLikes();
+                          }}
+                        >
+                          {likesCount}
+                        </span>
+                      </Button>
+
+                      {/* Reaction Picker Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-1 px-2"
+                        onClick={() => setShowReactionPicker(!showReactionPicker)}
+                      >
+                        <span className="text-xs">▼</span>
+                      </Button>
+                    </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{isLiked ? 'Bỏ thích' : 'Thích bài viết'}</p>
+                    <p>{isLiked ? 'Bỏ thích' : 'Thích bài viết'} • Right-click để chọn reaction</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
+              {/* Reaction Picker */}
+              {showReactionPicker && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 flex gap-1 z-10">
+                  {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
+                    <button
+                      key={reaction.id}
+                      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                        currentUserReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''
+                      }`}
+                      onClick={() => handleReaction(reaction.id)}
+                      title={reaction.label}
+                    >
+                      <span className="text-lg">{reaction.icon}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <Button
               variant="ghost"

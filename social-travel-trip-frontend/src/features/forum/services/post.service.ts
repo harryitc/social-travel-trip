@@ -68,7 +68,7 @@ export const postService = {
    * @param postId Post ID
    * @returns Promise with success status
    */
-  async likePost(postId: string, reactionId: number = 1): Promise<{ success: boolean }> {
+  async likePost(postId: string, reactionId: number): Promise<{ success: boolean }> {
     try {
       await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/like`, {
         postId: postId,
