@@ -31,10 +31,9 @@ const REACTION_TYPES = [
 
 interface PostItemProps {
   post: Post;
-  onHidePost?: (postId: string) => void;
 }
 
-export function PostItem({ post, onHidePost }: PostItemProps) {
+export function PostItem({ post }: PostItemProps) {
   const [isLiked, setIsLiked] = useState(post.is_liked);
   const [likesCount, setLikesCount] = useState(post.likes_count);
   const [isSaved, setIsSaved] = useState(false);
@@ -92,23 +91,16 @@ export function PostItem({ post, onHidePost }: PostItemProps) {
     // TODO: Implement save functionality
   };
 
-  const handleShare = () => {
-    setShowShareOptions(!showShareOptions);
-    // TODO: Implement share functionality
-  };
+  // const handleShare = () => {
+  //   setShowShareOptions(!showShareOptions);
+  //   // TODO: Implement share functionality
+  // };
 
-  const handleHidePost = () => {
-    setIsHidden(true);
-    if (onHidePost) {
-      onHidePost(post.post_id);
-    }
-  };
-
-  const handleReport = () => {
-    setIsReported(true);
-    // TODO: Implement report functionality
-    alert('Cảm ơn bạn đã báo cáo bài viết này. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất.');
-  };
+  // const handleReport = () => {
+  //   setIsReported(true);
+  //   // TODO: Implement report functionality
+  //   alert('Cảm ơn bạn đã báo cáo bài viết này. Chúng tôi sẽ xem xét và xử lý trong thời gian sớm nhất.');
+  // };
 
   if (isHidden) {
     return null;
@@ -142,14 +134,14 @@ export function PostItem({ post, onHidePost }: PostItemProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={handleSave}
               className="flex items-center cursor-pointer"
             >
               <Bookmark className="h-4 w-4 mr-2" />
               {isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết'}
-            </DropdownMenuItem>
-            <DropdownMenuItem
+            </DropdownMenuItem> */}
+            {/* <DropdownMenuItem
               onClick={handleHidePost}
               className="flex items-center cursor-pointer"
             >
@@ -163,7 +155,7 @@ export function PostItem({ post, onHidePost }: PostItemProps) {
             >
               <span className="mr-2">⚠️</span>
               {isReported ? 'Đã báo cáo' : 'Báo cáo bài viết'}
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuItem
               onClick={() => {
                 setIsFollowing(!isFollowing);
@@ -246,7 +238,7 @@ export function PostItem({ post, onHidePost }: PostItemProps) {
               <MessageCircle className="h-4 w-4 mr-1" />
               <span>{post.comments_count}</span>
             </Button>
-            <Popover open={showShareOptions} onOpenChange={setShowShareOptions}>
+            {/* <Popover open={showShareOptions} onOpenChange={setShowShareOptions}>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="sm" className="flex items-center">
                   <Share className="h-4 w-4 mr-1" />
@@ -280,7 +272,7 @@ export function PostItem({ post, onHidePost }: PostItemProps) {
                   </Button>
                 </div>
               </PopoverContent>
-            </Popover>
+            </Popover> */}
           </div>
           <Button
             variant="ghost"

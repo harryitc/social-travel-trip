@@ -81,23 +81,23 @@ export function PostList() {
     setPosts([newPost, ...posts]);
   };
 
-  const handleHidePost = (postId: string) => {
-    // Add post to hidden posts list
-    setHiddenPosts([...hiddenPosts, postId]);
+  // const handleHidePost = (postId: string) => {
+  //   // Add post to hidden posts list
+  //   setHiddenPosts([...hiddenPosts, postId]);
 
-    // Save hidden posts to localStorage
-    try {
-      const storedHiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
-      localStorage.setItem('hiddenPosts', JSON.stringify([...storedHiddenPosts, postId]));
-    } catch (error) {
-      console.error('Error saving hidden posts to localStorage:', error);
-    }
-  };
+  //   // Save hidden posts to localStorage
+  //   try {
+  //     const storedHiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
+  //     localStorage.setItem('hiddenPosts', JSON.stringify([...storedHiddenPosts, postId]));
+  //   } catch (error) {
+  //     console.error('Error saving hidden posts to localStorage:', error);
+  //   }
+  // };
 
-  const handleShowAllPosts = () => {
-    setHiddenPosts([]);
-    localStorage.removeItem('hiddenPosts');
-  };
+  // const handleShowAllPosts = () => {
+  //   setHiddenPosts([]);
+  //   localStorage.removeItem('hiddenPosts');
+  // };
 
   return (
     <div className="space-y-6">
@@ -157,19 +157,18 @@ export function PostList() {
               <PostItem
                 key={post.post_id}
                 post={post}
-                onHidePost={handleHidePost}
               />
             ))}
 
           {/* Show message if all posts are hidden */}
-          {posts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.post_id)).length === 0 && (
+          {/* {posts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.post_id)).length === 0 && (
             <div className="text-center py-8">
               <p className="text-muted-foreground mb-2">Tất cả bài viết đã bị ẩn</p>
               <Button variant="outline" onClick={handleShowAllPosts}>
                 Hiển thị lại tất cả bài viết
               </Button>
             </div>
-          )}
+          )} */}
 
           {/* Show message if no posts are available */}
           {posts.length === 0 && (
@@ -179,7 +178,7 @@ export function PostList() {
           )}
 
           {/* Show hidden posts count */}
-          {hiddenPosts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.post_id)).length > 0 && (
+          {/* {hiddenPosts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.post_id)).length > 0 && (
             <div className="text-center py-3 px-4 bg-gray-50 dark:bg-gray-800/30 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-muted-foreground">
               Bạn đã ẩn {hiddenPosts.length} bài viết.
               <Button
@@ -190,7 +189,7 @@ export function PostList() {
                 Hiển thị lại tất cả
               </Button>
             </div>
-          )}
+          )} */}
 
           {/* Load more button */}
           {hasMore && posts.length > 0 && (
