@@ -32,11 +32,11 @@ export function PostCreator() {
   const [hashtagsSelected, setHashtagsSelected] = useState<string[]>([]);
   const [searchHashtag, setSearchHashtag] = useState<string>('');
   const [loadingHashtag, setLoadingHashtag] = useState(false);
-  const [location, setLocation] = useState('');
-  const [locationId, setLocationId] = useState('');
-  const [locations, setLocations] = useState<any[]>([]);
-  const [loadingLocations, setLoadingLocations] = useState(false);
-  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
+  // const [location, setLocation] = useState('');
+  // const [locationId, setLocationId] = useState('');
+  // const [locations, setLocations] = useState<any[]>([]);
+  // const [loadingLocations, setLoadingLocations] = useState(false);
+  // const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [hashtagPopoverOpen, setHashtagPopoverOpen] = useState(false);
   const [mentionPopoverOpen, setMentionPopoverOpen] = useState(false);
@@ -62,23 +62,23 @@ export function PostCreator() {
   }, [router]);
 
   // Load locations
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        setLoadingLocations(true);
-        const response = await locationService.getLocations({ limit: 10 });
-        setLocations(response.data);
-      } catch (error) {
-        console.error('Error fetching locations:', error);
-      } finally {
-        setLoadingLocations(false);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchLocations = async () => {
+  //     try {
+  //       setLoadingLocations(true);
+  //       const response = await locationService.getLocations({ limit: 10 });
+  //       setLocations(response.data);
+  //     } catch (error) {
+  //       console.error('Error fetching locations:', error);
+  //     } finally {
+  //       setLoadingLocations(false);
+  //     }
+  //   };
 
-    if (locationPopoverOpen) {
-      fetchLocations();
-    }
-  }, [locationPopoverOpen]);
+  //   if (locationPopoverOpen) {
+  //     fetchLocations();
+  //   }
+  // }, [locationPopoverOpen]);
 
   // Load Hashtags
   useEffect(() => {
@@ -241,10 +241,10 @@ export function PostCreator() {
       };
 
       // Add location if selected
-      if (location) {
-        payload.location_id = locationId || undefined;
-        payload.location_name = location;
-      }
+      // if (location) {
+      //   payload.location_id = locationId || undefined;
+      //   payload.location_name = location;
+      // }
 
       // If files are provided, upload them first
       if (imageFiles && imageFiles.length > 0) {
@@ -268,8 +268,8 @@ export function PostCreator() {
       setImages([]);
       setImageFiles([]);
       setHashtags([]);
-      setLocation('');
-      setLocationId('');
+      // setLocation('');
+      // setLocationId('');
       setMentions([]);
 
       // WebSocket event will be emitted by server after post creation
@@ -426,7 +426,7 @@ export function PostCreator() {
                 <ImageIcon className="h-4 w-4 mr-2" />
                 Ảnh {images.length > 0 ? `(${images.length})` : ''}
               </Button>
-              <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
+              {/* <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -469,7 +469,7 @@ export function PostCreator() {
                     </CommandList>
                   </Command>
                 </PopoverContent>
-              </Popover>
+              </Popover> */}
               <Button
                 type="button"
                 variant="ghost"
