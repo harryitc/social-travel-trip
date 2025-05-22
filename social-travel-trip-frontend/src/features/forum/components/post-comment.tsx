@@ -11,16 +11,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/radix-ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/radix-ui/dialog';
 import { Comment, CreateCommentPayload } from '../models/comment.model';
 import { commentService } from '../services/comment.service';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { notification } from 'antd';
+import { LikesModal } from './likes-modal';
+import { commentLikesAdapter } from '../services/likes-adapters';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -49,13 +45,6 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
   const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
-  const [likesData, setLikesData] = useState<{
-    total: number;
-    reactions: { reaction_id: number; count: number }[];
-    users: (any & { reaction_id: number })[];
-  }>({ total: 0, reactions: [], users: [] });
-  const [loadingLikes, setLoadingLikes] = useState(false);
-  const [selectedReaction, setSelectedReaction] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
 
@@ -166,39 +155,14 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
 
   const handleLikeComment = (commentId: string) => handleReaction(commentId, 2);
 
-  const handleShowLikes = async (commentId: string) => {
+  const handleShowLikes = (commentId: string) => {
     const comment = comments.find(c => c.comment_id === commentId) ||
       comments.find(c => c.replies?.find(r => r.comment_id === commentId))?.replies?.find(r => r.comment_id === commentId);
 
     if (!comment || comment.stats.total_likes === 0) return;
 
-    try {
-      setLoadingLikes(true);
-      setSelectedCommentId(commentId);
-      setShowLikesModal(true);
-      setSelectedReaction(null);
-
-      // Get comment likes data
-      const likesResponse = await commentService.getCommentLikes(commentId);
-
-      // Get users who reacted
-      const usersResponse = await commentService.getCommentReactionUsers(commentId);
-
-      setLikesData({
-        total: likesResponse.total,
-        reactions: likesResponse.reactions,
-        users: usersResponse.data
-      });
-    } catch (error) {
-      console.error('Error fetching comment likes:', error);
-      notification.error({
-        message: 'Lỗi',
-        description: 'Không thể tải danh sách người thích. Vui lòng thử lại sau.',
-        placement: 'topRight',
-      });
-    } finally {
-      setLoadingLikes(false);
-    }
+    setSelectedCommentId(commentId);
+    setShowLikesModal(true);
   };
 
   const handleReplyToComment = (commentId: string, authorName: string) => {
@@ -260,11 +224,6 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
         onCommentAdded();
       }
 
-      notification.success({
-        message: 'Thành công',
-        description: 'Bình luận đã được thêm.',
-        placement: 'topRight',
-      });
     } catch (error) {
       console.error('Error creating comment:', error);
       notification.error({
@@ -480,128 +439,14 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
       </div>
 
       {/* Likes Modal */}
-      <Dialog open={showLikesModal} onOpenChange={setShowLikesModal}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-purple-600" />
-              Reactions ({likesData.total})
-            </DialogTitle>
-          </DialogHeader>
-          <div className="max-h-96 overflow-y-auto">
-            {loadingLikes ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-              </div>
-            ) : (
-              <div>
-                {/* Reaction Tabs */}
-                {likesData.reactions.length > 0 && (
-                  <div className="flex gap-2 mb-4 border-b">
-                    <button
-                      className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${selectedReaction === null
-                          ? 'border-purple-600 text-purple-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
-                        }`}
-                      onClick={async () => {
-                        setSelectedReaction(null);
-                        // Reload all users
-                        if (selectedCommentId) {
-                          try {
-                            setLoadingLikes(true);
-                            const usersResponse = await commentService.getCommentReactionUsers(selectedCommentId);
-                            setLikesData(prev => ({
-                              ...prev,
-                              users: usersResponse.data
-                            }));
-                          } catch (error) {
-                            console.error('Error fetching all reaction users:', error);
-                          } finally {
-                            setLoadingLikes(false);
-                          }
-                        }
-                      }}
-                    >
-                      Tất cả ({likesData.total})
-                    </button>
-                    {likesData.reactions.map((reaction) => {
-                      const reactionType = REACTION_TYPES.find(r => r.id === reaction.reaction_id);
-                      return (
-                        <button
-                          key={reaction.reaction_id}
-                          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${selectedReaction === reaction.reaction_id
-                              ? 'border-purple-600 text-purple-600'
-                              : 'border-transparent text-gray-500 hover:text-gray-700'
-                            }`}
-                          onClick={async () => {
-                            setSelectedReaction(reaction.reaction_id);
-                            // Optionally reload users for specific reaction
-                            if (selectedCommentId) {
-                              try {
-                                setLoadingLikes(true);
-                                const usersResponse = await commentService.getCommentReactionUsers(selectedCommentId, reaction.reaction_id);
-                                setLikesData(prev => ({
-                                  ...prev,
-                                  users: usersResponse.data
-                                }));
-                              } catch (error) {
-                                console.error('Error fetching reaction users:', error);
-                              } finally {
-                                setLoadingLikes(false);
-                              }
-                            }
-                          }}
-                        >
-                          <span>{reactionType?.icon}</span>
-                          <span>({reaction.count})</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Users List */}
-                {likesData.users.length > 0 ? (
-                  <div className="space-y-3">
-                    {likesData.users
-                      .filter(user => selectedReaction === null || user.reaction_id === selectedReaction)
-                      .map((user) => {
-                        const reactionType = REACTION_TYPES.find(r => r.id === user.reaction_id);
-
-                        return (
-                          <div key={`${user.user_id}-${user.reaction_id}`} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={user.avatar} alt={user.full_name} />
-                              <AvatarFallback>{user.full_name?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">{user.full_name}</span>
-                                <span className="text-lg">{reactionType?.icon}</span>
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                @{user.username}
-                              </div>
-                            </div>
-                            {user.user_id?.toString() !== currentUser?.user_id?.toString() && (
-                              <Button variant="outline" size="sm">
-                                Theo dõi
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Chưa có ai thích bình luận này
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LikesModal
+        isOpen={showLikesModal}
+        onClose={() => setShowLikesModal(false)}
+        itemId={selectedCommentId || ''}
+        itemType="comment"
+        service={commentLikesAdapter}
+        title="Reactions"
+      />
     </div>
   );
 }

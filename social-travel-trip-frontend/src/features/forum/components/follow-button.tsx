@@ -30,7 +30,7 @@ export function FollowButton({
 }: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const currentUser = getUserInfo();
 
   // Don't show follow button for current user
@@ -42,17 +42,19 @@ export function FollowButton({
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        setIsCheckingStatus(true);
         const { isFollowing: followStatus } = await userService.checkFollowStatus(userId);
         setIsFollowing(followStatus);
       } catch (error) {
         console.error('Error checking follow status:', error);
+        setIsFollowing(false);
       } finally {
-        setIsCheckingStatus(false);
+        setIsInitialized(true);
       }
     };
 
-    checkStatus();
+    if (userId) {
+      checkStatus();
+    }
   }, [userId]);
 
   const handleFollowToggle = async () => {
@@ -106,18 +108,9 @@ export function FollowButton({
     }
   };
 
-  // Show loading state while checking initial status
-  if (isCheckingStatus) {
-    return (
-      <Button
-        variant={variant}
-        size={size}
-        disabled
-        className={className}
-      >
-        <Loader2 className="h-4 w-4 animate-spin" />
-      </Button>
-    );
+  // Don't render until initialized
+  if (!isInitialized) {
+    return null;
   }
 
   return (

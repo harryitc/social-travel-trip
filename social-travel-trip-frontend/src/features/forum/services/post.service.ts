@@ -115,19 +115,37 @@ export const postService = {
   /**
    * Get users who reacted to a post
    * @param postId Post ID
+   * @param reactionId Optional reaction ID to filter by
    * @returns Promise with users who reacted to the post
    */
-  async getPostReactionUsers(postId: string): Promise<(PostAuthor & { reaction_id: string })[]> {
+  async getPostReactionUsers(postId: string, reactionId?: number): Promise<{
+    data: (PostAuthor & { reaction_id: number })[];
+    meta: { total: number };
+  }> {
     try {
-      const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/reaction-users`, {
-        params: { postId: postId },
+      const params: any = { postId: postId };
+      if (reactionId) {
+        params.reactionId = reactionId;
+      }
+
+      const response: any = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/reaction-users`, {
+        params
       });
-      return Array.isArray(response)
-        ? response.map((user: any) => ({
-            ...new PostAuthor(user),
-            reaction_id: user.reaction_id,
-          }))
-        : [];
+
+      return {
+        data: Array.isArray(response.data)
+          ? response.data.map((user: any) => ({
+              ...new PostAuthor(user),
+              reaction_id: user.reaction_id,
+            }))
+          : Array.isArray(response)
+          ? response.map((user: any) => ({
+              ...new PostAuthor(user),
+              reaction_id: user.reaction_id,
+            }))
+          : [],
+        meta: response.meta || { total: response.length || 0 }
+      };
     } catch (error) {
       console.error('Error getting post reaction users:', error);
       throw error;

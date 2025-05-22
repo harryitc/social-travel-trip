@@ -5,6 +5,7 @@ export { PostCreator } from './post-creator';
 export { PostComment } from './post-comment';
 export { ForumPost } from './forum-post';
 export { HashtagTrending } from './hashtag-trending';
+export { LikesModal } from './likes-modal';
 
 // Export follow-related components
 export { FollowButton } from './follow-button';

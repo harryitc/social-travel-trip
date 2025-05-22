@@ -45,7 +45,7 @@ export const userService = {
           },
         },
       );
-      return response.map((item: UserRelaWithDetails) => new UserRelaWithDetails(item));
+      return response.followers?.map((item: UserRelaWithDetails) => new UserRelaWithDetails(item)) || [];
     } catch (error) {
       console.error('Error getting user followers:', error);
       throw error;
@@ -96,15 +96,16 @@ export const userService = {
   },
 
   /**
-   * Check if current user is following a specific user
+   * Check if current user is following a specific user using API
    * @param userId User ID to check
    * @returns Promise with follow status
    */
   async checkFollowStatus(userId: string): Promise<{ isFollowing: boolean }> {
     try {
-      const following = await this.getFollowing();
-      const isFollowing = following.some(user => user.following.toString() === userId);
-      return { isFollowing };
+      const response: any = await Http.post(`${API_ENDPOINT.social_travel_trip}/user-rela/check-follow-status`, {
+        following_id: +userId,
+      });
+      return { isFollowing: response.isFollowing || false };
     } catch (error) {
       console.error('Error checking follow status:', error);
       return { isFollowing: false };
