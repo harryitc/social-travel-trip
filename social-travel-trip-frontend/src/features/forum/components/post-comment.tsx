@@ -123,8 +123,26 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
   };
 
   const handleReplyToComment = (commentId: string, authorName: string) => {
-    setReplyTo(commentId);
-    setReplyingToName(authorName);
+    // Find the comment to determine if it's a top-level comment or a reply
+    const topLevelComment = comments.find(c => c.comment_id === commentId);
+    const isReplyToReply = !topLevelComment;
+
+    if (isReplyToReply) {
+      // If replying to a reply, find the parent comment
+      const parentComment = comments.find(c =>
+        c.replies?.some(r => r.comment_id === commentId)
+      );
+      if (parentComment) {
+        // Set reply to the parent comment (cấp 1) instead of the reply (cấp 2)
+        setReplyTo(parentComment.comment_id);
+        setReplyingToName(authorName); // Still show we're replying to the specific person
+      }
+    } else {
+      // Replying to a top-level comment
+      setReplyTo(commentId);
+      setReplyingToName(authorName);
+    }
+
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -136,9 +154,15 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
     try {
       setSubmitting(true);
 
+      // Add mention to the comment if replying to someone
+      let finalComment = comment.trim();
+      if (replyingToName && replyTo) {
+        finalComment = `@${replyingToName} ${finalComment}`;
+      }
+
       const payload = new CreateCommentPayload({
         post_id: postId,
-        content: comment.trim(),
+        content: finalComment,
         parent_id: replyTo,
       });
 

@@ -45,7 +45,8 @@ export class CreateCommentCommandHandler
         throw new NotFoundException(`Post with ID ${data.postId} not found`);
       }
 
-      // Validate parent comment exists if provided
+      // Validate parent comment exists if provided and enforce 2-level hierarchy
+      let finalParentId = data.parentId;
       if (data.parentId) {
         const parentCommentResult = await this.repository.getCommentById(
           data.parentId,
@@ -59,10 +60,22 @@ export class CreateCommentCommandHandler
             `Parent comment with ID ${data.parentId} not found`,
           );
         }
+
+        const parentComment = parentCommentResult.rows[0];
+
+        // If the parent comment already has a parent (it's a level 2 comment),
+        // then make this comment a sibling (also level 2) by using the same parent
+        if (parentComment.parent_id) {
+          finalParentId = parentComment.parent_id;
+          this.logger.log(
+            `Comment ${data.parentId} is already level 2, making new comment sibling with parent ${finalParentId}`
+          );
+        }
       }
 
-      // Create comment
-      const insertResult = await this.repository.createComment(data, user_id);
+      // Create comment with the adjusted parent ID
+      const adjustedData = { ...data, parentId: finalParentId };
+      const insertResult = await this.repository.createComment(adjustedData, user_id);
       const createdComment = insertResult.rows[0];
 
       // Get user details for WebSocket event
@@ -95,7 +108,7 @@ export class CreateCommentCommandHandler
 
           const commentData = {
             ...createdComment,
-            parentId: data.parentId || null,
+            parentId: finalParentId || null,
           };
 
           // Get post details to find post author
@@ -123,11 +136,11 @@ export class CreateCommentCommandHandler
       }
 
       // Check if this is a reply to another comment
-      if (data.parentId) {
+      if (finalParentId) {
         // This is a reply to another comment
         // Get the parent comment to find its owner
         const parentCommentResult = await this.repository.getCommentById(
-          data.parentId,
+          finalParentId,
         );
 
         if (
@@ -149,7 +162,7 @@ export class CreateCommentCommandHandler
                 new CommentReplyEvent(
                   commentOwnerId,
                   data.postId,
-                  data.parentId,
+                  finalParentId,
                   createdComment.post_comment_id,
                   user_id,
                   replier.full_name || replier.username || 'A user',
