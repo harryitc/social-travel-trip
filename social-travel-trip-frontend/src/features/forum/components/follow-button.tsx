@@ -34,7 +34,7 @@ export function FollowButton({
   const currentUser = getUserInfo();
 
   // Don't show follow button for current user
-  if (currentUser?.userId === userId) {
+  if (currentUser?.userId?.toString() === userId?.toString()) {
     return null;
   }
 
@@ -56,14 +56,21 @@ export function FollowButton({
   }, [userId]);
 
   const handleFollowToggle = async () => {
+    if (isLoading) return; // Prevent multiple clicks
+
+    const previousStatus = isFollowing;
+    const newFollowStatus = !isFollowing;
+
     try {
       setIsLoading(true);
-      
-      if (isFollowing) {
+
+      // Optimistic update
+      setIsFollowing(newFollowStatus);
+
+      if (previousStatus) {
         // Unfollow user
         await userService.unfollowUser(userId);
-        setIsFollowing(false);
-        
+
         notification.success({
           message: 'Bỏ theo dõi thành công',
           description: `Bạn đã bỏ theo dõi ${fullName || username}.`,
@@ -72,8 +79,7 @@ export function FollowButton({
       } else {
         // Follow user
         await userService.followUser(userId);
-        setIsFollowing(true);
-        
+
         notification.success({
           message: 'Theo dõi thành công',
           description: `Bạn đã bắt đầu theo dõi ${fullName || username}. Bạn sẽ nhận được thông báo khi họ đăng bài viết mới.`,
@@ -81,15 +87,18 @@ export function FollowButton({
         });
       }
 
-      // Notify parent component about the change
-      onFollowChange?.(isFollowing);
-      
+      // Notify parent component about the change with the new status
+      onFollowChange?.(newFollowStatus);
+
     } catch (error: any) {
       console.error('Error toggling follow status:', error);
-      
+
+      // Revert optimistic update on error
+      setIsFollowing(previousStatus);
+
       notification.error({
         message: 'Có lỗi xảy ra',
-        description: error?.response?.data?.reasons?.message || `Không thể ${isFollowing ? 'bỏ theo dõi' : 'theo dõi'} ${fullName || username}. Vui lòng thử lại.`,
+        description: error?.response?.data?.reasons?.message || `Không thể ${previousStatus ? 'bỏ theo dõi' : 'theo dõi'} ${fullName || username}. Vui lòng thử lại.`,
         placement: 'topRight',
       });
     } finally {
@@ -118,8 +127,8 @@ export function FollowButton({
       onClick={handleFollowToggle}
       disabled={isLoading}
       className={`${className} ${
-        isFollowing 
-          ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-600 border-gray-300 hover:border-red-300' 
+        isFollowing
+          ? 'bg-gray-100 hover:bg-red-50 text-gray-700 hover:text-red-600 border-gray-300 hover:border-red-300'
           : 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600'
       }`}
     >
