@@ -4,20 +4,28 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/radix-ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
-import { Heart, MessageCircle, MoreHorizontal, Bookmark, MapPin, SendIcon } from 'lucide-react';
+import { Heart, MessageCircle, MapPin, SendIcon } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/radix-ui/dropdown-menu';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/radix-ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/radix-ui/tooltip';
 import ReactMarkdown from 'react-markdown';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import { postService } from '../services/post.service';
-import { Post } from '../models/post.model';
+import { Post, PostAuthor } from '../models/post.model';
 import { API_ENDPOINT } from '@/config/api.config';
 import CustomImage from '@/components/ui/custom-image';
 import { FollowButton } from './follow-button';
+import { useAuth } from '@/features/auth/hooks/use-auth';
+import { notification } from 'antd';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -33,19 +41,48 @@ interface PostItemProps {
 }
 
 export function PostItem({ post }: PostItemProps) {
-  // Determine if post is liked based on stats
-  const isPostLiked = post.stats?.reactions?.some(r => r.reaction_id === 1) || false;
+  const { user: currentUser } = useAuth();
+
   const [comment, setComment] = useState('');
-  const [isLiked, setIsLiked] = useState(isPostLiked);
+  const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.stats?.total_likes || 0);
-  const [commentsCount, setCommentsCount] = useState(post.stats?.total_comments || 0);
-  const [isHidden, setIsHidden] = useState(false);
+  const [commentsCount] = useState(post.stats?.total_comments || 0);
+  const [isHidden] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [currentReaction, setCurrentReaction] = useState<string | null>(null);
+  const [currentReaction] = useState<string | null>(null);
+  const [isLiking, setIsLiking] = useState(false);
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const [likedUsers, setLikedUsers] = useState<PostAuthor[]>([]);
+  const [loadingLikes, setLoadingLikes] = useState(false);
+  const [checkingLikeStatus, setCheckingLikeStatus] = useState(true);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
 
+
+  // Check initial like status
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      if (!currentUser?.user_id) {
+        setCheckingLikeStatus(false);
+        return;
+      }
+
+      try {
+        const { isLiked: userLiked } = await postService.checkUserLikeStatus(
+          post.post_id,
+          currentUser.user_id.toString()
+        );
+        setIsLiked(userLiked);
+      } catch (error) {
+        console.error('Error checking like status:', error);
+      } finally {
+        setCheckingLikeStatus(false);
+      }
+    };
+
+    checkLikeStatus();
+  }, [post.post_id, currentUser?.user_id]);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -77,8 +114,12 @@ export function PostItem({ post }: PostItemProps) {
   };
 
   const handleLike = async () => {
+    if (isLiking) return; // Prevent double clicks
+
     try {
-      // Toggle like status
+      setIsLiking(true);
+
+      // Toggle like status optimistically
       const newLikedStatus = !isLiked;
       setIsLiked(newLikedStatus);
       setLikesCount(prevCount => newLikedStatus ? prevCount + 1 : prevCount - 1);
@@ -88,11 +129,34 @@ export function PostItem({ post }: PostItemProps) {
 
       // WebSocket event will be emitted by server after like operation
       console.log('Post liked/unliked, server will emit WebSocket event');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error liking post:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: error?.response?.data?.reasons?.message || 'Không thể thích bài viết. Vui lòng thử lại sau.',
+        placement: 'topRight',
+      });
+
       // Revert UI changes if API call fails
       setIsLiked(!isLiked);
       setLikesCount(prevCount => !isLiked ? prevCount - 1 : prevCount + 1);
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
+  const handleShowLikes = async () => {
+    if (likesCount === 0) return;
+
+    try {
+      setLoadingLikes(true);
+      setShowLikesModal(true);
+      const users = await postService.getPostLikes(post.post_id);
+      setLikedUsers(users);
+    } catch (error) {
+      console.error('Error fetching liked users:', error);
+    } finally {
+      setLoadingLikes(false);
     }
   };
 
@@ -149,7 +213,7 @@ export function PostItem({ post }: PostItemProps) {
             variant="outline"
             size="sm"
           />
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreHorizontal className="h-4 w-4" />
@@ -169,7 +233,7 @@ export function PostItem({ post }: PostItemProps) {
                 Báo cáo bài viết
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
         </div>
       </CardHeader>
       <CardContent className="px-4 py-2 space-y-3">
@@ -211,21 +275,45 @@ export function PostItem({ post }: PostItemProps) {
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-2">
             <div className="relative" ref={reactionsMenuRef}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`flex items-center ${isLiked ? 'text-purple-600 dark:text-purple-400' : ''}`}
-                onClick={handleLike}
-              >
-                {currentReaction ? (
-                  <span className="mr-1 text-lg">
-                    {REACTION_TYPES.find(r => r.id === currentReaction)?.icon || '👍'}
-                  </span>
-                ) : (
-                  <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''}`} />
-                )}
-                <span>{likesCount}</span>
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`flex items-center transition-all duration-200 ${isLiked
+                          ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
+                          : 'hover:text-purple-600 dark:hover:text-purple-400'
+                        } ${isLiking ? 'scale-110' : ''}`}
+                      onClick={handleLike}
+                      disabled={isLiking || checkingLikeStatus}
+                    >
+                      {currentReaction ? (
+                        <span className="mr-1 text-lg">
+                          {REACTION_TYPES.find(r => r.id === currentReaction)?.icon || '👍'}
+                        </span>
+                      ) : (
+                        <Heart
+                          className={`h-4 w-4 mr-1 transition-all duration-200 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''
+                            } ${(isLiking || checkingLikeStatus) ? 'animate-pulse' : ''}`}
+                        />
+                      )}
+                      <span
+                        className={`cursor-pointer ${likesCount > 0 ? 'hover:underline' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowLikes();
+                        }}
+                      >
+                        {likesCount}
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{isLiked ? 'Bỏ thích' : 'Thích bài viết'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
             <Button
               variant="ghost"
@@ -340,6 +428,53 @@ export function PostItem({ post }: PostItemProps) {
           //   </div>
           // </div>
         )}
+
+        {/* Likes Modal */}
+        <Dialog open={showLikesModal} onOpenChange={setShowLikesModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Heart className="h-5 w-5 text-purple-600" />
+                Người đã thích ({likesCount})
+              </DialogTitle>
+            </DialogHeader>
+            <div className="max-h-96 overflow-y-auto">
+              {loadingLikes ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                </div>
+              ) : likedUsers.length > 0 ? (
+                <div className="space-y-3">
+                  {likedUsers.map((user) => (
+                    <div key={user.user_id} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.avatar} alt={user.full_name} />
+                        <AvatarFallback>{user.full_name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="font-medium">{user.full_name}</div>
+                        <div className="text-sm text-muted-foreground">@{user.username}</div>
+                      </div>
+                      {user.user_id.toString() !== currentUser?.user_id?.toString() && (
+                        <FollowButton
+                          userId={user.user_id.toString()}
+                          username={user.username}
+                          fullName={user.full_name}
+                          variant="outline"
+                          size="sm"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Chưa có ai thích bài viết này
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardFooter>
     </Card>
   );
