@@ -44,37 +44,77 @@ class WebSocketService {
    * Initialize WebSocket connection
    */
   connect(): Promise<void> {
+    console.log('WebSocket Service: Initializing connection...');
     const token = getAccessToken();
 
+    console.log('WebSocket Service: Token from getAccessToken:', token ? `${token.substring(0, 20)}...` : 'null');
+
     if (!token) {
+      console.error('WebSocket Service: No authentication token available');
       return Promise.reject(new Error('No authentication token available'));
     }
 
-    if (this.socket?.connected || this.isConnecting) {
+    console.log('WebSocket Service: Token available, checking connection state');
+
+    if (this.socket?.connected) {
+      console.log('WebSocket Service: Already connected, resolving');
       return Promise.resolve();
     }
 
+    if (this.isConnecting) {
+      console.log('WebSocket Service: Already connecting, resolving');
+      return Promise.resolve();
+    }
+
+    console.log('WebSocket Service: Starting connection process');
     this.isConnecting = true;
+
+    // Disconnect any existing socket
+    if (this.socket) {
+      console.log('WebSocket Service: Disconnecting existing socket');
+      this.socket.disconnect();
+      this.socket = null;
+    }
 
     return new Promise((resolve, reject) => {
       try {
-        this.socket = io(`${environment.apiUrl || 'http://localhost:3000'}/social`, {
+        const socketUrl = `${environment.apiUrl || 'http://localhost:3000'}/social`;
+        console.log('WebSocket Service: Connecting to', socketUrl);
+        console.log('WebSocket Service: Using token:', token.substring(0, 10) + '...');
+
+        // Create socket with detailed options
+        this.socket = io(socketUrl, {
           extraHeaders: {
             Authorization: `Bearer ${token}`,
           },
+          auth: {
+            token: `Bearer ${token}`, // Thêm token vào auth object
+          },
           reconnection: false, // We'll handle reconnection manually
           timeout: 10000, // 10 seconds
+          transports: ['websocket', 'polling'],
+          forceNew: true,
+          autoConnect: true,
+        });
+
+        // Log all socket events for debugging
+        this.socket.onAny((event, ...args) => {
+          console.log(`WebSocket Service: Received event "${event}"`, args);
         });
 
         this.socket.on('connect', () => {
-          console.log('WebSocket connected');
+          console.log('WebSocket Service: Successfully connected with ID:', this.socket?.id);
           this.reconnectAttempts = 0;
           this.isConnecting = false;
           resolve();
         });
 
+        this.socket.on('connection_established', (data) => {
+          console.log('WebSocket Service: Connection established with server:', data);
+        });
+
         this.socket.on('connect_error', (error) => {
-          console.error('WebSocket connection error:', error);
+          console.error('WebSocket Service: Connection error:', error);
           this.isConnecting = false;
           this.handleReconnect();
           reject(error);
@@ -193,12 +233,49 @@ class WebSocketService {
    * @param event Event type
    * @param data Event data
    */
-  emit(event: string, data: any): void {
-    if (this.socket?.connected) {
-      this.socket.emit(event, data);
-    } else {
-      console.error('Cannot emit event: WebSocket not connected');
-    }
+  emit(event: string, data: any): Promise<void> {
+    console.log('WebSocket Service: Emitting event', event, data);
+
+    return new Promise((resolve, reject) => {
+      if (this.socket?.connected) {
+        try {
+          // Add acknowledgment callback
+          this.socket.emit(event, data, (response: any) => {
+            console.log(`WebSocket Service: Server acknowledged ${event}:`, response);
+            resolve();
+          });
+          console.log('WebSocket Service: Event emitted successfully');
+        } catch (error) {
+          console.error('WebSocket Service: Error emitting event:', error);
+          reject(error);
+        }
+      } else {
+        console.error('WebSocket Service: Cannot emit event - WebSocket not connected');
+
+        // Try to reconnect and then emit
+        this.connect()
+          .then(() => {
+            console.log('WebSocket Service: Reconnected, now emitting event');
+            if (this.socket) {
+              try {
+                this.socket.emit(event, data, (response: any) => {
+                  console.log(`WebSocket Service: Server acknowledged ${event} after reconnect:`, response);
+                  resolve();
+                });
+              } catch (error) {
+                console.error('WebSocket Service: Error emitting event after reconnect:', error);
+                reject(error);
+              }
+            } else {
+              reject(new Error('Socket still null after reconnect'));
+            }
+          })
+          .catch(error => {
+            console.error('WebSocket Service: Failed to reconnect:', error);
+            reject(error);
+          });
+      }
+    });
   }
 
   /**

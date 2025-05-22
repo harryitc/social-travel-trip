@@ -9,7 +9,7 @@ import { AuthModule } from '@modules/auth/auth.module';
   imports: [
     CqrsModule,
     JwtModule.register({
-      secret: 'CAK_HARRYITC', // nên dùng .env
+      secret: 'CAK_HARRYITC', // Sử dụng cùng secret với Auth module
       signOptions: { expiresIn: '7d' },
     }),
     AuthModule,

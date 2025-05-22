@@ -11,7 +11,7 @@ type WebSocketContextType = {
   disconnect: () => void;
   on: (event: WebsocketEvent, handler: (data: any) => void) => void;
   off: (event: WebsocketEvent, handler: (data: any) => void) => void;
-  emit: (event: string, data: any) => void;
+  emit: (event: string, data: any) => Promise<void>;
 };
 
 // Create the context with default values
@@ -21,7 +21,7 @@ const WebSocketContext = createContext<WebSocketContextType>({
   disconnect: () => {},
   on: () => {},
   off: () => {},
-  emit: () => {},
+  emit: async () => {},
 });
 
 // Custom hook to use the WebSocket context
@@ -34,13 +34,18 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Connect to WebSocket when authenticated
   useEffect(() => {
+    console.log('WebSocket Provider: Authentication state changed:', isAuthenticated);
+
     if (isAuthenticated) {
+      console.log('WebSocket Provider: Attempting to connect...');
       connect();
     } else {
+      console.log('WebSocket Provider: Disconnecting due to not authenticated');
       disconnect();
     }
 
     return () => {
+      console.log('WebSocket Provider: Cleanup - disconnecting');
       disconnect();
     };
   }, [isAuthenticated]);
@@ -48,10 +53,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Connect to WebSocket
   const connect = async () => {
     try {
+      console.log('WebSocket Provider: Connecting to WebSocket service...');
       await websocketService.connect();
+      console.log('WebSocket Provider: Successfully connected');
       setIsConnected(true);
     } catch (error) {
-      console.error('Failed to connect to WebSocket:', error);
+      console.error('WebSocket Provider: Failed to connect to WebSocket:', error);
       setIsConnected(false);
     }
   };
@@ -73,8 +80,14 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   // Emit event
-  const emit = (event: string, data: any) => {
-    websocketService.emit(event, data);
+  const emit = async (event: string, data: any): Promise<void> => {
+    try {
+      console.log('WebSocket Provider: Emitting event', event);
+      await websocketService.emit(event, data);
+      console.log('WebSocket Provider: Event emitted successfully');
+    } catch (error) {
+      console.error('WebSocket Provider: Error emitting event:', error);
+    }
   };
 
   // Context value
