@@ -19,10 +19,10 @@ export class GetCommentByPostQueryHandler
   constructor(private readonly repository: CommentRepository) {}
 
   async execute(query: GetCommentByPostQuery) {
-    const { postId } = query;
+    const { postId, userId } = query;
 
     try {
-      const queryResult = await this.repository.getComments(postId);
+      const queryResult = await this.repository.getComments(postId, userId);
 
       if (queryResult.rowCount === 0) {
         return {
@@ -75,6 +75,7 @@ export class GetCommentByPostQueryHandler
             images: replyImages,
             stats: {
               total_likes: replyTotalLikes,
+              user_reaction: reply.user_reaction || null,
               reactions: replyReactions,
             },
           };
@@ -94,6 +95,7 @@ export class GetCommentByPostQueryHandler
           images,
           stats: {
             total_likes: totalLikes,
+            user_reaction: row.user_reaction || null,
             reactions: reactions,
           },
           replies: processedReplies,

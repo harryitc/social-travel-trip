@@ -13,7 +13,7 @@ export class CommentRepository {
   /**
    * Lấy danh sách bình luận theo bài viết
    */
-  async getComments(postId: number) {
+  async getComments(postId: number, userId?: number) {
     const query = `
     SELECT
       c.post_comment_id AS id,
@@ -36,6 +36,11 @@ export class CommentRepository {
           GROUP BY cl.reaction_id
         ) cl
       ) AS reactions,
+      (
+        SELECT reaction_id
+        FROM post_comment_likes ucl
+        WHERE ucl.comment_id = c.post_comment_id AND ucl.user_id = $2
+      ) AS user_reaction,
       COALESCE(
         (
           SELECT json_agg(
@@ -48,6 +53,11 @@ export class CommentRepository {
               'full_name', ru.full_name,
               'avatar_url', ru.avatar_url,
               'created_at', r.created_at,
+              'user_reaction', (
+                SELECT reaction_id
+                FROM post_comment_likes rucl
+                WHERE rucl.comment_id = r.post_comment_id AND rucl.user_id = $2
+              ),
               'reactions', (
                 SELECT json_agg(json_build_object(
                   'reaction_id', rcl.reaction_id,
@@ -72,7 +82,7 @@ export class CommentRepository {
     WHERE c.post_id = $1 AND c.parent_id IS NULL
     ORDER BY c.created_at DESC
   `;
-    const params = [postId];
+    const params = [postId, userId || null];
     return this.client.execute(query, params);
   }
 

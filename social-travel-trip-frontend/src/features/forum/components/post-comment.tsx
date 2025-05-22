@@ -40,12 +40,31 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const reactionsMenuRef = useRef<HTMLDivElement>(null);
 
   // Load comments when component mounts
   useEffect(() => {
     fetchComments();
   }, [postId]);
+
+  // Close reaction picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (reactionsMenuRef.current && !reactionsMenuRef.current.contains(event.target as Node)) {
+        setShowReactionPicker(null);
+      }
+    };
+
+    if (showReactionPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showReactionPicker]);
 
   const fetchComments = async () => {
     try {
@@ -64,7 +83,7 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
     }
   };
 
-  const handleLikeComment = async (commentId: string) => {
+  const handleReaction = async (commentId: string, reactionId: number) => {
     try {
       // Determine current reaction state
       const comment = comments.find(c => c.comment_id === commentId) ||
@@ -73,18 +92,22 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
       if (!comment) return;
 
       const currentReaction = comment.stats.user_reaction;
-      const isLiked = currentReaction && currentReaction > 1;
-      const newReactionId = isLiked ? 1 : 2; // 1 = no reaction, 2 = like
+      const isRemovingReaction = currentReaction === reactionId;
+      const newReactionId = isRemovingReaction ? 1 : reactionId; // 1 = no reaction
 
       // Update UI optimistically
+      const wasLiked = currentReaction && currentReaction > 1;
+      const willBeLiked = newReactionId > 1;
+
       setComments(comments.map(c => {
         if (c.comment_id === commentId) {
           return {
             ...c,
             stats: {
               ...c.stats,
-              user_reaction: newReactionId > 1 ? newReactionId : null,
-              total_likes: isLiked ? c.stats.total_likes - 1 : c.stats.total_likes + 1
+              user_reaction: willBeLiked ? newReactionId : null,
+              total_likes: wasLiked && !willBeLiked ? c.stats.total_likes - 1 :
+                          !wasLiked && willBeLiked ? c.stats.total_likes + 1 : c.stats.total_likes
             }
           };
         } else if (c.replies) {
@@ -96,8 +119,9 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
                   ...r,
                   stats: {
                     ...r.stats,
-                    user_reaction: newReactionId > 1 ? newReactionId : null,
-                    total_likes: isLiked ? r.stats.total_likes - 1 : r.stats.total_likes + 1
+                    user_reaction: willBeLiked ? newReactionId : null,
+                    total_likes: wasLiked && !willBeLiked ? r.stats.total_likes - 1 :
+                                !wasLiked && willBeLiked ? r.stats.total_likes + 1 : r.stats.total_likes
                   }
                 };
               }
@@ -110,17 +134,22 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
 
       // Call API
       await commentService.likeComment(commentId, newReactionId);
+
+      // Close reaction picker
+      setShowReactionPicker(null);
     } catch (error) {
-      console.error('Error liking comment:', error);
+      console.error('Error reacting to comment:', error);
       notification.error({
         message: 'Lỗi',
-        description: 'Không thể thích bình luận. Vui lòng thử lại sau.',
+        description: 'Không thể react bình luận. Vui lòng thử lại sau.',
         placement: 'topRight',
       });
       // Revert changes on error
       fetchComments();
     }
   };
+
+  const handleLikeComment = (commentId: string) => handleReaction(commentId, 2);
 
   const handleReplyToComment = (commentId: string, authorName: string) => {
     // Find the comment to determine if it's a top-level comment or a reply
@@ -252,19 +281,51 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
           </div>
           <div className="flex space-x-4 text-xs text-muted-foreground">
             <span>{formatDate(item.created_at)}</span>
-            <button
-              className={`hover:text-foreground flex items-center ${isLiked ? 'text-purple-600 dark:text-purple-400' : ''}`}
-              onClick={() => handleLikeComment(item.comment_id)}
-            >
-              {currentReaction && currentReaction > 1 ? (
-                <span className="mr-1 text-sm">
-                  {REACTION_TYPES.find(r => r.id === currentReaction)?.icon || '👍'}
-                </span>
-              ) : (
-                <Heart className={`h-3 w-3 mr-1 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''}`} />
+            <div className="relative flex items-center" ref={showReactionPicker === item.comment_id ? reactionsMenuRef : null}>
+              <button
+                className={`hover:text-foreground flex items-center ${isLiked ? 'text-purple-600 dark:text-purple-400' : ''}`}
+                onClick={() => handleLikeComment(item.comment_id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setShowReactionPicker(showReactionPicker === item.comment_id ? null : item.comment_id);
+                }}
+              >
+                {currentReaction && currentReaction > 1 ? (
+                  <span className="mr-1 text-sm">
+                    {REACTION_TYPES.find(r => r.id === currentReaction)?.icon || '👍'}
+                  </span>
+                ) : (
+                  <Heart className={`h-3 w-3 mr-1 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''}`} />
+                )}
+                Thích {item.stats.total_likes > 0 ? `(${item.stats.total_likes})` : ''}
+              </button>
+
+              {/* Reaction Picker Button */}
+              <button
+                className="ml-1 px-1 hover:text-foreground"
+                onClick={() => setShowReactionPicker(showReactionPicker === item.comment_id ? null : item.comment_id)}
+              >
+                <span className="text-xs">▼</span>
+              </button>
+
+              {/* Reaction Picker */}
+              {showReactionPicker === item.comment_id && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 flex gap-1 z-10">
+                  {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
+                    <button
+                      key={reaction.id}
+                      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                        currentReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''
+                      }`}
+                      onClick={() => handleReaction(item.comment_id, reaction.id)}
+                      title={reaction.label}
+                    >
+                      <span className="text-lg">{reaction.icon}</span>
+                    </button>
+                  ))}
+                </div>
               )}
-              Thích {item.stats.total_likes > 0 ? `(${item.stats.total_likes})` : ''}
-            </button>
+            </div>
             <button
               className="hover:text-foreground flex items-center"
               onClick={() => handleReplyToComment(item.comment_id, item.author.full_name)}
