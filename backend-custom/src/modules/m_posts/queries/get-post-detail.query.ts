@@ -24,7 +24,7 @@ export class GetPostDetailQueryHandler
 
     try {
       // Get post details
-      const postResult = await this.repository.getPostDetail(postId);
+      const postResult = await this.repository.getPostDetail(postId, userId);
 
       if (postResult.rowCount === 0) {
         throw new NotFoundException(`Post with ID ${postId} not found`);
@@ -47,12 +47,12 @@ export class GetPostDetailQueryHandler
       );
 
       return {
-        id: post.post_id,
+        post_id: post.post_id,
         content: post.content,
         created_at: post.created_at,
         updated_at: post.updated_at,
         user: {
-          id: post.user_id,
+          user_id: post.user_id,
           username: post.username,
           full_name: post.full_name,
           avatar_url: post.avatar_url,
@@ -65,6 +65,7 @@ export class GetPostDetailQueryHandler
           total_likes: totalLikes,
           total_comments: parseInt(post.comment_count) || 0,
           reactions: reactions,
+          user_reaction: post.user_reaction || null, // Add user reaction
         },
       };
     } catch (error) {

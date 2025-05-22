@@ -43,8 +43,12 @@ interface PostItemProps {
 export function PostItem({ post }: PostItemProps) {
   const { user: currentUser } = useAuth();
 
+  // Determine if post is liked based on user_reaction from backend
+  // user_reaction = null or 1 means "not liked", user_reaction > 1 means "liked"
+  const isPostLiked = post.stats?.user_reaction && post.stats.user_reaction > 1;
+
   const [comment, setComment] = useState('');
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(isPostLiked || false);
   const [likesCount, setLikesCount] = useState(post.stats?.total_likes || 0);
   const [commentsCount] = useState(post.stats?.total_comments || 0);
   const [isHidden] = useState(false);
@@ -54,35 +58,8 @@ export function PostItem({ post }: PostItemProps) {
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [likedUsers, setLikedUsers] = useState<PostAuthor[]>([]);
   const [loadingLikes, setLoadingLikes] = useState(false);
-  const [checkingLikeStatus, setCheckingLikeStatus] = useState(true);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-
-
-  // Check initial like status
-  useEffect(() => {
-    const checkLikeStatus = async () => {
-      if (!currentUser?.user_id) {
-        setCheckingLikeStatus(false);
-        return;
-      }
-
-      try {
-        const { isLiked: userLiked } = await postService.checkUserLikeStatus(
-          post.post_id,
-          currentUser.user_id.toString()
-        );
-        setIsLiked(userLiked);
-      } catch (error) {
-        console.error('Error checking like status:', error);
-      } finally {
-        setCheckingLikeStatus(false);
-      }
-    };
-
-    checkLikeStatus();
-  }, [post.post_id, currentUser?.user_id]);
 
   useEffect(() => {
     if (inputRef.current) {
@@ -125,7 +102,7 @@ export function PostItem({ post }: PostItemProps) {
       setLikesCount(prevCount => newLikedStatus ? prevCount + 1 : prevCount - 1);
 
       // Call API to like/unlike post
-      await postService.likePost(post.post_id);
+      await postService.likePost(post.post_id, newLikedStatus ? 2 : 1);
 
       // WebSocket event will be emitted by server after like operation
       console.log('Post liked/unliked, server will emit WebSocket event');
@@ -286,7 +263,7 @@ export function PostItem({ post }: PostItemProps) {
                           : 'hover:text-purple-600 dark:hover:text-purple-400'
                         } ${isLiking ? 'scale-110' : ''}`}
                       onClick={handleLike}
-                      disabled={isLiking || checkingLikeStatus}
+                      disabled={isLiking}
                     >
                       {currentReaction ? (
                         <span className="mr-1 text-lg">
@@ -295,7 +272,7 @@ export function PostItem({ post }: PostItemProps) {
                       ) : (
                         <Heart
                           className={`h-4 w-4 mr-1 transition-all duration-200 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''
-                            } ${(isLiking || checkingLikeStatus) ? 'animate-pulse' : ''}`}
+                            } ${isLiking ? 'animate-pulse' : ''}`}
                         />
                       )}
                       <span

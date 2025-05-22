@@ -57,12 +57,14 @@ export class PostStats {
   total_likes: number;
   total_comments: number;
   reactions: ReactionCountModel[];
+  user_reaction: number | null; // Add user reaction
   constructor(data: any) {
     this.total_likes = get(data, 'total_likes', 0);
     this.total_comments = get(data, 'total_comments', 0);
     this.reactions = get(data, 'reactions', [])?.map(
       (reaction: any) => new ReactionCountModel(reaction),
     );
+    this.user_reaction = get(data, 'user_reaction', null);
   }
 }
 

@@ -1,12 +1,11 @@
 import Http from '@/lib/http';
 import { API_ENDPOINT } from '@/config/api.config';
-import { fileService } from '@/features/file/file.service';
 import {
   Post,
   PostAuthor,
   CreatePostPayload,
   PostQueryParams,
-  PostQueryResponse
+  PostQueryResponse,
 } from '../models/post.model';
 
 /**
@@ -37,7 +36,9 @@ export const postService = {
    */
   async getPosts(params: PostQueryParams = {}): Promise<PostQueryResponse> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/query`, { params });
+      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/query`, {
+        params,
+      });
       return PostQueryResponse.fromResponse(response);
     } catch (error) {
       console.error('Error getting posts:', error);
@@ -53,7 +54,7 @@ export const postService = {
   async getPostDetails(postId: string): Promise<Post> {
     try {
       const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/detail`, {
-        params: { post_id: postId }
+        params: { postId: postId },
       });
       return Post.fromResponse(response);
     } catch (error) {
@@ -63,13 +64,16 @@ export const postService = {
   },
 
   /**
-   * Like a post
+   * Like a post (toggle like/unlike)
    * @param postId Post ID
    * @returns Promise with success status
    */
-  async likePost(postId: string): Promise<{ success: boolean }> {
+  async likePost(postId: string, reactionId: number = 1): Promise<{ success: boolean }> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/like`, { post_id: postId });
+      await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/like`, {
+        postId: postId,
+        reactionId: reactionId
+      });
       return { success: true };
     } catch (error) {
       console.error('Error liking post:', error);
@@ -85,11 +89,9 @@ export const postService = {
   async getPostLikes(postId: string): Promise<PostAuthor[]> {
     try {
       const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/get-post-likes`, {
-        params: { post_id: postId }
+        params: { postId: postId },
       });
-      return Array.isArray(response)
-        ? response.map((user: any) => new PostAuthor(user))
-        : [];
+      return Array.isArray(response) ? response.map((user: any) => new PostAuthor(user)) : [];
     } catch (error) {
       console.error('Error getting post likes:', error);
       throw error;
@@ -104,12 +106,12 @@ export const postService = {
   async getPostReactionUsers(postId: string): Promise<(PostAuthor & { reaction_id: string })[]> {
     try {
       const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/reaction-users`, {
-        params: { post_id: postId }
+        params: { postId: postId },
       });
       return Array.isArray(response)
         ? response.map((user: any) => ({
             ...new PostAuthor(user),
-            reaction_id: user.reaction_id
+            reaction_id: user.reaction_id,
           }))
         : [];
     } catch (error) {
@@ -117,6 +119,8 @@ export const postService = {
       throw error;
     }
   },
+
+
 
   /**
    * Update a post
@@ -127,13 +131,13 @@ export const postService = {
   async updatePost(postId: string, payload: Partial<CreatePostPayload>): Promise<Post> {
     try {
       const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/update`, {
-        post_id: postId,
-        ...payload
+        postId: postId,
+        ...payload,
       });
       return Post.fromResponse(response);
     } catch (error) {
       console.error('Error updating post:', error);
       throw error;
     }
-  }
+  },
 };
