@@ -22,7 +22,7 @@ export const userService = {
           },
         },
       );
-      return response.map((item: UserRelaWithDetails) => new UserRelaWithDetails(item));
+      return response.following.map((item: UserRelaWithDetails) => new UserRelaWithDetails(item));
     } catch (error) {
       console.error('Error getting user following:', error);
       throw error;
@@ -103,7 +103,7 @@ export const userService = {
   async checkFollowStatus(userId: string): Promise<{ isFollowing: boolean }> {
     try {
       const following = await this.getFollowing();
-      const isFollowing = following.some(user => user.user_id.toString() === userId);
+      const isFollowing = following.some(user => user.following.toString() === userId);
       return { isFollowing };
     } catch (error) {
       console.error('Error checking follow status:', error);
