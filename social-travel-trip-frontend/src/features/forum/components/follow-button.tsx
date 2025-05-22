@@ -82,11 +82,11 @@ export function FollowButton({
         // Follow user
         await userService.followUser(userId);
 
-        notification.success({
-          message: 'Theo dõi thành công',
-          description: `Bạn đã bắt đầu theo dõi ${fullName || username}. Bạn sẽ nhận được thông báo khi họ đăng bài viết mới.`,
-          placement: 'topRight',
-        });
+        // notification.success({
+        //   message: 'Theo dõi thành công',
+        //   description: `Bạn đã bắt đầu theo dõi ${fullName || username}. Bạn sẽ nhận được thông báo khi họ đăng bài viết mới.`,
+        //   placement: 'topRight',
+        // });
       }
 
       // Notify parent component about the change with the new status
