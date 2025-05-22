@@ -86,21 +86,8 @@ export function PostItem({ post }: PostItemProps) {
       // Call API to like/unlike post
       await postService.likePost(post.post_id);
 
-      // Emit WebSocket event if connected
-      if (isConnected) {
-        const currentUser = getUserInfo();
-
-        // Emit like event
-        emit(newLikedStatus ? WebsocketEvent.POST_LIKED : WebsocketEvent.POST_UNLIKED, {
-          postId: post.post_id,
-          likerId: currentUser?.user_id,
-          likerData: {
-            id: currentUser?.user_id,
-            username: currentUser?.username,
-            avatar: currentUser?.avatar_url
-          }
-        });
-      }
+      // WebSocket event will be emitted by server after like operation
+      console.log('Post liked/unliked, server will emit WebSocket event');
     } catch (error) {
       console.error('Error liking post:', error);
       // Revert UI changes if API call fails

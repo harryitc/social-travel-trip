@@ -248,24 +248,8 @@ export function PostCreator() {
       setLocationId('');
       setMentions([]);
 
-      // Emit WebSocket event if connected
-      if (isConnected) {
-        try {
-          const eventData = {
-            post: createdPost,
-            authorId: user?.user_id,
-            authorName: user?.fullName || user?.username,
-            authorAvatar: user?.imageUrl
-          };
-          console.log('Emitting WebSocket event:', WebsocketEvent.POST_CREATED, eventData);
-
-          // Use await with emit since it now returns a Promise
-          await emit(WebsocketEvent.POST_CREATED, eventData);
-          console.log('WebSocket event emitted successfully');
-        } catch (error) {
-          console.error('Error emitting WebSocket event:', error);
-        }
-      }
+      // WebSocket event will be emitted by server after post creation
+      console.log('Post created successfully, server will emit WebSocket event');
 
       setIsSubmitting(false);
 

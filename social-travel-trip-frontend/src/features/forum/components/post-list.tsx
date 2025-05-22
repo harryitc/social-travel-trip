@@ -30,8 +30,8 @@ export function PostList() {
       console.log('WebSocket not connected, skipping event registration');
       return;
     }
-    // Register event handlers
-    console.log('Registering WebSocket event handlers');
+    // Register event handlers - only listening to server-emitted events
+    console.log('Registering WebSocket event handlers for server-emitted events');
     on(WebsocketEvent.POST_CREATED, handleNewPost);
     on(WebsocketEvent.POST_LIKED, handlePostLiked);
     on(WebsocketEvent.COMMENT_CREATED, handleNewComment);
@@ -43,26 +43,17 @@ export function PostList() {
       off(WebsocketEvent.POST_LIKED, handlePostLiked);
       off(WebsocketEvent.COMMENT_CREATED, handleNewComment);
     };
-  }, [])
+  }, [on, off])
 
   // Init data
   useEffect(() => {
-    fetchPosts();
+    fetchPostsComplex(false);
   }, [activeTab]);
 
   // Handler for new posts
-  const handleNewPost = (data: any) => {
+  const handleNewPost = async (data: any) => {
     console.log('Received WebSocket event:', WebsocketEvent.POST_CREATED, data);
-
-    // Add new post to the beginning of the list
     fetchPosts();
-
-    // Show notification
-    notification.info({
-      message: 'Bài viết mới',
-      description: `${data.authorName || 'Một người dùng'} vừa đăng một bài viết mới`,
-      placement: 'topRight',
-    });
   };
 
   // Handler for post likes
@@ -101,34 +92,11 @@ export function PostList() {
     );
   };
 
-  const fetchPosts = async (loadMore = false) => {
+  const fetchPostsComplex = async (loadMore?: boolean) => {
     try {
       setLoading(true);
       setError(null);
-
-      const currentPage = loadMore ? page + 1 : 1;
-
-      // Create query params based on active tab
-      const params: PostQueryParams = {
-        page: currentPage,
-        limit: 10,
-        // sort_by: activeTab
-      };
-
-      // Fetch posts
-      const response = await postService.getPosts(params);
-
-      // Update state
-      if (loadMore) {
-        setPosts(prevPosts => [...prevPosts, ...response.data]);
-        setPage(currentPage);
-      } else {
-        setPosts(response.data);
-        setPage(1);
-      }
-
-      // Check if there are more posts to load
-      setHasMore(response.data.length === 10);
+      await fetchPosts();
     } catch (error) {
       console.error('Error fetching posts:', error);
       setError('Có lỗi xảy ra khi tải bài viết. Vui lòng thử lại sau.');
@@ -136,6 +104,32 @@ export function PostList() {
       setLoading(false);
     }
   };
+
+  const fetchPosts = async (loadMore?: boolean) => {
+    const currentPage = loadMore ? page + 1 : 1;
+
+    // Create query params based on active tab
+    const params: PostQueryParams = {
+      page: currentPage,
+      limit: 10,
+      // sort_by: activeTab
+    };
+
+    // Fetch posts
+    const response = await postService.getPosts(params);
+
+    // Update state
+    if (loadMore) {
+      setPosts(prevPosts => [...prevPosts, ...response.data]);
+      setPage(currentPage);
+    } else {
+      setPosts(response.data);
+      setPage(1);
+    }
+
+    // Check if there are more posts to load
+    setHasMore(response.data.length === 10);
+  }
 
   const handleLoadMore = () => {
     if (!loading && hasMore) {

@@ -1,7 +1,6 @@
 import {
   WebSocketGateway,
   WebSocketServer,
-  SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
@@ -164,95 +163,6 @@ export class WebsocketGateway
     }
   }
 
-  // Event handlers for different actions
-  @SubscribeMessage('post:create')
-  handlePostCreate(client: Socket, payload: any) {
-    this.logger.log(`Post created by user ${client.data.user.sub}`);
-    // Broadcast to all clients
-    this.server.emit('post:created', payload);
-    return { event: 'post:created', data: payload };
-  }
-
-  // Handle post:created event directly
-  @SubscribeMessage('post:created')
-  handlePostCreated(client: Socket, payload: any) {
-    this.logger.log(
-      `Post created event received from user ${client.data?.user?.sub || 'unknown'}`,
-    );
-    this.logger.log(`Payload: ${JSON.stringify(payload)}`);
-
-    try {
-      // Broadcast to all clients except sender
-      this.logger.log('Broadcasting post:created event to all clients');
-      client.broadcast.emit('post:created', payload);
-
-      // Also broadcast to all clients using server
-      this.logger.log('Broadcasting post:created event using server.emit');
-      this.server.emit('post:created', payload);
-
-      return { event: 'post:created', data: payload };
-    } catch (error) {
-      this.logger.error(
-        `Error broadcasting post:created event: ${error.message}`,
-      );
-      return { event: 'error', data: { message: 'Failed to broadcast event' } };
-    }
-  }
-
-  @SubscribeMessage('post:like')
-  handlePostLike(client: Socket, payload: any) {
-    this.logger.log(`Post liked by user ${client.data.user.sub}`);
-    // Broadcast to all clients
-    this.server.emit('post:liked', payload);
-    return { event: 'post:liked', data: payload };
-  }
-
-  // Handle post:liked event directly
-  @SubscribeMessage('post:liked')
-  handlePostLiked(client: Socket, payload: any) {
-    this.logger.log(
-      `Post liked event received from user ${client.data.user.sub}`,
-    );
-    // Broadcast to all clients except sender
-    client.broadcast.emit('post:liked', payload);
-    return { event: 'post:liked', data: payload };
-  }
-
-  @SubscribeMessage('post:comment')
-  handlePostComment(client: Socket, payload: any) {
-    this.logger.log(`Comment added by user ${client.data.user.sub}`);
-    // Broadcast to all clients
-    this.server.emit('comment:created', payload);
-    return { event: 'comment:created', data: payload };
-  }
-
-  // Handle comment:created event directly
-  @SubscribeMessage('comment:created')
-  handleCommentCreated(client: Socket, payload: any) {
-    this.logger.log(
-      `Comment created event received from user ${client.data.user.sub}`,
-    );
-    // Broadcast to all clients except sender
-    client.broadcast.emit('comment:created', payload);
-    return { event: 'comment:created', data: payload };
-  }
-
-  @SubscribeMessage('user:follow')
-  handleUserFollow(client: Socket, payload: any) {
-    this.logger.log(`User ${client.data.user.sub} followed another user`);
-    // Broadcast to all clients
-    this.server.emit('user:followed', payload);
-    return { event: 'user:followed', data: payload };
-  }
-
-  // Handle user:followed event directly
-  @SubscribeMessage('user:followed')
-  handleUserFollowed(client: Socket, payload: any) {
-    this.logger.log(
-      `User followed event received from user ${client.data.user.sub}`,
-    );
-    // Broadcast to all clients except sender
-    client.broadcast.emit('user:followed', payload);
-    return { event: 'user:followed', data: payload };
-  }
+  // WebSocket Gateway now only handles connection/disconnection
+  // All events are emitted by server-side services after API operations
 }

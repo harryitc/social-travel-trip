@@ -12,6 +12,7 @@ import { UserService } from '@modules/user/user.service';
 import { PostRepository } from '@modules/m_posts/repositories/post.repository';
 import { CommentReplyEvent } from '@modules/m_notify/events/comment-reply.event';
 import { PostCommentEvent } from '@modules/m_notify/events/post-comment.event';
+import { WebsocketService, WebsocketEvent } from '@modules/m_websocket/websocket.service';
 
 export class CreateCommentCommand implements ICommand {
   constructor(
@@ -31,6 +32,7 @@ export class CreateCommentCommandHandler
     private readonly eventBus: EventBus,
     private readonly userService: UserService,
     private readonly postRepository: PostRepository,
+    private readonly websocketService: WebsocketService,
   ) {}
 
   execute = async (command: CreateCommentCommand): Promise<any> => {
@@ -62,6 +64,29 @@ export class CreateCommentCommandHandler
       // Create comment
       const insertResult = await this.repository.createComment(data, user_id);
       const createdComment = insertResult.rows[0];
+
+      // Get user details for WebSocket event
+      const commenter = await this.userService.findById(user_id);
+
+      if (commenter && createdComment) {
+        // Emit WebSocket event for new comment
+        try {
+          const eventData = {
+            comment: createdComment,
+            postId: data.postId,
+            userId: user_id,
+            userName: commenter.full_name || commenter.username || 'A user',
+            userAvatar: commenter.avatar_url || null,
+            parentId: data.parentId || null,
+          };
+
+          this.logger.log(`Emitting WebSocket event for new comment on post: ${data.postId}`);
+          this.websocketService.sendToAll(WebsocketEvent.COMMENT_CREATED, eventData);
+        } catch (wsError) {
+          this.logger.error(`Failed to emit WebSocket event: ${wsError.message}`);
+        }
+      }
+
       // Check if this is a reply to another comment
       if (data.parentId) {
         // This is a reply to another comment

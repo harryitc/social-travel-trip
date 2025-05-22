@@ -11,6 +11,7 @@ import { NotifyModule } from '@modules/m_notify/notify.module';
 import { UserModule } from '@modules/user/user.module';
 import { UserRelaModule } from '@modules/m_user_rela/user-rela.module';
 import { PostRepository } from './repositories/post.repository';
+import { WebsocketModule } from '@modules/m_websocket/websocket.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PostRepository } from './repositories/post.repository';
     NotifyModule, // Import NotifyModule to use event classes
     UserModule, // Import UserModule to get user details
     UserRelaModule, // Import UserRelaModule to get followers
+    WebsocketModule, // Import WebsocketModule to emit events
   ],
   controllers: [PostController],
   providers: [

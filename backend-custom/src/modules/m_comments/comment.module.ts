@@ -10,6 +10,7 @@ import { CommentController } from './controllers/comment.controller';
 import { NotifyModule } from '@modules/m_notify/notify.module';
 import { UserModule } from '@modules/user/user.module';
 import { PostModule } from '@modules/m_posts/post.module';
+import { WebsocketModule } from '@modules/m_websocket/websocket.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PostModule } from '@modules/m_posts/post.module';
     NotifyModule, // Import NotifyModule to use event classes
     UserModule, // Import UserModule to get user details
     PostModule,
+    WebsocketModule, // Import WebsocketModule to emit events
   ],
   controllers: [CommentController],
   providers: [
