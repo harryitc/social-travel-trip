@@ -205,13 +205,15 @@ export function PostItem({ post }: PostItemProps) {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <FollowButton
-            userId={post.author.user_id.toString()}
-            username={post.author.username}
-            fullName={post.author.full_name}
-            variant="outline"
-            size="sm"
-          />
+          {post.author.user_id?.toString() !== currentUser?.user_id?.toString() && (
+            <FollowButton
+              userId={post.author.user_id.toString()}
+              username={post.author.username}
+              fullName={post.author.full_name}
+              variant="outline"
+              size="sm"
+            />
+          )}
           {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -336,9 +338,8 @@ export function PostItem({ post }: PostItemProps) {
                   {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
                     <button
                       key={reaction.id}
-                      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                        currentUserReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''
-                      }`}
+                      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentUserReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''
+                        }`}
                       onClick={() => handleReaction(reaction.id)}
                       title={reaction.label}
                     >
