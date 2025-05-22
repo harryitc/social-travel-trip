@@ -27,11 +27,14 @@ export class CommentRepository {
       (
         SELECT json_agg(json_build_object(
           'reaction_id', cl.reaction_id,
-          'count', COUNT(*)
+          'count', cl.count
         ))
-        FROM post_comment_likes cl
-        WHERE cl.comment_id = c.post_comment_id AND cl.reaction_id > 1
-        GROUP BY cl.comment_id
+        FROM (
+          SELECT cl.reaction_id, COUNT(*) as count
+          FROM post_comment_likes cl
+          WHERE cl.comment_id = c.post_comment_id AND cl.reaction_id > 1
+          GROUP BY cl.reaction_id
+        ) cl
       ) AS reactions,
       COALESCE(
         (
@@ -48,11 +51,14 @@ export class CommentRepository {
               'reactions', (
                 SELECT json_agg(json_build_object(
                   'reaction_id', rcl.reaction_id,
-                  'count', COUNT(*)
+                  'count', rcl.count
                 ))
-                FROM post_comment_likes rcl
-                WHERE rcl.comment_id = r.post_comment_id AND rcl.reaction_id > 1
-                GROUP BY rcl.comment_id
+                FROM (
+                  SELECT rcl.reaction_id, COUNT(*) as count
+                  FROM post_comment_likes rcl
+                  WHERE rcl.comment_id = r.post_comment_id AND rcl.reaction_id > 1
+                  GROUP BY rcl.reaction_id
+                ) rcl
               )
             ) ORDER BY r.created_at
           )

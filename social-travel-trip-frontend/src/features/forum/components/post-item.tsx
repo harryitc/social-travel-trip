@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/radix-ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
-import { Heart, MessageCircle, MapPin, SendIcon } from 'lucide-react';
+import { Heart, MessageCircle, MapPin } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import CustomImage from '@/components/ui/custom-image';
 import { FollowButton } from './follow-button';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { notification } from 'antd';
+import { PostComment } from './post-comment';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -49,7 +50,6 @@ export function PostItem({ post }: PostItemProps) {
   const isPostLiked = post.stats?.user_reaction && post.stats.user_reaction > 1;
   const userReactionId = post.stats?.user_reaction || null;
 
-  const [comment, setComment] = useState('');
   const [isLiked, setIsLiked] = useState(isPostLiked || false);
   const [currentUserReaction, setCurrentUserReaction] = useState<number | null>(userReactionId);
   const [likesCount, setLikesCount] = useState(post.stats?.total_likes || 0);
@@ -181,9 +181,7 @@ export function PostItem({ post }: PostItemProps) {
     }
   };
 
-  const handleSubmitComment = () => {
 
-  };
 
   // const handleSave = () => {
   //   setIsSaved(!isSaved);
@@ -426,62 +424,16 @@ export function PostItem({ post }: PostItemProps) {
         </div>
 
         {showComments && (
-
-          <div className="space-y-4 pt-2 w-full">
-            <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={post.author.avatar} alt={post.author.full_name} />
-                <AvatarFallback>{post.author.full_name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 relative">
-                {/* <Input
-                placeholder={replyingToName ? `Trả lời ${replyingToName}...` : "Viết bình luận..."}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="flex-1"
-              /> */}
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Viết bình luận..."
-                  className="w-full rounded-full bg-muted px-3 py-2 text-sm"
-                />
-              </div>
-              <Button
-                size="icon"
-                onClick={handleSubmitComment}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-                disabled={!comment.trim()}
-              >
-                <SendIcon className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="text-center text-sm text-muted-foreground">
-              <Button variant="link" className="p-0 h-auto">Xem tất cả {commentsCount} bình luận</Button>
-            </div>
+          <div className="pt-2 w-full">
+            <PostComment
+              postId={post.post_id.toString()}
+              onCommentAdded={() => {
+                // Update comments count when a new comment is added
+                // This could be improved by using WebSocket events
+                console.log('Comment added to post:', post.post_id);
+              }}
+            />
           </div>
-
-          // <div className="space-y-4 pt-2">
-          //   <div className="flex items-center space-x-2">
-          //     <Avatar className="h-8 w-8">
-          //       <AvatarImage src={post.author.avatar} alt={post.author.full_name} />
-          //       <AvatarFallback>{post.author.full_name?.charAt(0)}</AvatarFallback>
-          //     </Avatar>
-          //     <div className="flex-1">
-          //       <input
-          //         type="text"
-          //         placeholder="Viết bình luận..."
-          //         className="w-full rounded-full bg-muted px-3 py-2 text-sm"
-          //       />
-          //     </div>
-          //     <Button size="sm">Gửi</Button>
-          //   </div>
-          //   <div className="text-center text-sm text-muted-foreground">
-          //     <Button variant="link" className="p-0 h-auto">Xem tất cả {commentsCount} bình luận</Button>
-          //   </div>
-          // </div>
         )}
 
         {/* Likes Modal */}

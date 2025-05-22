@@ -12,20 +12,26 @@ export class Comment {
   created_at: string;
   updated_at: string;
   author: PostAuthor;
-  likes_count: number;
-  is_liked: boolean;
+  stats: {
+    total_likes: number;
+    user_reaction?: number | null;
+    reactions: { reaction_id: number; count: number }[];
+  };
   replies?: Comment[];
 
   constructor(data: any) {
-    this.comment_id = get(data, 'comment_id', -1);
-    this.post_id = get(data, 'post_id', -1);
+    this.comment_id = get(data, 'id', get(data, 'comment_id', -1)).toString();
+    this.post_id = get(data, 'post_id', -1).toString();
     this.content = get(data, 'content', '');
-    this.parent_id = get(data, 'parent_id', null);
+    this.parent_id = get(data, 'parent_id', null)?.toString();
     this.created_at = get(data, 'created_at', '');
     this.updated_at = get(data, 'updated_at', '');
-    this.author = new PostAuthor(data?.author);
-    this.likes_count = get(data, 'likes_count', 0);
-    this.is_liked = get(data, 'is_liked', false);
+    this.author = new PostAuthor(data?.user || data?.author);
+    this.stats = {
+      total_likes: get(data, 'stats.total_likes', 0),
+      user_reaction: get(data, 'stats.user_reaction', null),
+      reactions: get(data, 'stats.reactions', [])
+    };
     this.replies = get(data, 'replies', [])?.map((reply: any) => new Comment(reply));
   }
 }
@@ -37,11 +43,13 @@ export class CreateCommentPayload {
   post_id: string;
   content: string;
   parent_id?: string;
+  jsonData?: any;
 
   constructor(data: any) {
-    this.post_id = get(data, 'post_id', -1);
+    this.post_id = get(data, 'post_id', -1).toString();
     this.content = get(data, 'content', '');
-    this.parent_id = get(data, 'parent_id', null);
+    this.parent_id = get(data, 'parent_id', null)?.toString();
+    this.jsonData = get(data, 'jsonData', {});
   }
 }
 

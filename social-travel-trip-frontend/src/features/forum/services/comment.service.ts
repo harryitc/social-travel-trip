@@ -16,7 +16,12 @@ export const commentService = {
     try {
       const response: any = await Http.post(
         `${API_ENDPOINT.social_travel_trip}/comments/create`,
-        payload,
+        {
+          postId: parseInt(payload.post_id),
+          content: payload.content,
+          parentId: payload.parent_id ? parseInt(payload.parent_id) : null,
+          jsonData: {}
+        },
       );
       return new Comment(response);
     } catch (error) {
@@ -33,9 +38,9 @@ export const commentService = {
   async getComments(postId: string): Promise<Comment[]> {
     try {
       const response: any = await Http.get(`${API_ENDPOINT.social_travel_trip}/comments/get`, {
-        params: { post_id: postId },
+        params: { postId: postId },
       });
-      return response.map((item: Comment) => new Comment(item));
+      return response.data?.map((item: any) => new Comment(item)) || [];
     } catch (error) {
       console.error('Error getting comments:', error);
       throw error;
@@ -45,12 +50,14 @@ export const commentService = {
   /**
    * Like a comment
    * @param commentId Comment ID
+   * @param reactionId Reaction ID (default: 2 for like)
    * @returns Promise with success status
    */
-  async likeComment(commentId: string): Promise<{ success: boolean }> {
+  async likeComment(commentId: string, reactionId: number = 2): Promise<{ success: boolean }> {
     try {
       await Http.post(`${API_ENDPOINT.social_travel_trip}/comments/like`, {
-        comment_id: commentId,
+        commentId: parseInt(commentId),
+        reactionId: reactionId,
       });
       return { success: true };
     } catch (error) {
@@ -62,17 +69,28 @@ export const commentService = {
   /**
    * Get users who liked a comment
    * @param commentId Comment ID
-   * @returns Promise with users who liked the comment
+   * @returns Promise with likes data
    */
-  async getCommentLikes(commentId: string): Promise<PostAuthor[]> {
+  async getCommentLikes(commentId: string): Promise<{
+    total: number;
+    reactions: { reaction_id: number; count: number }[];
+    users: (PostAuthor & { reaction_id: number })[];
+  }> {
     try {
       const response: any = await Http.get(
         `${API_ENDPOINT.social_travel_trip}/comments/get-likes`,
         {
-          params: { comment_id: commentId },
+          params: { commentId: parseInt(commentId) },
         },
       );
-      return response.map((item: PostAuthor) => new PostAuthor(item));
+      return {
+        total: response.total || 0,
+        reactions: response.reactions || [],
+        users: response.users?.map((item: any) => ({
+          ...new PostAuthor(item),
+          reaction_id: item.reaction_id
+        })) || []
+      };
     } catch (error) {
       console.error('Error getting comment likes:', error);
       throw error;
