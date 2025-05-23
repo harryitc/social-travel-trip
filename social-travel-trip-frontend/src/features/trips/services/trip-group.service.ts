@@ -63,14 +63,20 @@ class TripGroupService {
 
   async createGroup(data: CreateTripGroupData): Promise<TripGroup> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/create`, data.toBackendDTO());
+      const payload = data.toBackendDTO();
+      console.log('Sending create group request to:', `${API_ENDPOINT.social_travel_trip}/group/create`);
+      console.log('Payload:', payload);
 
-      const groupDTO: TripGroupDTO = response.data;
+      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/create`, payload);
+      console.log('Create group response:', response);
+
+      const groupDTO: TripGroupDTO = response.data || response;
 
       // Map DTO to class instance
       return new TripGroup(groupDTO);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating trip group:', error);
+      console.error('Error response:', error.response);
       throw error;
     }
   }

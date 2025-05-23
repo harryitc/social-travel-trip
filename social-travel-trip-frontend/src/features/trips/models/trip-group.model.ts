@@ -191,9 +191,6 @@ export class CreateTripGroupData {
   public title: string;
   public description?: string;
   public location?: string;
-  public startDate?: Date;
-  public endDate?: Date;
-  public maxMembers?: number;
   public isPrivate?: boolean;
   public image?: string;
 
@@ -201,19 +198,13 @@ export class CreateTripGroupData {
     title: string;
     description?: string;
     location?: string;
-    startDate?: Date;
-    endDate?: Date;
-    maxMembers?: number;
     isPrivate?: boolean;
     image?: string;
   }) {
     this.title = data.title;
     this.description = data.description;
     this.location = data.location;
-    this.startDate = data.startDate;
-    this.endDate = data.endDate;
-    this.maxMembers = data.maxMembers || 10;
-    this.isPrivate = data.isPrivate || false;
+    this.isPrivate = data.isPrivate || true; // Mặc định là riêng tư
     this.image = data.image;
   }
 
@@ -225,9 +216,6 @@ export class CreateTripGroupData {
       cover_url: this.image,
       json_data: {
         location: this.location,
-        startDate: this.startDate,
-        endDate: this.endDate,
-        maxMembers: this.maxMembers,
       },
       status: this.isPrivate ? 'private' : 'public',
     };

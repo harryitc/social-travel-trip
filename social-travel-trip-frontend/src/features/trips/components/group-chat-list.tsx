@@ -32,13 +32,17 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
 
   const handleCreateGroup = async (groupData: CreateTripGroupData) => {
     try {
-      await tripGroupService.createGroup(groupData);
+      console.log('Creating group with data:', groupData.toBackendDTO());
+      const result = await tripGroupService.createGroup(groupData);
+      console.log('Group created successfully:', result);
       setShowCreateDialog(false);
       // TODO: Refresh groups list or emit event to parent
       window.location.reload(); // Temporary solution
     } catch (error) {
       console.error('Error creating group:', error);
+      console.error('Error details:', error.response?.data || error.message);
       // TODO: Show error toast
+      alert(`Lỗi tạo nhóm: ${error.response?.data?.message || error.message}`);
     }
   };
 

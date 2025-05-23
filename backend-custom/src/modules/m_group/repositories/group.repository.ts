@@ -19,14 +19,14 @@ export class GroupRepository {
 
   // Group operations
   async createGroup(data: CreateGroupDto) {
-    const { name, description, cover_url, plan_id } = data;
+    const { name, description, cover_url, plan_id, status, json_data } = data;
     const params = [
       name,
       description || null,
       cover_url || null,
-      'public', // status
+      status || 'public', // status
       plan_id || null,
-      JSON.stringify({}), // json_data
+      JSON.stringify(json_data || {}), // json_data
     ];
 
     const query = `

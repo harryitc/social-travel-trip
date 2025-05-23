@@ -7,11 +7,7 @@ import { Input } from '@/components/ui/radix-ui/input';
 import { Textarea } from '@/components/ui/radix-ui/textarea';
 import { Label } from '@/components/ui/radix-ui/label';
 import { Switch } from '@/components/ui/radix-ui/switch';
-import { Calendar } from '@/components/ui/radix-ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
-import { CalendarIcon, MapPin, Users } from 'lucide-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { MapPin, ImageIcon } from 'lucide-react';
 import { CreateTripGroupData } from '../models/trip-group.model';
 
 type CreateGroupDialogProps = {
@@ -25,10 +21,7 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
     title: '',
     description: '',
     location: '',
-    startDate: undefined as Date | undefined,
-    endDate: undefined as Date | undefined,
-    maxMembers: 10,
-    isPrivate: false,
+    isPrivate: true, // Mặc định là riêng tư
     image: '',
   });
 
@@ -44,9 +37,6 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
       title: formData.title,
       description: formData.description,
       location: formData.location,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      maxMembers: formData.maxMembers,
       isPrivate: formData.isPrivate,
       image: formData.image,
     });
@@ -58,10 +48,7 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
       title: '',
       description: '',
       location: '',
-      startDate: undefined,
-      endDate: undefined,
-      maxMembers: 10,
-      isPrivate: false,
+      isPrivate: true,
       image: '',
     });
   };
@@ -127,66 +114,19 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
             </div>
           </div>
 
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Ngày bắt đầu</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.startDate ? format(formData.startDate, 'dd/MM/yyyy', { locale: vi }) : 'Chọn ngày'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.startDate}
-                    onSelect={(date) => setFormData({ ...formData, startDate: date })}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Ngày kết thúc</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.endDate ? format(formData.endDate, 'dd/MM/yyyy', { locale: vi }) : 'Chọn ngày'}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.endDate}
-                    onSelect={(date) => setFormData({ ...formData, endDate: date })}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {/* Max Members */}
+          {/* Cover Image */}
           <div className="space-y-2">
-            <Label htmlFor="maxMembers">Số thành viên tối đa</Label>
+            <Label htmlFor="image" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Ảnh bìa nhóm
+            </Label>
             <div className="relative">
-              <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <ImageIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                id="maxMembers"
-                type="number"
-                min="2"
-                max="50"
-                value={formData.maxMembers}
-                onChange={(e) => setFormData({ ...formData, maxMembers: parseInt(e.target.value) || 10 })}
-                className="pl-10"
+                id="image"
+                placeholder="URL ảnh bìa (tùy chọn)"
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                className="pl-10 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600"
               />
             </div>
           </div>
@@ -196,7 +136,9 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
             <div className="space-y-0.5">
               <Label>Nhóm riêng tư</Label>
               <p className="text-sm text-muted-foreground">
-                Chỉ những người được mời mới có thể tham gia
+                {formData.isPrivate
+                  ? 'Chỉ những người được mời mới có thể tham gia'
+                  : 'Mọi người đều có thể tham gia nhóm'}
               </p>
             </div>
             <Switch
