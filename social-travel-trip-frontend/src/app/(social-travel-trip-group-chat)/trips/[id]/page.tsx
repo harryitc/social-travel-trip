@@ -9,7 +9,7 @@ export default function TripPage() {
   return (
     <div className="w-full overflow-hidden">
       <div className="h-[calc(100vh-7rem)]">
-        <TripChatLayout initialTripId={params.id as string} />
+        <TripChatLayout key={'detail'} initialTripId={params.id as string} />
       </div>
     </div>
   );

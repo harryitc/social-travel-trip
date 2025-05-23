@@ -9,7 +9,7 @@ export default function TripsPage() {
       <TabMenu />
       <div className="w-full overflow-hidden">
         <div className="h-[calc(100vh-7rem)]">
-          <TripChatLayout />
+          <TripChatLayout key={'list'} />
         </div>
       </div>
     </>

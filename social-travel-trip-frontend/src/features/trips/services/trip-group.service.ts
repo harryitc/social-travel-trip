@@ -175,7 +175,12 @@ class TripGroupService {
         body.before_id = beforeId;
       }
 
+      console.log('Calling getMessages API with URL:', `${API_ENDPOINT.social_travel_trip}/group/get-messages`);
+      console.log('Request body:', body);
+
       const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-messages`, body);
+      console.log('getMessages API response:', response);
+
       return response;
     } catch (error) {
       console.error('Error fetching messages:', error);

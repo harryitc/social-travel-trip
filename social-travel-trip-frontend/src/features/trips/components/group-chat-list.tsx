@@ -12,19 +12,19 @@ import { Badge } from '@/components/ui/radix-ui/badge';
 import { CreateGroupDialog } from './create-group-dialog';
 import { JoinGroupDialog } from './join-group-dialog';
 import { notification } from 'antd';
+import { useEventStore } from '@/features/stores/event.store';
 
 type GroupChatListProps = {
   groups: TripGroup[];
   selectedGroupId: string;
   onSelectGroup: (group: TripGroup) => void;
-  onGroupCreated?: (group: TripGroup) => void;
-  onGroupJoined?: (group: TripGroup) => void;
 };
 
-export function GroupChatList({ groups, selectedGroupId, onSelectGroup, onGroupCreated, onGroupJoined }: GroupChatListProps) {
+export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupChatListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const emit = useEventStore((state) => state.emit);
 
   const filteredGroups = groups.filter(group => {
     const title = group.title || group.name || '';
@@ -48,10 +48,8 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup, onGroupC
         duration: 3,
       });
 
-      // Notify parent component
-      if (onGroupCreated) {
-        onGroupCreated(result);
-      }
+      // Emit event using Zustand
+      emit('group:created', { group: result });
     } catch (error: any) {
       console.error('Error creating group:', error);
       console.error('Error details:', error.response?.data || error.message);
@@ -80,10 +78,8 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup, onGroupC
         duration: 3,
       });
 
-      // Notify parent component
-      if (onGroupJoined) {
-        onGroupJoined(result);
-      }
+      // Emit event using Zustand
+      emit('group:joined', { group: result });
     } catch (error: any) {
       console.error('Error joining group:', error);
 

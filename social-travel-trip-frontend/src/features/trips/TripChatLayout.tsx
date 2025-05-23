@@ -7,11 +7,12 @@ import { TripBreadcrumb } from './components/trip-breadcrumb';
 import { TripChat } from './trip-chat';
 import { GroupChatDetails } from './GroupChatDetails';
 import { TripTabMenu } from './TripTabMenu';
+import { GroupListSkeleton } from './components/chat-skeleton';
 import { TripGroup } from './models/trip-group.model';
 import { tripGroupService } from './services/trip-group.service';
-import { webSocketService } from './services/websocket.service';
 import { Users, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/radix-ui/button';
+import { useEventListeners } from '@/features/stores/useEventListeners';
 
 type TripChatLayoutProps = {
   initialTripId?: string;
@@ -55,48 +56,51 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
   }, [initialTripId]);
 
   // Theo dõi kích thước màn hình
-  useEffect(() => {
-    const checkScreenSize = () => {
-      const isTabletSize = window.innerWidth >= 768 && window.innerWidth < 1024;
-      setIsTablet(isTabletSize);
+  // useEffect(() => {
+  //   const checkScreenSize = () => {
+  //     const isTabletSize = window.innerWidth >= 768 && window.innerWidth < 1024;
+  //     setIsTablet(isTabletSize);
 
-      // Khi ở chế độ tablet, luôn hiển thị layout dọc (showDetails = true)
-      if (isTabletSize) {
-        setShowDetails(true);
+  //     // Khi ở chế độ tablet, luôn hiển thị layout dọc (showDetails = true)
+  //     if (isTabletSize) {
+  //       setShowDetails(true);
+  //     }
+  //   };
+
+  //   // Kiểm tra kích thước ban đầu
+  //   checkScreenSize();
+
+  //   // Thêm event listener để theo dõi thay đổi kích thước
+  //   window.addEventListener('resize', checkScreenSize);
+
+  //   // Cleanup
+  //   return () => window.removeEventListener('resize', checkScreenSize);
+  // }, []);
+
+  // Event listeners setup
+  useEventListeners({
+    'group:created': (data) => {
+      console.log('Group created event received:', data);
+      setAllGroups(prev => [data.group, ...prev]);
+      setSelectedGroup(data.group);
+      router.push(`/trips/${data.group.id}`);
+    },
+    'group:joined': (data) => {
+      console.log('Group joined event received:', data);
+      loadGroups(); // Reload to get updated data
+      setSelectedGroup(data.group);
+      router.push(`/trips/${data.group.id}`);
+    },
+    'group:updated': (data) => {
+      console.log('Group updated event received:', data);
+      setAllGroups(prev => prev.map(group =>
+        group.id === data.group.id ? data.group : group
+      ));
+      if (selectedGroup?.id === data.group.id) {
+        setSelectedGroup(data.group);
       }
-    };
-
-    // Kiểm tra kích thước ban đầu
-    checkScreenSize();
-
-    // Thêm event listener để theo dõi thay đổi kích thước
-    window.addEventListener('resize', checkScreenSize);
-
-    // Cleanup
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
-
-  // WebSocket setup
-  useEffect(() => {
-    if (selectedGroup) {
-      webSocketService.joinGroup(selectedGroup.group_id.toString());
-
-      // Listen for new messages
-      const handleNewMessage = (data: { groupId: string; message: any }) => {
-        if (data.groupId === selectedGroup.group_id.toString()) {
-          // Refresh messages or update state
-          console.log('New message received:', data.message);
-        }
-      };
-
-      webSocketService.on('message:new', handleNewMessage);
-
-      return () => {
-        webSocketService.off('message:new', handleNewMessage);
-        webSocketService.leaveGroup(selectedGroup.group_id.toString());
-      };
-    }
-  }, [selectedGroup]);
+    },
+  });
 
   const handleSelectGroup = (group: TripGroup) => {
     setSelectedGroup(group);
@@ -148,22 +152,7 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
     setActiveTab(tabId);
   };
 
-  // Handle group created
-  const handleGroupCreated = (newGroup: TripGroup) => {
-    setAllGroups(prev => [newGroup, ...prev]);
-    setSelectedGroup(newGroup);
-    // Update URL
-    router.push(`/trips/${newGroup.id}`);
-  };
 
-  // Handle group joined
-  const handleGroupJoined = (joinedGroup: TripGroup) => {
-    // Reload groups to get updated data
-    loadGroups();
-    setSelectedGroup(joinedGroup);
-    // Update URL
-    router.push(`/trips/${joinedGroup.id}`);
-  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-gray-50 dark:bg-gray-900">
@@ -184,16 +173,12 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
         {/* Left column - Group list */}
         <div className="w-[320px] md:w-[320px] lg:w-[320px] min-w-[320px] flex-shrink-0 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm overflow-hidden">
           {loading ? (
-            <div className="flex justify-center items-center h-full">
-              <div className="text-sm text-muted-foreground">Đang tải nhóm...</div>
-            </div>
+            <GroupListSkeleton />
           ) : (
             <GroupChatList
               groups={allGroups}
               selectedGroupId={selectedGroup?.id || ''}
               onSelectGroup={handleSelectGroup}
-              onGroupCreated={handleGroupCreated}
-              onGroupJoined={handleGroupJoined}
             />
           )}
         </div>
