@@ -2,14 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
 import { PostItem } from './post-item';
 import { PostCreator } from './post-creator';
 import { postService } from '../services/post.service';
 import { Skeleton } from '@/components/ui/radix-ui/skeleton';
-import { HashtagTrending } from './hashtag-trending';
 import { Post, PostQueryParams } from '../models/post.model';
-import { App, notification } from 'antd';
 import { useEventStore } from '../../stores/event.store';
 
 export function PostList() {
@@ -19,10 +16,14 @@ export function PostList() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const { on, emit } = useEventStore();
+  const { on } = useEventStore();
 
   // WebSocket event listeners
   useEffect(() => {
+    const handleNewPost = async () => {
+      fetchPostsComplex(false);
+    };
+
     const unsub = on('post:created', handleNewPost);
     return () => {
       unsub();
@@ -34,52 +35,11 @@ export function PostList() {
     fetchPostsComplex(false);
   }, []);
 
-  // Handler for new posts
-  const handleNewPost = async (data: any) => {
-    fetchPosts();
-  };
-
-  // Handler for post likes
-  const handlePostLiked = (data: any) => {
-    // Update post likes count
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.post_id === data.postId
-          ? {
-            ...post,
-            stats: {
-              ...post.stats,
-              total_likes: post.stats.total_likes + 1
-            }
-          }
-          : post
-      )
-    );
-  };
-
-  // Handler for new comments
-  const handleNewComment = (data: any) => {
-    // Update post comments count
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.post_id === data.postId
-          ? {
-            ...post,
-            stats: {
-              ...post.stats,
-              total_comments: post.stats.total_comments + 1
-            }
-          }
-          : post
-      )
-    );
-  };
-
   const fetchPostsComplex = async (loadMore?: boolean) => {
     try {
       setLoading(true);
       setError(null);
-      await fetchPosts();
+      await fetchPosts(loadMore);
     } catch (error) {
       console.error('Error fetching posts:', error);
       setError('Có lỗi xảy ra khi tải bài viết. Vui lòng thử lại sau.');
@@ -98,8 +58,12 @@ export function PostList() {
       // sort_by: activeTab
     };
 
+    console.log('Fetching posts with params:', params);
+
     // Fetch posts
     const response = await postService.getPosts(params);
+
+    console.log('Posts response:', response);
 
     // Update state
     if (loadMore) {
@@ -111,12 +75,20 @@ export function PostList() {
     }
 
     // Check if there are more posts to load
-    setHasMore(response.data.length === 10);
+    setHasMore(response.data.length === params.limit);
   }
 
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
     if (!loading && hasMore) {
-      fetchPosts(true);
+      try {
+        setLoading(true);
+        await fetchPosts(true);
+      } catch (error) {
+        console.error('Error loading more posts:', error);
+        setError('Có lỗi xảy ra khi tải thêm bài viết. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -152,7 +124,7 @@ export function PostList() {
           <Button
             variant="outline"
             className="mt-2"
-            onClick={() => fetchPosts()}
+            onClick={() => fetchPostsComplex(false)}
           >
             Thử lại
           </Button>

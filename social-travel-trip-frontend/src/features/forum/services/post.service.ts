@@ -22,7 +22,7 @@ export const postService = {
     try {
       // Create post
       const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/create`, payload);
-      return Post.fromResponse(response);
+      return new Post(response);
     } catch (error) {
       console.error('Error creating post:', error);
       throw error;
@@ -36,9 +36,8 @@ export const postService = {
    */
   async getPosts(params: PostQueryParams = {}): Promise<PostQueryResponse> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/query`, {
-        params,
-      });
+      // Backend expect params directly, not wrapped in params object
+      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/query`, params);
       return PostQueryResponse.fromResponse(response);
     } catch (error) {
       console.error('Error getting posts:', error);
@@ -56,7 +55,7 @@ export const postService = {
       const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/posts/detail`, {
         params: { postId: postId },
       });
-      return Post.fromResponse(response);
+      return new Post(response);
     } catch (error) {
       console.error('Error getting post details:', error);
       throw error;
@@ -166,7 +165,7 @@ export const postService = {
         postId: postId,
         ...payload,
       });
-      return Post.fromResponse(response);
+      return new Post(response);
     } catch (error) {
       console.error('Error updating post:', error);
       throw error;
