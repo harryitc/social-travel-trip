@@ -12,11 +12,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-u
 import { CalendarIcon, MapPin, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { CreateTripGroupData } from '../models/trip-group.model';
 
 type CreateGroupDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateGroup: (groupData: any) => void;
+  onCreateGroup: (groupData: CreateTripGroupData) => void;
 };
 
 export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateGroupDialogProps) {
@@ -38,17 +39,19 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
       return;
     }
 
-    onCreateGroup({
-      ...formData,
-      id: Date.now().toString(), // Temporary ID generation
-      members: {
-        count: 1,
-        max: formData.maxMembers,
-        list: [], // Current user would be added here
-      },
-      hashtags: [],
-      hasPlan: false,
+    // Create group data using class
+    const groupData = new CreateTripGroupData({
+      title: formData.title,
+      description: formData.description,
+      location: formData.location,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      maxMembers: formData.maxMembers,
+      isPrivate: formData.isPrivate,
+      image: formData.image,
     });
+
+    onCreateGroup(groupData);
 
     // Reset form
     setFormData({

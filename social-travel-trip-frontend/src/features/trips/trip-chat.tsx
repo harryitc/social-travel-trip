@@ -25,36 +25,141 @@ import {
 } from '@/components/ui/radix-ui/dropdown-menu';
 import { PinnedMessages } from './pinned-messages';
 import { EmojiPicker } from './emoji-picker';
-import { Message, Member, MOCK_CHAT_MESSAGES } from './mock-chat-data';
+import { TripGroupMember } from './models/trip-group.model';
+import { tripGroupService, TripGroupMessage } from './services/trip-group.service';
+import { webSocketService } from './services/websocket.service';
+
+// Transform TripGroupMessage to Message format for UI compatibility
+interface Message {
+  id: string;
+  content: string;
+  sender: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  timestamp: string;
+  pinned?: boolean;
+  attachments?: Array<{
+    type: 'image' | 'file';
+    url: string;
+    name: string;
+    size?: number;
+  }>;
+  replyTo?: {
+    id: string;
+    content: string;
+    sender: {
+      id: string;
+      name: string;
+    };
+  };
+}
 
 type TripChatProps = {
   tripId: string;
-  members?: Member[];
+  members?: TripGroupMember[];
   isTablet?: boolean;
   isVerticalLayout?: boolean;
 };
 
-export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }: TripChatProps) {
-  const user: any = null;
-  // Get messages for the specific trip group
-  const [messages, setMessages] = useState<Message[]>(() => {
-    // If messages exist for this trip, use them, otherwise return an empty array
-    return MOCK_CHAT_MESSAGES[tripId] || [];
-  });
+// Helper function to transform backend message to UI message
+const transformMessage = (backendMessage: TripGroupMessage): Message => {
+  return {
+    id: backendMessage.group_message_id.toString(),
+    content: backendMessage.message,
+    sender: {
+      id: backendMessage.user_id.toString(),
+      name: backendMessage.user?.username || 'Unknown User',
+      avatar: backendMessage.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
+    },
+    timestamp: new Date(backendMessage.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+    pinned: backendMessage.is_pinned || false,
+    attachments: [], // TODO: Handle attachments from backend
+  };
+};
 
+export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }: TripChatProps) {
+  const user: any = null; // TODO: Get from auth context
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
 
-  // Update messages when tripId changes
+  // Load messages from API
   useEffect(() => {
-    setMessages(MOCK_CHAT_MESSAGES[tripId] || []);
+    const loadMessages = async () => {
+      if (!tripId) return;
+
+      try {
+        setLoading(true);
+        const result = await tripGroupService.getMessages(tripId);
+        const transformedMessages = result.messages.map(transformMessage);
+        setMessages(transformedMessages);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMessages();
   }, [tripId]);
+
+  // WebSocket setup for real-time messages
+  useEffect(() => {
+    if (!tripId) return;
+
+    const handleNewMessage = (data: { groupId: string; message: TripGroupMessage }) => {
+      if (data.groupId === tripId) {
+        const transformedMessage = transformMessage(data.message);
+        setMessages(prev => [...prev, transformedMessage]);
+      }
+    };
+
+    const handleMessageLike = (data: { messageId: number; likeCount: number; userId: number }) => {
+      setMessages(prev => prev.map(msg =>
+        msg.id === data.messageId.toString()
+          ? { ...msg, likeCount: data.likeCount }
+          : msg
+      ));
+    };
+
+    const handleMessagePin = (data: { messageId: number; groupId: string; isPinned: boolean }) => {
+      if (data.groupId === tripId) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === data.messageId.toString()
+            ? { ...msg, pinned: data.isPinned }
+            : msg
+        ));
+      }
+    };
+
+    const handleUserTyping = (data: { groupId: string; userId: number; isTyping: boolean }) => {
+      if (data.groupId === tripId && data.userId.toString() !== (user?.id || '1')) {
+        setIsTyping(data.isTyping);
+      }
+    };
+
+    webSocketService.on('message:new', handleNewMessage);
+    webSocketService.on('message:like', handleMessageLike);
+    webSocketService.on('message:pin', handleMessagePin);
+    webSocketService.on('user:typing', handleUserTyping);
+
+    return () => {
+      webSocketService.off('message:new', handleNewMessage);
+      webSocketService.off('message:like', handleMessageLike);
+      webSocketService.off('message:pin', handleMessagePin);
+      webSocketService.off('user:typing', handleUserTyping);
+    };
+  }, [tripId, user?.id]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -104,12 +209,26 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     setImagePreviewUrls(newImagePreviewUrls);
   };
 
-  const handlePinMessage = (messageId: string) => {
-    setMessages(messages.map(message =>
-      message.id === messageId
-        ? { ...message, pinned: !message.pinned }
-        : message
-    ));
+  const handlePinMessage = async (messageId: string) => {
+    try {
+      const message = messages.find(m => m.id === messageId);
+      if (!message) return;
+
+      if (message.pinned) {
+        await tripGroupService.unpinMessage(parseInt(messageId), tripId);
+      } else {
+        await tripGroupService.pinMessage(parseInt(messageId), tripId);
+      }
+
+      // Update local state optimistically
+      setMessages(messages.map(msg =>
+        msg.id === messageId
+          ? { ...msg, pinned: !msg.pinned }
+          : msg
+      ));
+    } catch (error) {
+      console.error('Error toggling pin message:', error);
+    }
   };
 
   const handleReplyMessage = (message: Message) => {
@@ -133,70 +252,46 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
   };
 
   const handleSendMessage = async () => {
-    if ((!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0)) return;
+    if (!newMessage.trim()) return;
 
-    // Create attachments from selected images and files
-    let attachments = [];
+    try {
+      // Send message via API
+      const sentMessage = await tripGroupService.sendMessage({
+        group_id: parseInt(tripId),
+        message: newMessage,
+      });
 
-    // Add images to attachments
-    if (selectedImages.length > 0) {
-      const imageAttachments = await Promise.all(selectedImages.map(async (file, index) => {
-        // In a real app, you would upload the file to a server and get a URL
-        // For now, we'll just use the object URL
-        return {
-          type: 'image' as const,
-          url: imagePreviewUrls[index],
-          name: file.name,
-          size: file.size,
-        };
-      }));
-      attachments.push(...imageAttachments);
+      // Transform and add to local state
+      const transformedMessage = transformMessage(sentMessage);
+      setMessages(prev => [...prev, transformedMessage]);
+
+      // Clear input
+      setNewMessage('');
+      setSelectedImages([]);
+      setSelectedFiles([]);
+      setImagePreviewUrls([]);
+      setReplyingTo(null);
+
+      // Stop typing indicator
+      webSocketService.sendTyping(tripId, false);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // TODO: Show error toast
     }
+  };
 
-    // Add files to attachments
-    if (selectedFiles.length > 0) {
-      const fileAttachments = selectedFiles.map(file => ({
-        type: 'file' as const,
-        url: URL.createObjectURL(file), // In a real app, this would be a server URL
-        name: file.name,
-        size: file.size,
-      }));
-      attachments.push(...fileAttachments);
+  // Handle typing indicator
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+
+    // Send typing indicator
+    if (e.target.value.trim() && !isTyping) {
+      webSocketService.sendTyping(tripId, true);
+      setIsTyping(true);
+    } else if (!e.target.value.trim() && isTyping) {
+      webSocketService.sendTyping(tripId, false);
+      setIsTyping(false);
     }
-
-    // Sử dụng ID mặc định '1' nếu user chưa đăng nhập
-    const userId = user?.id || '1';
-    const userName = user?.fullName || 'Đức Anh'; // Tên mặc định nếu không có user
-    const userAvatar = user?.imageUrl || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1'; // Avatar mặc định
-
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender: {
-        id: userId,
-        name: userName,
-        avatar: userAvatar,
-      },
-      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-      attachments,
-      ...(replyingTo && {
-        replyTo: {
-          id: replyingTo.id,
-          content: replyingTo.content,
-          sender: {
-            id: replyingTo.sender.id,
-            name: replyingTo.sender.name,
-          },
-        },
-      }),
-    };
-
-    setMessages([...messages, message]);
-    setNewMessage('');
-    setSelectedImages([]);
-    setSelectedFiles([]);
-    setImagePreviewUrls([]);
-    setReplyingTo(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -216,7 +311,12 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
           isTablet={isTablet}
         />
 
-        <div className={`${isTablet ? 'space-y-2' : 'space-y-3'}`}>
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-sm text-muted-foreground">Đang tải tin nhắn...</div>
+          </div>
+        ) : (
+          <div className={`${isTablet ? 'space-y-2' : 'space-y-3'}`}>
           {messages.map((message) => (
             <div
               id={`message-${message.id}`}
@@ -325,8 +425,22 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
               </div>
             </div>
           ))}
+
+          {/* Typing indicator */}
+          {isTyping && (
+            <div className="flex gap-2 items-center">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
+              <span className="text-xs text-muted-foreground">Ai đó đang nhập...</span>
+            </div>
+          )}
+
           <div ref={messageEndRef} />
-        </div>
+          </div>
+        )}
       </ScrollArea>
 
       <div className={`${isTablet ? 'p-1.5' : 'p-2'} ${isVerticalLayout ? 'border-t-0' : 'border-t'} border-purple-100 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-900/10`}>
@@ -445,7 +559,7 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
           <Input
             placeholder="Nhập tin nhắn..."
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             className={`flex-1 ${isTablet ? 'h-6 text-xs' : 'h-7'} bg-white dark:bg-gray-900 border-purple-100 dark:border-purple-800 focus-visible:ring-purple-500`}
           />

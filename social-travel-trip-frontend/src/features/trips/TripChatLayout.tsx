@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { GroupChatList } from './components/group-chat-list';
 import { TripBreadcrumb } from './components/trip-breadcrumb';
 import { TripChat } from './trip-chat';
 import { GroupChatDetails } from './GroupChatDetails';
 import { TripTabMenu } from './TripTabMenu';
-import { MOCK_TRIP_GROUPS, TripGroup } from './mock-trip-groups';
+import { TripGroup } from './models/trip-group.model';
+import { tripGroupService } from './services/trip-group.service';
+import { webSocketService } from './services/websocket.service';
 import { Users, Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/radix-ui/button';
 
@@ -19,23 +21,37 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(
-    initialTripId ? MOCK_TRIP_GROUPS.find(group => group.id === initialTripId) || null : null
-  );
+  const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(null);
+  const [allGroups, setAllGroups] = useState<TripGroup[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showDetails, setShowDetails] = useState(true);
   const [isTablet, setIsTablet] = useState(false);
   const [activeTab, setActiveTab] = useState('chat');
 
-  // Đồng bộ URL với selected group
+  // Load groups from API
   useEffect(() => {
-    // Nếu có initialTripId nhưng chưa có selectedGroup, tìm và set group
-    if (initialTripId && !selectedGroup) {
-      const group = MOCK_TRIP_GROUPS.find(g => g.id === initialTripId);
-      if (group) {
-        setSelectedGroup(group);
+    const loadGroups = async () => {
+      try {
+        setLoading(true);
+        const groups = await tripGroupService.getAllGroups();
+        setAllGroups(groups);
+
+        // If initialTripId is provided, find and set the selected group
+        if (initialTripId) {
+          const group = groups.find(g => g.id === initialTripId || g.group_id.toString() === initialTripId);
+          if (group) {
+            setSelectedGroup(group);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading groups:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [initialTripId, selectedGroup]);
+    };
+
+    loadGroups();
+  }, [initialTripId]);
 
   // Theo dõi kích thước màn hình
   useEffect(() => {
@@ -59,11 +75,27 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Hiển thị tất cả các nhóm có trong hệ thống, không lọc theo người dùng
-  const allGroups = useMemo(() => {
-    // Trả về tất cả các nhóm từ mock data
-    return MOCK_TRIP_GROUPS;
-  }, []);
+  // WebSocket setup
+  useEffect(() => {
+    if (selectedGroup) {
+      webSocketService.joinGroup(selectedGroup.group_id.toString());
+
+      // Listen for new messages
+      const handleNewMessage = (data: { groupId: string; message: any }) => {
+        if (data.groupId === selectedGroup.group_id.toString()) {
+          // Refresh messages or update state
+          console.log('New message received:', data.message);
+        }
+      };
+
+      webSocketService.on('message:new', handleNewMessage);
+
+      return () => {
+        webSocketService.off('message:new', handleNewMessage);
+        webSocketService.leaveGroup(selectedGroup.group_id.toString());
+      };
+    }
+  }, [selectedGroup]);
 
   const handleSelectGroup = (group: TripGroup) => {
     setSelectedGroup(group);
@@ -133,11 +165,17 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
       <div className="flex flex-1 overflow-hidden gap-4 px-4 pb-4">
         {/* Left column - Group list */}
         <div className="w-[320px] md:w-[320px] lg:w-[320px] min-w-[320px] flex-shrink-0 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm overflow-hidden">
-          <GroupChatList
-            groups={allGroups}
-            selectedGroupId={selectedGroup?.id || ''}
-            onSelectGroup={handleSelectGroup}
-          />
+          {loading ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="text-sm text-muted-foreground">Đang tải nhóm...</div>
+            </div>
+          ) : (
+            <GroupChatList
+              groups={allGroups}
+              selectedGroupId={selectedGroup?.id || ''}
+              onSelectGroup={handleSelectGroup}
+            />
+          )}
         </div>
 
         {/* Middle and Right columns container */}

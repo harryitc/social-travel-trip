@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { ChevronRight, Home, Users, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/radix-ui/button';
-import { TripGroup } from '../mock-trip-groups';
+import { TripGroup } from '../models/trip-group.model';
 
 type TripBreadcrumbProps = {
   selectedGroup?: TripGroup | null;
@@ -45,8 +45,7 @@ export function TripBreadcrumb({ selectedGroup }: TripBreadcrumbProps) {
       items.push({
         label: selectedGroup.title,
         href: `/trips/${selectedGroup.id}`,
-        icon: null,
-      });
+      } as any);
     }
 
     return items;

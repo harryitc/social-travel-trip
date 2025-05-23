@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { TripGroup } from '../mock-trip-groups';
+import { TripGroup, CreateTripGroupData, JoinTripGroupData } from '../models/trip-group.model';
+import { tripGroupService } from '../services/trip-group.service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Input } from '@/components/ui/radix-ui/input';
@@ -22,21 +23,36 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
 
-  const filteredGroups = groups.filter(group =>
-    group.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    group.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredGroups = groups.filter(group => {
+    const title = group.title || group.name || '';
+    const location = group.location || '';
+    return title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           location.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
-  const handleCreateGroup = (groupData: any) => {
-    // TODO: Implement create group logic
-    console.log('Creating group:', groupData);
-    setShowCreateDialog(false);
+  const handleCreateGroup = async (groupData: CreateTripGroupData) => {
+    try {
+      await tripGroupService.createGroup(groupData);
+      setShowCreateDialog(false);
+      // TODO: Refresh groups list or emit event to parent
+      window.location.reload(); // Temporary solution
+    } catch (error) {
+      console.error('Error creating group:', error);
+      // TODO: Show error toast
+    }
   };
 
-  const handleJoinGroup = (qrCode: string) => {
-    // TODO: Implement join group logic
-    console.log('Joining group with QR:', qrCode);
-    setShowJoinDialog(false);
+  const handleJoinGroup = async (qrCode: string) => {
+    try {
+      const joinData = new JoinTripGroupData({ qrCode });
+      await tripGroupService.joinGroup(joinData);
+      setShowJoinDialog(false);
+      // TODO: Refresh groups list or emit event to parent
+      window.location.reload(); // Temporary solution
+    } catch (error) {
+      console.error('Error joining group:', error);
+      // TODO: Show error toast
+    }
   };
 
   return (
@@ -125,10 +141,12 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                       <Users className="h-3 w-3" />
                       <span>{group.members.count}/{group.members.max}</span>
                     </div>
-                    <div className="flex items-center gap-1 truncate">
-                      <MapPin className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">{group.location.split(',')[0]}</span>
-                    </div>
+                    {group.location && (
+                      <div className="flex items-center gap-1 truncate">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{group.getLocationShort()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>
