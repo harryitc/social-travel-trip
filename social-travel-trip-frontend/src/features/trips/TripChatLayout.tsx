@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { GroupChatList } from './GroupChatList';
+import { GroupChatList } from './components/group-chat-list';
 import { TripChat } from './trip-chat';
 import { GroupChatDetails } from './GroupChatDetails';
 import { TripTabMenu } from './TripTabMenu';
@@ -10,12 +10,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/radix-ui/button';
 
 type TripChatLayoutProps = {
-  initialTripId: string;
+  initialTripId?: string;
 };
 
 export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
   const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(
-    MOCK_TRIP_GROUPS.find(group => group.id === initialTripId) || null
+    initialTripId ? MOCK_TRIP_GROUPS.find(group => group.id === initialTripId) || null : null
   );
   const [showDetails, setShowDetails] = useState(true);
   const [isTablet, setIsTablet] = useState(false);
@@ -82,7 +82,7 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left column - Group list */}
-        <div className="w-[280px] md:w-[80px] lg:w-[280px] min-w-[80px] lg:min-w-[220px] flex-shrink-0 rounded-lg border border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 shadow-md mr-3 md:mr-2 lg:mr-3 overflow-hidden">
+        <div className="w-[320px] md:w-[320px] lg:w-[320px] min-w-[320px] flex-shrink-0 rounded-lg border border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 shadow-md mr-3 md:mr-2 lg:mr-3 overflow-hidden">
           <GroupChatList
             groups={allGroups}
             selectedGroupId={selectedGroup?.id || ''}
