@@ -15,6 +15,16 @@ export type EventMap = {
   'group:left': { groupId: string };
   'group:member_added': { group: any; member: any };
   'group:member_removed': { group: any; memberId: string };
+  'group:selected': { group: any };
+
+  // Chat events
+  'chat:message_sent': { groupId: string; message: any };
+  'chat:message_received': { groupId: string; message: any };
+  'chat:message_pinned': { groupId: string; messageId: string };
+  'chat:message_unpinned': { groupId: string; messageId: string };
+  'chat:typing_start': { groupId: string; userId: string };
+  'chat:typing_stop': { groupId: string; userId: string };
+  'chat:messages_loaded': { groupId: string; messages: any[] };
 };
 
 // Các key của EventMap sẽ là các loại sự kiện hợp lệ
