@@ -26,6 +26,26 @@ export enum WebsocketEvent {
   NOTIFICATION_CREATED = 'notification:created',
   NOTIFICATION_READ = 'notification:read',
   NOTIFICATION_DELETED = 'notification:deleted',
+
+  // Group messaging events
+  GROUP_MESSAGE_SENT = 'group:message:sent',
+  GROUP_MESSAGE_LIKED = 'group:message:liked',
+  GROUP_MESSAGE_UNLIKED = 'group:message:unliked',
+  GROUP_MESSAGE_PINNED = 'group:message:pinned',
+  GROUP_MESSAGE_UNPINNED = 'group:message:unpinned',
+
+  // Group member events
+  GROUP_MEMBER_JOINED = 'group:member:joined',
+  GROUP_MEMBER_LEFT = 'group:member:left',
+  GROUP_MEMBER_TYPING = 'group:member:typing',
+  GROUP_MEMBER_STOP_TYPING = 'group:member:stop_typing',
+
+  // Group events
+  GROUP_UPDATED = 'group:updated',
+
+  // User status events
+  USER_TYPING = 'user:typing',
+  USER_ONLINE = 'user:online',
 }
 
 // Event handler type
@@ -283,6 +303,90 @@ class WebSocketService {
    */
   isConnected(): boolean {
     return this.socket?.connected || false;
+  }
+
+  // Group messaging methods
+  /**
+   * Join a group room
+   * @param groupId Group ID to join
+   */
+  joinGroup(groupId: string): void {
+    if (this.socket?.connected) {
+      this.socket.emit('group:join', { groupId });
+      console.log(`WebSocket Service: Joined group ${groupId}`);
+    } else {
+      console.warn('WebSocket Service: Cannot join group - not connected');
+    }
+  }
+
+  /**
+   * Leave a group room
+   * @param groupId Group ID to leave
+   */
+  leaveGroup(groupId: string): void {
+    if (this.socket?.connected) {
+      this.socket.emit('group:leave', { groupId });
+      console.log(`WebSocket Service: Left group ${groupId}`);
+    } else {
+      console.warn('WebSocket Service: Cannot leave group - not connected');
+    }
+  }
+
+  /**
+   * Send typing indicator
+   * @param groupId Group ID
+   * @param isTyping Whether user is typing or stopped typing
+   */
+  sendTyping(groupId: string, isTyping: boolean): void {
+    if (this.socket?.connected) {
+      const event = isTyping ? 'group:typing:start' : 'group:typing:stop';
+      this.socket.emit(event, { groupId });
+      console.log(`WebSocket Service: Sent typing ${isTyping ? 'start' : 'stop'} for group ${groupId}`);
+    } else {
+      console.warn('WebSocket Service: Cannot send typing indicator - not connected');
+    }
+  }
+
+  /**
+   * Enhanced on method that supports both old and new event types
+   */
+  onEvent<K extends keyof typeof WebsocketEvent>(
+    event: K | WebsocketEvent | string,
+    handler: EventHandler
+  ): void {
+    const eventName = typeof event === 'string' ? event : WebsocketEvent[event as keyof typeof WebsocketEvent];
+
+    const handlers = this.eventHandlers.get(eventName) || [];
+    handlers.push(handler);
+    this.eventHandlers.set(eventName, handlers);
+
+    // Register handler if socket is connected
+    if (this.socket?.connected) {
+      this.socket.on(eventName, handler);
+    }
+  }
+
+  /**
+   * Enhanced off method that supports both old and new event types
+   */
+  offEvent<K extends keyof typeof WebsocketEvent>(
+    event: K | WebsocketEvent | string,
+    handler: EventHandler
+  ): void {
+    const eventName = typeof event === 'string' ? event : WebsocketEvent[event as keyof typeof WebsocketEvent];
+
+    const handlers = this.eventHandlers.get(eventName) || [];
+    const index = handlers.indexOf(handler);
+
+    if (index !== -1) {
+      handlers.splice(index, 1);
+      this.eventHandlers.set(eventName, handlers);
+    }
+
+    // Remove handler if socket is connected
+    if (this.socket?.connected) {
+      this.socket.off(eventName, handler);
+    }
   }
 }
 

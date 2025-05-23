@@ -24,6 +24,22 @@ export enum WebsocketEvent {
   NOTIFICATION_CREATED = 'notification:created',
   NOTIFICATION_READ = 'notification:read',
   NOTIFICATION_DELETED = 'notification:deleted',
+
+  // Group messaging events
+  GROUP_MESSAGE_SENT = 'group:message:sent',
+  GROUP_MESSAGE_LIKED = 'group:message:liked',
+  GROUP_MESSAGE_UNLIKED = 'group:message:unliked',
+  GROUP_MESSAGE_PINNED = 'group:message:pinned',
+  GROUP_MESSAGE_UNPINNED = 'group:message:unpinned',
+
+  // Group member events
+  GROUP_MEMBER_JOINED = 'group:member:joined',
+  GROUP_MEMBER_LEFT = 'group:member:left',
+  GROUP_MEMBER_TYPING = 'group:member:typing',
+  GROUP_MEMBER_STOP_TYPING = 'group:member:stop_typing',
+
+  // Group events
+  GROUP_UPDATED = 'group:updated',
 }
 
 @Injectable()
@@ -245,6 +261,185 @@ export class WebsocketService {
     this.sendToUser(followedId, WebsocketEvent.USER_FOLLOWED, {
       followerId,
       followerData,
+    });
+  }
+
+  /**
+   * Send event to all members of a group
+   * @param groupId Group ID
+   * @param memberIds Array of member user IDs
+   * @param event Event type
+   * @param data Event data
+   */
+  sendToGroup(
+    groupId: number,
+    memberIds: number[],
+    event: WebsocketEvent,
+    data: any,
+  ) {
+    if (!memberIds || memberIds.length === 0) {
+      this.logger.debug(`No members to notify for group ${groupId}`);
+      return;
+    }
+
+    this.logger.debug(
+      `Sending ${event} to ${memberIds.length} members of group ${groupId}`,
+    );
+    this.sendToUsers(memberIds, event, data);
+  }
+
+  /**
+   * Notify group members about new message
+   * @param groupId Group ID
+   * @param memberIds Array of member user IDs
+   * @param senderId User ID who sent the message
+   * @param messageData Message data
+   */
+  notifyGroupMessage(
+    groupId: number,
+    memberIds: number[],
+    senderId: number,
+    messageData: any,
+  ) {
+    // Don't send notification to the sender
+    const recipientIds = memberIds.filter((id) => id !== senderId);
+
+    if (recipientIds.length === 0) {
+      this.logger.debug(
+        `No recipients to notify for message in group ${groupId}`,
+      );
+      return;
+    }
+
+    this.sendToGroup(groupId, recipientIds, WebsocketEvent.GROUP_MESSAGE_SENT, {
+      groupId,
+      senderId,
+      message: messageData,
+    });
+  }
+
+  /**
+   * Notify group members about message like/unlike
+   * @param groupId Group ID
+   * @param memberIds Array of member user IDs
+   * @param messageId Message ID
+   * @param likerId User ID who liked/unliked
+   * @param isLiked Whether message was liked or unliked
+   * @param likeCount Updated like count
+   */
+  notifyGroupMessageLike(
+    groupId: number,
+    memberIds: number[],
+    messageId: number,
+    likerId: number,
+    isLiked: boolean,
+    likeCount: number,
+  ) {
+    const event = isLiked
+      ? WebsocketEvent.GROUP_MESSAGE_LIKED
+      : WebsocketEvent.GROUP_MESSAGE_UNLIKED;
+
+    this.sendToGroup(groupId, memberIds, event, {
+      groupId,
+      messageId,
+      likerId,
+      likeCount,
+      isLiked,
+    });
+  }
+
+  /**
+   * Notify group members about message pin/unpin
+   * @param groupId Group ID
+   * @param memberIds Array of member user IDs
+   * @param messageId Message ID
+   * @param pinnerId User ID who pinned/unpinned
+   * @param isPinned Whether message was pinned or unpinned
+   */
+  notifyGroupMessagePin(
+    groupId: number,
+    memberIds: number[],
+    messageId: number,
+    pinnerId: number,
+    isPinned: boolean,
+  ) {
+    const event = isPinned
+      ? WebsocketEvent.GROUP_MESSAGE_PINNED
+      : WebsocketEvent.GROUP_MESSAGE_UNPINNED;
+
+    this.sendToGroup(groupId, memberIds, event, {
+      groupId,
+      messageId,
+      pinnerId,
+      isPinned,
+    });
+  }
+
+  /**
+   * Notify group members about member joining
+   * @param groupId Group ID
+   * @param memberIds Array of current member user IDs
+   * @param newMemberId User ID of new member
+   * @param newMemberData New member data
+   */
+  notifyGroupMemberJoined(
+    groupId: number,
+    memberIds: number[],
+    newMemberId: number,
+    newMemberData: any,
+  ) {
+    this.sendToGroup(groupId, memberIds, WebsocketEvent.GROUP_MEMBER_JOINED, {
+      groupId,
+      newMemberId,
+      member: newMemberData,
+    });
+  }
+
+  /**
+   * Notify group members about member leaving
+   * @param groupId Group ID
+   * @param memberIds Array of remaining member user IDs
+   * @param leftMemberId User ID of member who left
+   */
+  notifyGroupMemberLeft(
+    groupId: number,
+    memberIds: number[],
+    leftMemberId: number,
+  ) {
+    this.sendToGroup(groupId, memberIds, WebsocketEvent.GROUP_MEMBER_LEFT, {
+      groupId,
+      leftMemberId,
+    });
+  }
+
+  /**
+   * Notify group members about typing status
+   * @param groupId Group ID
+   * @param memberIds Array of member user IDs
+   * @param typingUserId User ID who is typing
+   * @param isTyping Whether user is typing or stopped typing
+   */
+  notifyGroupMemberTyping(
+    groupId: number,
+    memberIds: number[],
+    typingUserId: number,
+    isTyping: boolean,
+  ) {
+    // Don't send typing notification to the typer
+    const recipientIds = memberIds.filter((id) => id !== typingUserId);
+
+    if (recipientIds.length === 0) {
+      return;
+    }
+
+    const event = isTyping
+      ? WebsocketEvent.GROUP_MEMBER_TYPING
+      : WebsocketEvent.GROUP_MEMBER_STOP_TYPING;
+
+    this.sendToGroup(groupId, recipientIds, event, {
+      groupId,
+      typingUserId,
+      isTyping,
     });
   }
 

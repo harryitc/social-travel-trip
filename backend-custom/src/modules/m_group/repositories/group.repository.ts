@@ -354,6 +354,25 @@ export class GroupRepository {
     return this.client.execute(query, [messageId]);
   }
 
+  async getMessageById(messageId: number) {
+    const query = `
+      SELECT * FROM group_messages
+      WHERE group_message_id = $1
+    `;
+
+    return this.client.execute(query, [messageId]);
+  }
+
+  async getMessageLikeCount(messageId: number) {
+    const query = `
+      SELECT COUNT(*) as like_count
+      FROM message_likes
+      WHERE group_message_id = $1 AND reaction_id > 1
+    `;
+
+    return this.client.execute(query, [messageId]);
+  }
+
   async addMessagePin(data: AddMessagePinDto, userId: number) {
     const { group_message_id, group_id } = data;
 

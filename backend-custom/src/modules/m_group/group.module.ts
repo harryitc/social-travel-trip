@@ -9,6 +9,7 @@ import { Repositories } from './repositories';
 import { GroupController } from './controllers/group.controller';
 import { NotifyModule } from '@modules/m_notify/notify.module';
 import { UserModule } from '@modules/user/user.module';
+import { WebsocketModule } from '@modules/m_websocket/websocket.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { UserModule } from '@modules/user/user.module';
     PostgresModule.forFeature(CONNECTION_STRING_DEFAULT),
     NotifyModule, // Import NotifyModule to use event classes
     UserModule, // Import UserModule to get user details
+    WebsocketModule, // Import WebsocketModule for real-time messaging
   ],
   controllers: [GroupController],
   providers: [

@@ -188,10 +188,11 @@ class TripGroupService {
     }
   }
 
-  async toggleMessageLike(messageId: number): Promise<void> {
+  async toggleMessageLike(messageId: number, reactionId: number = 2): Promise<void> {
     try {
-      await Http.post(`${API_ENDPOINT.social_travel_trip}/group/toggle-like`, {
+      await Http.post(`${API_ENDPOINT.social_travel_trip}/group/messages/like`, {
         group_message_id: messageId,
+        reaction_id: reactionId, // 1 = no like, 2 = like, etc.
       });
     } catch (error) {
       console.error('Error toggling message like:', error);

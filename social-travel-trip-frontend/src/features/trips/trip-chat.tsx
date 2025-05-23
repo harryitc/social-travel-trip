@@ -15,7 +15,8 @@ import {
   X,
   MessageSquareQuote,
   Download,
-  File as FileIcon
+  File as FileIcon,
+  Heart
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import { tripGroupService, TripGroupMessage } from './services/trip-group.servic
 import { ChatSkeleton } from './components/chat-skeleton';
 import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
+import { websocketService, WebsocketEvent } from '@/lib/services/websocket.service';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -42,6 +44,7 @@ interface Message {
   };
   timestamp: string;
   pinned?: boolean;
+  likeCount?: number;
   attachments?: Array<{
     type: 'image' | 'file';
     url: string;
@@ -77,6 +80,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
     },
     timestamp: new Date(backendMessage.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
     pinned: backendMessage.is_pinned || false,
+    likeCount: backendMessage.like_count || 0,
     attachments: [], // TODO: Handle attachments from backend
   };
 };
@@ -92,9 +96,11 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load messages from API
   useEffect(() => {
@@ -149,7 +155,86 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     loadMessages();
   }, [tripId]);
 
-  // TODO: Add real-time message updates using events if needed
+  // WebSocket integration for real-time messaging
+  useEffect(() => {
+    if (!tripId) return;
+
+    // Connect to WebSocket
+    websocketService.connect();
+
+    // Join group room
+    websocketService.joinGroup(tripId);
+
+    // Set up event listeners
+    const handleNewMessage = (data: { groupId: number; senderId: number; message: any }) => {
+      if (data.groupId.toString() === tripId) {
+        const transformedMessage = transformMessage(data.message);
+        setMessages(prev => [...prev, transformedMessage]);
+
+        // Emit event for other components
+        emit('chat:message_received', {
+          groupId: tripId,
+          message: transformedMessage
+        });
+      }
+    };
+
+    const handleMessageLike = (data: { groupId: number; messageId: number; likerId: number; likeCount: number; isLiked: boolean }) => {
+      if (data.groupId.toString() === tripId) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === data.messageId.toString()
+            ? { ...msg, likeCount: data.likeCount }
+            : msg
+        ));
+      }
+    };
+
+    const handleMessagePin = (data: { groupId: number; messageId: number; pinnerId: number; isPinned: boolean }) => {
+      if (data.groupId.toString() === tripId) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === data.messageId.toString()
+            ? { ...msg, pinned: data.isPinned }
+            : msg
+        ));
+      }
+    };
+
+    const handleTyping = (data: { groupId: number; typingUserId: number; isTyping: boolean }) => {
+      if (data.groupId.toString() === tripId) {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          if (data.isTyping) {
+            newSet.add(data.typingUserId);
+          } else {
+            newSet.delete(data.typingUserId);
+          }
+          return newSet;
+        });
+      }
+    };
+
+    // Subscribe to events
+    websocketService.onEvent('group:message:sent', handleNewMessage);
+    websocketService.onEvent('group:message:liked', handleMessageLike);
+    websocketService.onEvent('group:message:unliked', handleMessageLike);
+    websocketService.onEvent('group:message:pinned', handleMessagePin);
+    websocketService.onEvent('group:message:unpinned', handleMessagePin);
+    websocketService.onEvent('group:member:typing', handleTyping);
+    websocketService.onEvent('group:member:stop_typing', handleTyping);
+
+    // Cleanup on unmount
+    return () => {
+      websocketService.offEvent('group:message:sent', handleNewMessage);
+      websocketService.offEvent('group:message:liked', handleMessageLike);
+      websocketService.offEvent('group:message:unliked', handleMessageLike);
+      websocketService.offEvent('group:message:pinned', handleMessagePin);
+      websocketService.offEvent('group:message:unpinned', handleMessagePin);
+      websocketService.offEvent('group:member:typing', handleTyping);
+      websocketService.offEvent('group:member:stop_typing', handleTyping);
+
+      websocketService.leaveGroup(tripId);
+    };
+  }, [tripId, emit]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -221,6 +306,20 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     }
   };
 
+  const handleLikeMessage = async (messageId: string) => {
+    try {
+      await tripGroupService.toggleMessageLike(parseInt(messageId));
+      // The WebSocket will handle updating the UI
+    } catch (error) {
+      console.error('Error liking message:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể thích tin nhắn. Vui lòng thử lại sau.',
+        placement: 'topRight',
+      });
+    }
+  };
+
   const handleReplyMessage = (message: Message) => {
     setReplyingTo(message);
   };
@@ -281,10 +380,26 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     }
   };
 
-  // Handle input change
+  // Handle input change with typing indicator
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
-    // TODO: Add typing indicator logic if needed
+
+    // Send typing indicator
+    if (!isTyping) {
+      setIsTyping(true);
+      websocketService.sendTyping(tripId, true);
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set new timeout to stop typing indicator
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      websocketService.sendTyping(tripId, false);
+    }, 2000); // Stop typing after 2 seconds of inactivity
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -354,6 +469,14 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
 
                   <p className="text-sm message-content">{message.content}</p>
 
+                  {/* Like count */}
+                  {message.likeCount && message.likeCount > 0 && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <Heart className="h-3 w-3 text-red-500 fill-current" />
+                      <span className="text-xs text-muted-foreground">{message.likeCount}</span>
+                    </div>
+                  )}
+
                   {message.attachments && message.attachments.length > 0 && (
                     <div className={`${isTablet ? 'mt-1.5 space-y-1.5' : 'mt-2 space-y-2'}`}>
                       {message.attachments.map((attachment, index) => (
@@ -401,6 +524,10 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align={message.sender.id === (user?.id || '1') ? "end" : "start"}>
+                        <DropdownMenuItem onClick={() => handleLikeMessage(message.id)}>
+                          <Heart className="h-4 w-4 mr-2" />
+                          Thích
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
                           <Reply className="h-4 w-4 mr-2" />
                           Phản hồi
@@ -418,14 +545,16 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
           ))}
 
           {/* Typing indicator */}
-          {isTyping && (
+          {typingUsers.size > 0 && (
             <div className="flex gap-2 items-center">
               <div className="flex space-x-1">
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                 <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
-              <span className="text-xs text-muted-foreground">Ai đó đang nhập...</span>
+              <span className="text-xs text-muted-foreground">
+                {typingUsers.size === 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
+              </span>
             </div>
           )}
 

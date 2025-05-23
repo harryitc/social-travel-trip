@@ -5,6 +5,9 @@ import {
   OnGatewayDisconnect,
   OnGatewayInit,
   WsException,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
@@ -163,6 +166,133 @@ export class WebsocketGateway
     }
   }
 
-  // WebSocket Gateway now only handles connection/disconnection
-  // All events are emitted by server-side services after API operations
+  // Group room management
+  @SubscribeMessage('group:join')
+  handleJoinGroup(
+    @MessageBody() data: { groupId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const userId = client.data.user?.sub;
+      if (!userId) {
+        this.logger.error(`User not authenticated for group join: ${client.id}`);
+        return;
+      }
+
+      const roomName = `group-${data.groupId}`;
+      client.join(roomName);
+
+      this.logger.debug(
+        `User ${userId} joined group room ${roomName} (socket: ${client.id})`,
+      );
+
+      // Notify other group members that user is online
+      client.to(roomName).emit('user:online', {
+        userId,
+        isOnline: true,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error joining group ${data.groupId}: ${error.message}`,
+      );
+    }
+  }
+
+  @SubscribeMessage('group:leave')
+  handleLeaveGroup(
+    @MessageBody() data: { groupId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const userId = client.data.user?.sub;
+      if (!userId) {
+        this.logger.error(`User not authenticated for group leave: ${client.id}`);
+        return;
+      }
+
+      const roomName = `group-${data.groupId}`;
+
+      // Notify other group members that user is offline
+      client.to(roomName).emit('user:online', {
+        userId,
+        isOnline: false,
+      });
+
+      client.leave(roomName);
+
+      this.logger.debug(
+        `User ${userId} left group room ${roomName} (socket: ${client.id})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error leaving group ${data.groupId}: ${error.message}`,
+      );
+    }
+  }
+
+  // Typing indicators
+  @SubscribeMessage('group:typing:start')
+  handleStartTyping(
+    @MessageBody() data: { groupId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const userId = client.data.user?.sub;
+      if (!userId) {
+        this.logger.error(`User not authenticated for typing start: ${client.id}`);
+        return;
+      }
+
+      const roomName = `group-${data.groupId}`;
+
+      // Notify other group members that user is typing
+      client.to(roomName).emit('user:typing', {
+        groupId: data.groupId,
+        userId,
+        isTyping: true,
+      });
+
+      this.logger.debug(
+        `User ${userId} started typing in group ${data.groupId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error handling typing start in group ${data.groupId}: ${error.message}`,
+      );
+    }
+  }
+
+  @SubscribeMessage('group:typing:stop')
+  handleStopTyping(
+    @MessageBody() data: { groupId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const userId = client.data.user?.sub;
+      if (!userId) {
+        this.logger.error(`User not authenticated for typing stop: ${client.id}`);
+        return;
+      }
+
+      const roomName = `group-${data.groupId}`;
+
+      // Notify other group members that user stopped typing
+      client.to(roomName).emit('user:typing', {
+        groupId: data.groupId,
+        userId,
+        isTyping: false,
+      });
+
+      this.logger.debug(
+        `User ${userId} stopped typing in group ${data.groupId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error handling typing stop in group ${data.groupId}: ${error.message}`,
+      );
+    }
+  }
+
+  // WebSocket Gateway now handles group room management and typing indicators
+  // All other events are emitted by server-side services after API operations
 }
