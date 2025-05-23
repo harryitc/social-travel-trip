@@ -20,7 +20,7 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!qrCode.trim()) {
       return;
     }
@@ -32,7 +32,7 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
   const handleScanQR = () => {
     // TODO: Implement QR code scanning functionality
     setIsScanning(true);
-    
+
     // Simulate QR scanning (in real implementation, use camera API)
     setTimeout(() => {
       setIsScanning(false);
@@ -43,12 +43,15 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
-          <DialogTitle className="text-purple-800 dark:text-purple-300 flex items-center gap-2">
-            <QrCode className="h-5 w-5" />
+      <DialogContent className="sm:max-w-[450px]">
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <QrCode className="h-5 w-5 text-blue-600" />
             Tham gia nhóm
           </DialogTitle>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Nhập mã mời hoặc quét mã QR để tham gia nhóm chuyến đi
+          </p>
         </DialogHeader>
 
         <Tabs defaultValue="manual" className="w-full">
@@ -63,33 +66,36 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="manual" className="space-y-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <TabsContent value="manual" className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="qrCode">Mã tham gia nhóm</Label>
+                <Label htmlFor="qrCode" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Mã tham gia nhóm
+                </Label>
                 <Input
                   id="qrCode"
                   placeholder="Nhập mã QR hoặc link tham gia"
                   value={qrCode}
                   onChange={(e) => setQrCode(e.target.value)}
-                  className="font-mono"
+                  className="font-mono h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600"
                 />
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Nhập mã QR hoặc link mời từ người tạo nhóm
                 </p>
               </div>
 
-              <div className="flex justify-end gap-3">
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => onOpenChange(false)}
+                  className="px-6 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
                 >
                   Hủy
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  className="px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                   disabled={!qrCode.trim()}
                 >
                   Tham gia

@@ -66,46 +66,59 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-purple-800 dark:text-purple-300">Tạo nhóm chuyến đi mới</DialogTitle>
+        <DialogHeader className="space-y-3">
+          <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            Tạo nhóm chuyến đi mới
+          </DialogTitle>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Tạo một nhóm mới để cùng bạn bè lên kế hoạch cho chuyến đi tuyệt vời
+          </p>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Group Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Tên nhóm *</Label>
+            <Label htmlFor="title" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Tên nhóm *
+            </Label>
             <Input
               id="title"
               placeholder="Ví dụ: Khám phá Đà Lạt"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600"
               required
             />
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Mô tả</Label>
+            <Label htmlFor="description" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Mô tả
+            </Label>
             <Textarea
               id="description"
               placeholder="Mô tả về chuyến đi của bạn..."
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
+              className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 resize-none"
             />
           </div>
 
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="location">Địa điểm *</Label>
+            <Label htmlFor="location" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Địa điểm *
+            </Label>
             <div className="relative">
-              <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="location"
                 placeholder="Ví dụ: Đà Lạt, Lâm Đồng"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="pl-10"
+                className="pl-10 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600"
                 required
               />
             </div>
@@ -190,17 +203,18 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="px-6 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
             >
               Hủy
             </Button>
             <Button
               type="submit"
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
               disabled={!formData.title.trim() || !formData.location.trim()}
             >
               Tạo nhóm
