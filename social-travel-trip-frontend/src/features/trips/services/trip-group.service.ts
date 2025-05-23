@@ -34,8 +34,8 @@ class TripGroupService {
   // Group operations
   async getAllGroups(): Promise<TripGroup[]> {
     try {
-      const response = await Http.get(`${API_ENDPOINT.social_travel_trip}/group/get-list`);
-      const groupDTOs: TripGroupDTO[] = response.data || [];
+      const response:any = await Http.get(`${API_ENDPOINT.social_travel_trip}/group/get-list`);
+      const groupDTOs: TripGroupDTO[] = response || [];
 
       // Map DTOs to class instances
       return groupDTOs.map(dto => new TripGroup(dto));
@@ -47,11 +47,11 @@ class TripGroupService {
 
   async getGroupById(id: string): Promise<TripGroup> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-details`, {
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-details`, {
         group_id: parseInt(id)
       });
 
-      const groupDTO: TripGroupDTO = response.data;
+      const groupDTO: TripGroupDTO = response;
 
       // Map DTO to class instance
       return new TripGroup(groupDTO);
@@ -67,10 +67,10 @@ class TripGroupService {
       console.log('Sending create group request to:', `${API_ENDPOINT.social_travel_trip}/group/create`);
       console.log('Payload:', payload);
 
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/create`, payload);
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/create`, payload);
       console.log('Create group response:', response);
 
-      const groupDTO: TripGroupDTO = response.data || response;
+      const groupDTO: TripGroupDTO = response;
 
       // Map DTO to class instance
       return new TripGroup(groupDTO);
@@ -83,9 +83,9 @@ class TripGroupService {
 
   async joinGroup(data: JoinTripGroupData): Promise<TripGroup> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/join-by-code`, data.toBackendDTO());
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/join-by-code`, data.toBackendDTO());
 
-      const groupDTO: TripGroupDTO = response.data;
+      const groupDTO: TripGroupDTO = response;
 
       // Map DTO to class instance
       return new TripGroup(groupDTO);
@@ -122,13 +122,13 @@ class TripGroupService {
 
   async getGroupMembers(groupId: string, page: number = 1, limit: number = 20) {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-members`, {
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-members`, {
         group_id: parseInt(groupId),
         page,
         limit,
       });
 
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Error fetching group members:', error);
       throw error;
@@ -137,11 +137,11 @@ class TripGroupService {
 
   async generateJoinCode(groupId: string): Promise<string> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/generate-join-qrcode`, {
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/generate-join-qrcode`, {
         group_id: parseInt(groupId),
       });
 
-      return response.data.join_code;
+      return response.join_code;
     } catch (error) {
       console.error('Error generating join code:', error);
       throw error;
@@ -151,8 +151,8 @@ class TripGroupService {
   // Message operations
   async sendMessage(data: SendMessageData): Promise<TripGroupMessage> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/send-message`, data);
-      return response.data;
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/send-message`, data);
+      return response;
     } catch (error) {
       console.error('Error sending message:', error);
       throw error;
@@ -175,8 +175,8 @@ class TripGroupService {
         body.before_id = beforeId;
       }
 
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-messages`, body);
-      return response.data;
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-messages`, body);
+      return response;
     } catch (error) {
       console.error('Error fetching messages:', error);
       throw error;
@@ -220,11 +220,11 @@ class TripGroupService {
 
   async getMessageReactions(messageId: number): Promise<any[]> {
     try {
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-message-reactions`, {
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-message-reactions`, {
         group_message_id: messageId,
       });
 
-      return response.data || [];
+      return response || [];
     } catch (error) {
       console.error('Error fetching message reactions:', error);
       throw error;

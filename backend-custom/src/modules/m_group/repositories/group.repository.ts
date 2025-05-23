@@ -62,10 +62,18 @@ export class GroupRepository {
   async getListGroups(userId: number) {
     const params = [userId];
     const query = `
-      SELECT * FROM groups
-      WHERE group_id IN (
+      SELECT
+        g.*,
+        (
+          SELECT COUNT(*)
+          FROM group_members gm
+          WHERE gm.group_id = g.group_id
+        ) as member_count
+      FROM groups g
+      WHERE g.group_id IN (
         SELECT group_id FROM group_members WHERE user_id = $1
       )
+      ORDER BY g.updated_at DESC
     `;
 
     return this.client.execute(query, params);

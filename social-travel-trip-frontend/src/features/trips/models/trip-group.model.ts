@@ -134,6 +134,10 @@ export class TripGroup {
       max: dto.members?.max || 10,
       list: dto.members?.list?.map(memberDto => new TripGroupMember(memberDto)) || [],
     };
+
+    // Debug log for members data
+    console.log('TripGroup constructor - dto.members:', dto.members);
+    console.log('TripGroup constructor - this.members:', this.members);
   }
 
   private parseJsonData(jsonData: any): any {

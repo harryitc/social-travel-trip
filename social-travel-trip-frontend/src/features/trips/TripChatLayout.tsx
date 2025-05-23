@@ -29,27 +29,28 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
   const [activeTab, setActiveTab] = useState('chat');
 
   // Load groups from API
-  useEffect(() => {
-    const loadGroups = async () => {
-      try {
-        setLoading(true);
-        const groups = await tripGroupService.getAllGroups();
-        setAllGroups(groups);
+  const loadGroups = async () => {
+    try {
+      setLoading(true);
+      const groups = await tripGroupService.getAllGroups();
+      console.log('Loaded groups:', groups); // Debug log
+      setAllGroups(groups);
 
-        // If initialTripId is provided, find and set the selected group
-        if (initialTripId) {
-          const group = groups.find(g => g.id === initialTripId || g.group_id.toString() === initialTripId);
-          if (group) {
-            setSelectedGroup(group);
-          }
+      // If initialTripId is provided, find and set the selected group
+      if (initialTripId) {
+        const group = groups.find(g => g.id === initialTripId || g.group_id.toString() === initialTripId);
+        if (group) {
+          setSelectedGroup(group);
         }
-      } catch (error) {
-        console.error('Error loading groups:', error);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Error loading groups:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadGroups();
   }, [initialTripId]);
 
@@ -147,6 +148,23 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
     setActiveTab(tabId);
   };
 
+  // Handle group created
+  const handleGroupCreated = (newGroup: TripGroup) => {
+    setAllGroups(prev => [newGroup, ...prev]);
+    setSelectedGroup(newGroup);
+    // Update URL
+    router.push(`/trips/${newGroup.id}`);
+  };
+
+  // Handle group joined
+  const handleGroupJoined = (joinedGroup: TripGroup) => {
+    // Reload groups to get updated data
+    loadGroups();
+    setSelectedGroup(joinedGroup);
+    // Update URL
+    router.push(`/trips/${joinedGroup.id}`);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden w-full max-w-full bg-gray-50 dark:bg-gray-900">
       {/* Breadcrumb */}
@@ -174,6 +192,8 @@ export function TripChatLayout({ initialTripId }: TripChatLayoutProps) {
               groups={allGroups}
               selectedGroupId={selectedGroup?.id || ''}
               onSelectGroup={handleSelectGroup}
+              onGroupCreated={handleGroupCreated}
+              onGroupJoined={handleGroupJoined}
             />
           )}
         </div>

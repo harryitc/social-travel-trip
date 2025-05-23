@@ -11,14 +11,17 @@ import { Search, Plus, QrCode, Users, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import { CreateGroupDialog } from './create-group-dialog';
 import { JoinGroupDialog } from './join-group-dialog';
+import { notification } from 'antd';
 
 type GroupChatListProps = {
   groups: TripGroup[];
   selectedGroupId: string;
   onSelectGroup: (group: TripGroup) => void;
+  onGroupCreated?: (group: TripGroup) => void;
+  onGroupJoined?: (group: TripGroup) => void;
 };
 
-export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupChatListProps) {
+export function GroupChatList({ groups, selectedGroupId, onSelectGroup, onGroupCreated, onGroupJoined }: GroupChatListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showJoinDialog, setShowJoinDialog] = useState(false);
@@ -36,26 +39,61 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       const result = await tripGroupService.createGroup(groupData);
       console.log('Group created successfully:', result);
       setShowCreateDialog(false);
-      // TODO: Refresh groups list or emit event to parent
-      window.location.reload(); // Temporary solution
-    } catch (error) {
+
+      // Show success notification
+      notification.success({
+        message: 'Tạo nhóm thành công',
+        description: `Nhóm "${result.title}" đã được tạo thành công!`,
+        placement: 'topRight',
+        duration: 3,
+      });
+
+      // Notify parent component
+      if (onGroupCreated) {
+        onGroupCreated(result);
+      }
+    } catch (error: any) {
       console.error('Error creating group:', error);
       console.error('Error details:', error.response?.data || error.message);
-      // TODO: Show error toast
-      alert(`Lỗi tạo nhóm: ${error.response?.data?.message || error.message}`);
+
+      // Show error notification
+      notification.error({
+        message: 'Lỗi tạo nhóm',
+        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo nhóm',
+        placement: 'topRight',
+        duration: 5,
+      });
     }
   };
 
   const handleJoinGroup = async (qrCode: string) => {
     try {
       const joinData = new JoinTripGroupData({ qrCode });
-      await tripGroupService.joinGroup(joinData);
+      const result = await tripGroupService.joinGroup(joinData);
       setShowJoinDialog(false);
-      // TODO: Refresh groups list or emit event to parent
-      window.location.reload(); // Temporary solution
-    } catch (error) {
+
+      // Show success notification
+      notification.success({
+        message: 'Tham gia nhóm thành công',
+        description: `Bạn đã tham gia nhóm "${result.title}" thành công!`,
+        placement: 'topRight',
+        duration: 3,
+      });
+
+      // Notify parent component
+      if (onGroupJoined) {
+        onGroupJoined(result);
+      }
+    } catch (error: any) {
       console.error('Error joining group:', error);
-      // TODO: Show error toast
+
+      // Show error notification
+      notification.error({
+        message: 'Lỗi tham gia nhóm',
+        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tham gia nhóm',
+        placement: 'topRight',
+        duration: 5,
+      });
     }
   };
 
@@ -117,7 +155,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                 <Avatar className="h-11 w-11 shrink-0 ring-2 ring-white shadow-sm dark:ring-gray-800">
                   <AvatarImage src={group.image} alt={group.title} />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-medium">
-                    {group.title[0]}
+                    {(group.title || group.name || 'G')[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
 

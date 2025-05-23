@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/radix-ui/button';
 import { CreateGroupDialog } from '@/features/trips/components/create-group-dialog';
 import { CreateTripGroupData } from '@/features/trips/models/trip-group.model';
 import { tripGroupService } from '@/features/trips/services/trip-group.service';
+import { notification } from 'antd';
 
 export default function TestGroupModalPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -15,11 +16,23 @@ export default function TestGroupModalPage() {
       const result = await tripGroupService.createGroup(groupData);
       console.log('Group created successfully:', result);
       setShowCreateDialog(false);
-      alert('Tạo nhóm thành công!');
+
+      notification.success({
+        message: 'Tạo nhóm thành công',
+        description: `Nhóm "${result.title}" đã được tạo thành công!`,
+        placement: 'topRight',
+        duration: 3,
+      });
     } catch (error: any) {
       console.error('Error creating group:', error);
       console.error('Error details:', error.response?.data || error.message);
-      alert(`Lỗi tạo nhóm: ${error.response?.data?.message || error.message}`);
+
+      notification.error({
+        message: 'Lỗi tạo nhóm',
+        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo nhóm',
+        placement: 'topRight',
+        duration: 5,
+      });
     }
   };
 
@@ -29,13 +42,13 @@ export default function TestGroupModalPage() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">
           Test Group Creation Modal
         </h1>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4">Test Modal Tạo Nhóm</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Click vào nút bên dưới để mở modal tạo nhóm và test chức năng.
           </p>
-          
+
           <Button
             onClick={() => setShowCreateDialog(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white"

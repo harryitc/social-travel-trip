@@ -10,6 +10,11 @@ export class Group {
   plan_id?: number;
   join_code?: string;
   join_code_expires_at?: Date;
+  members?: {
+    count: number;
+    max?: number;
+    list: any[];
+  };
 
   constructor(data: any) {
     this.group_id = data.group_id;
@@ -23,6 +28,15 @@ export class Group {
     this.plan_id = data.plan_id;
     this.join_code = data.join_code;
     this.join_code_expires_at = data.join_code_expires_at;
+
+    // Handle member count from query
+    if (data.member_count !== undefined) {
+      this.members = {
+        count: parseInt(data.member_count) || 0,
+        max: 10, // Default max members
+        list: [],
+      };
+    }
   }
 }
 
