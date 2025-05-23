@@ -23,6 +23,7 @@ import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
 import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
 import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
+import { InviteMemberDto } from '../dto/invite-member.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { GroupService } from '../services/group.service';
 
@@ -165,5 +166,12 @@ export class GroupController {
   async joinGroupByCode(@Body() dto: JoinGroupByCodeDto, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.joinGroupByCode(dto, +userId);
+  }
+
+  @Post('invite-member')
+  @ApiOperation({ summary: 'Invite a member to group by username or email' })
+  async inviteMember(@Body() dto: InviteMemberDto, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.inviteMember(dto, +userId);
   }
 }

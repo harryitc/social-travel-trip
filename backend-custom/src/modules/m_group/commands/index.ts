@@ -9,6 +9,7 @@ import { AddMessagePinCommandHandler } from './add-message-pin.command';
 import { RemoveMessagePinCommandHandler } from './remove-message-pin.command';
 import { GenerateJoinQRCodeCommandHandler } from './generate-join-qrcode.command';
 import { JoinGroupByCodeCommandHandler } from './join-group-by-code.command';
+import { InviteMemberCommandHandler } from './invite-member.command';
 
 export const CommandHandlers = [
   CreateGroupCommandHandler,
@@ -22,4 +23,5 @@ export const CommandHandlers = [
   RemoveMessagePinCommandHandler,
   GenerateJoinQRCodeCommandHandler,
   JoinGroupByCodeCommandHandler,
+  InviteMemberCommandHandler,
 ];

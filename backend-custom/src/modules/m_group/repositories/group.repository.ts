@@ -133,6 +133,17 @@ export class GroupRepository {
     return this.client.execute(query, [userId]);
   }
 
+  async findUserByUsernameOrEmail(usernameOrEmail: string) {
+    const query = `
+      SELECT user_id, username, email, avatar_url
+      FROM users
+      WHERE username = $1 OR email = $1
+      LIMIT 1
+    `;
+
+    return this.client.execute(query, [usernameOrEmail]);
+  }
+
   async addGroupMember(data: {
     group_id: number;
     user_id: number;

@@ -135,15 +135,36 @@ class TripGroupService {
     }
   }
 
-  async generateJoinCode(groupId: string): Promise<string> {
+  async generateJoinCode(groupId: string): Promise<any> {
     try {
       const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/generate-join-qrcode`, {
         group_id: parseInt(groupId),
       });
 
-      return response.join_code;
+      return response; // Return full response with QR data
     } catch (error) {
       console.error('Error generating join code:', error);
+      throw error;
+    }
+  }
+
+  async inviteMember(data: {
+    groupId: string;
+    usernameOrEmail: string;
+    role: string;
+    nickname?: string;
+  }): Promise<any> {
+    try {
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/invite-member`, {
+        group_id: parseInt(data.groupId),
+        username_or_email: data.usernameOrEmail,
+        role: data.role,
+        nickname: data.nickname,
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Error inviting member:', error);
       throw error;
     }
   }

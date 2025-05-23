@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/radix-ui/input';
 import { Label } from '@/components/ui/radix-ui/label';
 import { QrCode, Camera, Type } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
+import { notification } from 'antd';
 
 type JoinGroupDialogProps = {
   open: boolean;
@@ -30,15 +31,51 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
   };
 
   const handleScanQR = () => {
-    // TODO: Implement QR code scanning functionality
     setIsScanning(true);
 
-    // Simulate QR scanning (in real implementation, use camera API)
-    setTimeout(() => {
+    // Check if browser supports camera
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      notification.error({
+        message: 'Không hỗ trợ camera',
+        description: 'Trình duyệt của bạn không hỗ trợ truy cập camera. Vui lòng nhập mã thủ công.',
+        placement: 'topRight',
+        duration: 5,
+      });
       setIsScanning(false);
-      // Mock QR code result
-      setQrCode('TRIP_GROUP_123456');
-    }, 2000);
+      return;
+    }
+
+    // Request camera permission and start scanning
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(stream => {
+        // In a real implementation, you would use a QR scanner library here
+        // For now, we'll simulate the scanning process
+        setTimeout(() => {
+          setIsScanning(false);
+          stream.getTracks().forEach(track => track.stop()); // Stop camera
+
+          // Mock QR code result - in real implementation, this would come from QR scanner
+          const mockQrCode = 'sample_join_code_123';
+          setQrCode(mockQrCode);
+
+          notification.success({
+            message: 'Quét thành công',
+            description: 'Đã phát hiện mã QR. Vui lòng kiểm tra và nhấn "Tham gia nhóm".',
+            placement: 'topRight',
+            duration: 3,
+          });
+        }, 3000);
+      })
+      .catch(error => {
+        console.error('Camera access error:', error);
+        setIsScanning(false);
+        notification.error({
+          message: 'Lỗi truy cập camera',
+          description: 'Không thể truy cập camera. Vui lòng cấp quyền camera hoặc nhập mã thủ công.',
+          placement: 'topRight',
+          duration: 5,
+        });
+      });
   };
 
   return (
