@@ -16,27 +16,27 @@ export default function DetailsPage() {
   // Listen to group selection events
   useEventListeners({
     'group:selected': (data) => {
-      console.log('📋 DetailsPage: Group selected:', data.group.id, data.group.title);
+      console.log('📋 [DetailsPage] Group selected:', data.group.id, data.group.title);
       setSelectedGroup(data.group);
     },
     'group:updated': (data) => {
       // Update group info if it's the currently selected group
       if (selectedGroup && selectedGroup.id === data.group.id) {
-        console.log('📋 DetailsPage: Group updated:', data.group.title);
+        console.log('📋 [DetailsPage] Group updated:', data.group.title);
         setSelectedGroup(data.group);
       }
     },
     'group:member_added': (data) => {
       // Update group info if it's the currently selected group
       if (selectedGroup && selectedGroup.id === data.group.id) {
-        console.log('📋 DetailsPage: Member added to group:', data.member);
+        console.log('📋 [DetailsPage] Member added to group:', data.member);
         setSelectedGroup(data.group);
       }
     },
     'group:member_removed': (data) => {
       // Update group info if it's the currently selected group
       if (selectedGroup && selectedGroup.id === data.group.id) {
-        console.log('📋 DetailsPage: Member removed from group:', data.memberId);
+        console.log('📋 [DetailsPage] Member removed from group:', data.memberId);
         setSelectedGroup(data.group);
       }
     },

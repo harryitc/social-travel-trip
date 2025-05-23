@@ -37,7 +37,7 @@ app/(social-travel-trip-group-chat)/
 - Layout render 4 parallel routes đồng thời:
   - `@groups`: Load danh sách nhóm
   - `@chat`: Hiển thị empty state
-  - `@details`: Hiển thị empty state  
+  - `@details`: Hiển thị empty state
   - `@breadcrumb`: Hiển thị breadcrumb
 
 ### 2. Auto-select nhóm
@@ -45,14 +45,25 @@ app/(social-travel-trip-group-chat)/
 - Emit event `group:selected` qua Zustand
 
 ### 3. Cập nhật các cột
-- `@chat` listen event `group:selected` → Hiển thị TripChat
+- `@chat` listen event `group:selected` → Hiển thị TripChat → TripChat tự động load messages
 - `@details` listen event `group:selected` → Hiển thị GroupChatDetails
 - `@breadcrumb` listen event `group:selected` → Cập nhật breadcrumb
 
-### 4. Tương tác người dùng
+### 4. Load messages
+- TripChat component nhận `tripId` → Gọi API `getMessages(tripId)`
+- Sau khi load xong → Emit event `chat:messages_loaded`
+- Messages được hiển thị trong chat interface
+
+### 5. Tương tác người dùng
 - User click nhóm khác trong `@groups`
 - Emit event `group:selected` với nhóm mới
 - Tất cả components khác tự động cập nhật
+- TripChat tự động load messages cho nhóm mới
+
+### 6. Gửi tin nhắn
+- User gửi tin nhắn → TripChat gọi API `sendMessage`
+- Sau khi gửi thành công → Emit event `chat:message_sent`
+- Tin nhắn được thêm vào danh sách messages
 
 ## Events được sử dụng
 

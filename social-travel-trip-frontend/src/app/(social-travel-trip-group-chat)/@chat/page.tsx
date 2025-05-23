@@ -17,13 +17,13 @@ export default function ChatPage() {
   // Listen to group selection events
   useEventListeners({
     'group:selected': (data) => {
-      console.log('💬 ChatPage: Group selected:', data.group.id, data.group.title);
+      console.log('💬 [ChatPage] Group selected:', data.group.id, data.group.title);
       setSelectedGroup(data.group);
     },
     'group:updated': (data) => {
       // Update group info if it's the currently selected group
       if (selectedGroup && selectedGroup.id === data.group.id) {
-        console.log('💬 ChatPage: Group updated:', data.group.title);
+        console.log('💬 [ChatPage] Group updated:', data.group.title);
         setSelectedGroup(data.group);
       }
     },

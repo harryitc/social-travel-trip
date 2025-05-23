@@ -29,6 +29,7 @@ import { TripGroupMember } from './models/trip-group.model';
 import { tripGroupService, TripGroupMessage } from './services/trip-group.service';
 import { ChatSkeleton } from './components/chat-skeleton';
 import { notification } from 'antd';
+import { useEventStore } from '@/features/stores/event.store';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -82,6 +83,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
 
 export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }: TripChatProps) {
   const user: any = null; // TODO: Get from auth context
+  const { emit } = useEventStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
@@ -101,26 +103,44 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
 
       try {
         setLoading(true);
-        console.log('Loading messages for tripId:', tripId);
+        console.log('💬 [TripChat] Loading messages for tripId:', tripId);
         const result = await tripGroupService.getMessages(tripId);
-        console.log('Messages API response:', result);
+        console.log('💬 [TripChat] Messages API response:', result);
 
         if (result && result.messages) {
           const transformedMessages = result.messages.map(transformMessage);
-          console.log('Transformed messages:', transformedMessages);
+          console.log('💬 [TripChat] Transformed messages:', transformedMessages);
           setMessages(transformedMessages);
+
+          // Emit event that messages have been loaded
+          emit('chat:messages_loaded', {
+            groupId: tripId,
+            messages: transformedMessages
+          });
         } else {
-          console.warn('No messages found in response:', result);
+          console.warn('💬 [TripChat] No messages found in response:', result);
           setMessages([]);
+
+          // Emit event with empty messages
+          emit('chat:messages_loaded', {
+            groupId: tripId,
+            messages: []
+          });
         }
       } catch (error: any) {
-        console.error('Error loading messages:', error);
+        console.error('❌ [TripChat] Error loading messages:', error);
         notification.error({
           message: 'Lỗi',
           description:  error.response?.data?.message || 'Không thể tải tin nhắn. Vui lòng thử lại sau.',
           placement: 'topRight',
         });
         setMessages([]);
+
+        // Emit event with empty messages on error
+        emit('chat:messages_loaded', {
+          groupId: tripId,
+          messages: []
+        });
       } finally {
         setLoading(false);
       }
@@ -225,6 +245,8 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     if (!newMessage.trim()) return;
 
     try {
+      console.log('💬 [TripChat] Sending message:', newMessage);
+
       // Send message via API
       const sentMessage = await tripGroupService.sendMessage({
         group_id: parseInt(tripId),
@@ -235,6 +257,12 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
       const transformedMessage = transformMessage(sentMessage);
       setMessages(prev => [...prev, transformedMessage]);
 
+      // Emit event that message was sent
+      emit('chat:message_sent', {
+        groupId: tripId,
+        message: transformedMessage
+      });
+
       // Clear input
       setNewMessage('');
       setSelectedImages([]);
@@ -242,10 +270,14 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
       setImagePreviewUrls([]);
       setReplyingTo(null);
 
-      // TODO: Stop typing indicator if needed
-    } catch (error) {
-      console.error('Error sending message:', error);
-      // TODO: Show error toast
+      console.log('✅ [TripChat] Message sent successfully');
+    } catch (error: any) {
+      console.error('❌ [TripChat] Error sending message:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: error.response?.data?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.',
+        placement: 'topRight',
+      });
     }
   };
 

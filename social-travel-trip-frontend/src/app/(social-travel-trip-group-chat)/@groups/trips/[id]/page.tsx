@@ -17,7 +17,7 @@ export default function GroupsDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { emit } = useEventStore();
-  
+
   const [allGroups, setAllGroups] = useState<TripGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -28,27 +28,27 @@ export default function GroupsDetailPage() {
   const loadGroups = async () => {
     try {
       setLoading(true);
-      console.log('📋 Loading groups list for trip:', tripId);
+      console.log('📋 [GroupsDetailPage] Loading groups list for trip:', tripId);
       const groups = await tripGroupService.getAllGroups();
-      console.log('✅ Groups loaded:', groups.length, 'groups');
+      console.log('✅ [GroupsDetailPage] Groups loaded:', groups.length, 'groups');
       setAllGroups(groups);
 
       // Auto-select group based on URL parameter
       if (tripId && groups.length > 0) {
         const group = groups.find(g => g.id === tripId || g.group_id.toString() === tripId);
         if (group) {
-          console.log('✅ Found trip group:', group.title);
+          console.log('✅ [GroupsDetailPage] Found trip group:', group.title);
           handleSelectGroup(group);
         } else {
-          console.log('❌ Trip group not found, selecting first group');
+          console.log('❌ [GroupsDetailPage] Trip group not found, selecting first group');
           handleSelectGroup(groups[0]);
         }
       } else if (groups.length > 0) {
-        console.log('📌 Auto-selecting first group:', groups[0].title);
+        console.log('📌 [GroupsDetailPage] Auto-selecting first group:', groups[0].title);
         handleSelectGroup(groups[0]);
       }
     } catch (error) {
-      console.error('❌ Error loading groups:', error);
+      console.error('❌ [GroupsDetailPage] Error loading groups:', error);
     } finally {
       setLoading(false);
     }
@@ -56,12 +56,12 @@ export default function GroupsDetailPage() {
 
   // Handle group selection with Zustand events
   const handleSelectGroup = (group: TripGroup) => {
-    console.log('🎯 Selected group:', group.id, group.title);
+    console.log('🎯 [GroupsDetailPage] Selected group:', group.id, group.title);
     setSelectedGroupId(group.id);
-    
+
     // Update URL
     router.replace(`/trips/${group.id}`);
-    
+
     // Emit event for other components to listen
     emit('group:selected', { group });
   };

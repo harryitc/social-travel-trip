@@ -15,13 +15,13 @@ export default function BreadcrumbPage() {
   // Listen to group selection events
   useEventListeners({
     'group:selected': (data) => {
-      console.log('🍞 BreadcrumbPage: Group selected:', data.group.id, data.group.title);
+      console.log('🍞 [BreadcrumbPage] Group selected:', data.group.id, data.group.title);
       setSelectedGroup(data.group);
     },
     'group:updated': (data) => {
       // Update group info if it's the currently selected group
       if (selectedGroup && selectedGroup.id === data.group.id) {
-        console.log('🍞 BreadcrumbPage: Group updated:', data.group.title);
+        console.log('🍞 [BreadcrumbPage] Group updated:', data.group.title);
         setSelectedGroup(data.group);
       }
     },
