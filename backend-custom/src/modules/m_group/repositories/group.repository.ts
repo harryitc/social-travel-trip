@@ -40,6 +40,29 @@ export class GroupRepository {
     return this.client.execute(query, params);
   }
 
+  async createGroupWithJoinCode(data: CreateGroupDto, joinCode: string) {
+    const { name, description, cover_url, plan_id, status, json_data } = data;
+    const params = [
+      name,
+      description || null,
+      cover_url || null,
+      status || 'private', // Default to private for groups with join codes
+      plan_id || null,
+      JSON.stringify(json_data || {}), // json_data
+      joinCode,
+    ];
+
+    const query = `
+      INSERT INTO groups (
+        name, description, cover_url, status, plan_id, json_data, join_code, created_at, updated_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      RETURNING *
+    `;
+
+    return this.client.execute(query, params);
+  }
+
   async updateGroup(groupId: number, data: Partial<CreateGroupDto>) {
     const { name, description, cover_url, plan_id } = data;
     const params = [name, description, cover_url, plan_id, groupId];

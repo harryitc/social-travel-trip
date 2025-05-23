@@ -14,6 +14,7 @@ import { JoinGroupDialog } from './join-group-dialog';
 import { QRCodeDisplayDialog } from './qr-code-display-dialog';
 import { InviteMemberDialog, InviteMemberData } from './invite-member-dialog';
 import { GroupActionsMenu } from './group-actions-menu';
+import { GroupCreatedSuccessDialog } from './group-created-success-dialog';
 import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
 
@@ -29,7 +30,9 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [selectedGroupForActions, setSelectedGroupForActions] = useState<TripGroup | null>(null);
+  const [createdGroup, setCreatedGroup] = useState<TripGroup | null>(null);
   const emit = useEventStore((state) => state.emit);
 
   const filteredGroups = groups.filter(group => {
@@ -46,13 +49,9 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       console.log('Group created successfully:', result);
       setShowCreateDialog(false);
 
-      // Show success notification
-      notification.success({
-        message: 'Tạo nhóm thành công',
-        description: `Nhóm "${result.title}" đã được tạo thành công!`,
-        placement: 'topRight',
-        duration: 3,
-      });
+      // Store created group and show success dialog
+      setCreatedGroup(result);
+      setShowSuccessDialog(true);
 
       // Emit event using Zustand
       emit('group:created', { group: result });
@@ -92,7 +91,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       // Show error notification
       notification.error({
         message: 'Lỗi tham gia nhóm',
-        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tham gia nhóm',
+        description: error.response?.data?.reasons?.message || error.message || 'Có lỗi xảy ra khi tham gia nhóm',
         placement: 'topRight',
         duration: 5,
       });
@@ -281,6 +280,12 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
           />
         </>
       )}
+
+      <GroupCreatedSuccessDialog
+        open={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+        group={createdGroup}
+      />
     </div>
   );
 }

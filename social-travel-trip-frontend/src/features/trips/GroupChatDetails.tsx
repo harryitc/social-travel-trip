@@ -5,9 +5,11 @@ import { TripGroup, TripGroupMember } from './models/trip-group.model';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Badge } from '@/components/ui/radix-ui/badge';
-import { Calendar, MapPin, Users, Clock, Globe, Lock, UserPlus, Pencil, Trash2, Plus, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Globe, Lock, UserPlus, Pencil, Trash2, Plus, ChevronRight, Copy, QrCode } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/radix-ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
+import { Input } from '@/components/ui/radix-ui/input';
+import { notification } from 'antd';
 import { TRAVEL_PLAN_TEMPLATES } from '../planning/mock-data';
 import TripPlanEditor from './TripPlanEditor';
 import { TripPlan } from './types';
@@ -44,6 +46,28 @@ export function GroupChatDetails({ group, isCollapsed = false }: GroupChatDetail
   const handleOpenInviteDialog = () => {
     setShowInviteDialog(true);
     setShowMemberList(false);
+  };
+
+  // Copy join code to clipboard
+  const copyJoinCode = async () => {
+    if (group.join_code) {
+      try {
+        await navigator.clipboard.writeText(group.join_code);
+        notification.success({
+          message: 'Đã sao chép',
+          description: 'Mã mời đã được sao chép vào clipboard',
+          placement: 'topRight',
+          duration: 2,
+        });
+      } catch (error) {
+        notification.error({
+          message: 'Lỗi sao chép',
+          description: 'Không thể sao chép mã mời',
+          placement: 'topRight',
+          duration: 3,
+        });
+      }
+    }
   };
 
   // Xử lý khi lưu kế hoạch chuyến đi
@@ -117,6 +141,39 @@ export function GroupChatDetails({ group, isCollapsed = false }: GroupChatDetail
           </div>
         </div>
       </div>
+
+      {/* Join Code section */}
+      {group.join_code && (
+        <div className="p-3 border-b border-teal-100 dark:border-teal-900 bg-teal-50/30 dark:bg-teal-900/10">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <QrCode className="h-4 w-4 text-teal-500" />
+              <h3 className="font-medium text-sm">Mã mời</h3>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Input
+                value={group.join_code}
+                readOnly
+                className="font-mono text-sm bg-white dark:bg-gray-800 border-teal-200 dark:border-teal-700"
+              />
+              <Button
+                onClick={copyJoinCode}
+                variant="outline"
+                size="sm"
+                className="px-3 border-teal-200 hover:bg-teal-50 dark:border-teal-700 dark:hover:bg-teal-900/20"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Chia sẻ mã này để mời người khác tham gia nhóm
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Members section - Simplified for vertical layout */}
       {isCollapsed ? (

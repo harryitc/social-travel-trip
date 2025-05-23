@@ -18,16 +18,59 @@ type JoinGroupDialogProps = {
 export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDialogProps) {
   const [qrCode, setQrCode] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [isValidCode, setIsValidCode] = useState(true);
+
+  // Validate join code format
+  const validateJoinCode = (code: string): boolean => {
+    // Join code should be 8-16 characters, alphanumeric
+    const codeRegex = /^[A-Z0-9]{8,16}$/;
+    return codeRegex.test(code);
+  };
+
+  const handleCodeChange = (value: string) => {
+    const upperValue = value.toUpperCase();
+    setQrCode(upperValue);
+
+    if (upperValue.length > 0) {
+      setIsValidCode(validateJoinCode(upperValue));
+    } else {
+      setIsValidCode(true);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!qrCode.trim()) {
+    const trimmedCode = qrCode.trim();
+    if (!trimmedCode) {
       return;
     }
 
-    onJoinGroup(qrCode.trim());
+    if (!validateJoinCode(trimmedCode)) {
+      notification.error({
+        message: 'Mã mời không hợp lệ',
+        description: 'Mã mời phải có 8-16 ký tự và chỉ chứa chữ cái và số',
+        placement: 'topRight',
+        duration: 3,
+      });
+      return;
+    }
+
+    onJoinGroup(trimmedCode);
+    resetForm();
+  };
+
+  const resetForm = () => {
     setQrCode('');
+    setIsValidCode(true);
+    setIsScanning(false);
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    if (!open) {
+      resetForm();
+    }
+    onOpenChange(open);
   };
 
   const handleScanQR = () => {
@@ -55,8 +98,8 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
           stream.getTracks().forEach(track => track.stop()); // Stop camera
 
           // Mock QR code result - in real implementation, this would come from QR scanner
-          const mockQrCode = 'sample_join_code_123';
-          setQrCode(mockQrCode);
+          const mockQrCode = 'ABC123DEF456';
+          handleCodeChange(mockQrCode);
 
           notification.success({
             message: 'Quét thành công',
@@ -79,7 +122,7 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
@@ -87,7 +130,7 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
             Tham gia nhóm
           </DialogTitle>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Nhập mã mời hoặc quét mã QR để tham gia nhóm chuyến đi
+            Sử dụng mã mời từ người tạo nhóm hoặc quét mã QR để tham gia nhóm chuyến đi
           </p>
         </DialogHeader>
 
@@ -95,7 +138,7 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="manual" className="flex items-center gap-2">
               <Type className="h-4 w-4" />
-              Nhập mã
+              Mã mời
             </TabsTrigger>
             <TabsTrigger value="scan" className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
@@ -107,35 +150,51 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="qrCode" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Mã tham gia nhóm
+                  Mã mời nhóm
                 </Label>
                 <Input
                   id="qrCode"
-                  placeholder="Nhập mã QR hoặc link tham gia"
+                  placeholder="Ví dụ: ABC123DEF456"
                   value={qrCode}
-                  onChange={(e) => setQrCode(e.target.value)}
-                  className="font-mono h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600"
+                  onChange={(e) => handleCodeChange(e.target.value)}
+                  className={`font-mono h-10 focus:ring-blue-500 dark:border-gray-600 text-center tracking-wider ${
+                    !isValidCode && qrCode.length > 0
+                      ? 'border-red-300 focus:border-red-500 dark:border-red-600'
+                      : 'border-gray-300 focus:border-blue-500'
+                  }`}
+                  maxLength={16}
                 />
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Nhập mã QR hoặc link mời từ người tạo nhóm
-                </p>
+                <div className="space-y-1">
+                  {!isValidCode && qrCode.length > 0 ? (
+                    <p className="text-sm text-red-500 dark:text-red-400">
+                      ❌ Mã mời không hợp lệ. Vui lòng kiểm tra lại.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Nhập mã mời 8-16 ký tự từ người tạo nhóm
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    💡 Mã mời thường có dạng: ABC123DEF456 (chữ và số)
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => onOpenChange(false)}
+                  onClick={() => handleDialogChange(false)}
                   className="px-6 border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
                 >
                   Hủy
                 </Button>
                 <Button
                   type="submit"
-                  className="px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                  disabled={!qrCode.trim()}
+                  className="px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!qrCode.trim() || !isValidCode}
                 >
-                  Tham gia
+                  Tham gia nhóm
                 </Button>
               </div>
             </form>
@@ -191,23 +250,31 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
                   <Label>Mã đã quét được:</Label>
                   <Input
                     value={qrCode}
-                    onChange={(e) => setQrCode(e.target.value)}
-                    className="font-mono text-sm"
+                    onChange={(e) => handleCodeChange(e.target.value)}
+                    className={`font-mono text-sm text-center tracking-wider ${
+                      !isValidCode && qrCode.length > 0
+                        ? 'border-red-300 focus:border-red-500 dark:border-red-600'
+                        : 'border-gray-300 focus:border-blue-500'
+                    }`}
+                    maxLength={16}
                   />
                 </div>
                 <div className="flex justify-end gap-3">
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      setQrCode('');
-                      onOpenChange(false);
-                    }}
+                    onClick={() => handleDialogChange(false)}
                   >
                     Hủy
                   </Button>
                   <Button
-                    onClick={() => onJoinGroup(qrCode)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={() => {
+                      if (validateJoinCode(qrCode)) {
+                        onJoinGroup(qrCode);
+                        resetForm();
+                      }
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!isValidCode || !qrCode.trim()}
                   >
                     Tham gia nhóm
                   </Button>

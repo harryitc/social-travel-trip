@@ -6,6 +6,7 @@ export { GroupSearchBar } from './group-search-bar';
 export { QRCodeDisplayDialog } from './qr-code-display-dialog';
 export { InviteMemberDialog } from './invite-member-dialog';
 export { GroupActionsMenu } from './group-actions-menu';
+export { GroupCreatedSuccessDialog } from './group-created-success-dialog';
 export { TripBreadcrumb } from './trip-breadcrumb';
 export { ChatSkeleton, GroupListSkeleton } from './chat-skeleton';
 export { GroupListColumn } from './group-list-column';
