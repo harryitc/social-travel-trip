@@ -33,7 +33,7 @@ export class GroupRepository {
       INSERT INTO groups (
         name, description, cover_url, status, plan_id, json_data, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING *
     `;
 
@@ -56,7 +56,7 @@ export class GroupRepository {
       INSERT INTO groups (
         name, description, cover_url, status, plan_id, json_data, join_code, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING *
     `;
 
@@ -82,7 +82,7 @@ export class GroupRepository {
         cover_url = COALESCE($3, cover_url),
         plan_id = COALESCE($4, plan_id),
         json_data = COALESCE($5, json_data),
-        updated_at = NOW()
+        updated_at = CURRENT_TIMESTAMP
       WHERE group_id = $6
       RETURNING *
     `;
@@ -202,7 +202,7 @@ export class GroupRepository {
       INSERT INTO group_members (
         group_id, user_id, role, nickname, join_at
       )
-      VALUES ($1, $2, $3, $4, NOW())
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
       ON CONFLICT (group_id, user_id) DO UPDATE
       SET
         role = EXCLUDED.role,
@@ -299,7 +299,7 @@ export class GroupRepository {
         INSERT INTO group_messages (
           group_id, user_id, message, reply_to_message_id, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
       `;
     } else {
@@ -308,7 +308,7 @@ export class GroupRepository {
         INSERT INTO group_messages (
           group_id, user_id, message, created_at, updated_at
         )
-        VALUES ($1, $2, $3, NOW(), NOW())
+        VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
       `;
     }
@@ -503,7 +503,7 @@ export class GroupRepository {
       INSERT INTO message_pins (
         group_message_id, group_id, user_id, created_at
       )
-      VALUES ($1, $2, $3, NOW())
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
       ON CONFLICT (group_id, group_message_id) DO UPDATE
       SET
         user_id = EXCLUDED.user_id,

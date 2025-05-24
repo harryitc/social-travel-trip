@@ -91,8 +91,11 @@ export class GroupMessage {
     this.group_id = data.group_id;
     this.user_id = data.user_id;
     this.message = data.message;
-    this.created_at = data.created_at;
-    this.updated_at = data.updated_at;
+
+    // Ensure timestamps are properly formatted with timezone
+    this.created_at = data.created_at ? new Date(data.created_at) : new Date();
+    this.updated_at = data.updated_at ? new Date(data.updated_at) : new Date();
+
     this.like_count = data.like_count;
     this.is_pinned = data.is_pinned;
     // Map reply information

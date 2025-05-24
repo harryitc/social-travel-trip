@@ -71,7 +71,33 @@ type TripChatProps = {
 
 // Helper function to format message timestamp
 const formatMessageTimestamp = (dateString: string): string => {
-  const messageDate = new Date(dateString);
+  // Parse the timestamp and ensure it's treated as local time
+  // Backend sends timestamp in format: "2024-01-01T08:29:00.000Z" or "2024-01-01 08:29:00"
+  let messageDate: Date;
+
+  try {
+    // Handle different timestamp formats from backend
+    if (dateString.includes('T') && dateString.includes('Z')) {
+      // ISO format with timezone: "2024-01-01T08:29:00.000Z"
+      messageDate = new Date(dateString);
+    } else if (dateString.includes('T')) {
+      // ISO format without timezone: "2024-01-01T08:29:00"
+      messageDate = new Date(dateString);
+    } else {
+      // PostgreSQL format: "2024-01-01 08:29:00"
+      messageDate = new Date(dateString.replace(' ', 'T'));
+    }
+
+    // If the date is invalid, fallback to current time
+    if (isNaN(messageDate.getTime())) {
+      console.warn('Invalid timestamp received:', dateString);
+      messageDate = new Date();
+    }
+  } catch (error) {
+    console.error('Error parsing timestamp:', dateString, error);
+    messageDate = new Date();
+  }
+
   const now = new Date();
   const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
 
@@ -80,7 +106,8 @@ const formatMessageTimestamp = (dateString: string): string => {
     return messageDate.toLocaleTimeString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
+      timeZone: 'Asia/Ho_Chi_Minh' // Ensure Vietnam timezone
     });
   }
 
@@ -92,7 +119,8 @@ const formatMessageTimestamp = (dateString: string): string => {
       return `Hôm qua ${messageDate.toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: false,
+        timeZone: 'Asia/Ho_Chi_Minh'
       })}`;
     }
   }
@@ -103,7 +131,8 @@ const formatMessageTimestamp = (dateString: string): string => {
       weekday: 'short',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
+      timeZone: 'Asia/Ho_Chi_Minh'
     });
   }
 
@@ -114,7 +143,8 @@ const formatMessageTimestamp = (dateString: string): string => {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false
+    hour12: false,
+    timeZone: 'Asia/Ho_Chi_Minh'
   });
 };
 
@@ -124,7 +154,9 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
   const displayName = backendMessage.nickname || backendMessage.username || backendMessage.user?.username || `User ${backendMessage.user_id}`;
   const avatarUrl = backendMessage.avatar_url || backendMessage.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
 
-  // Debug log for user info extraction
+  console.log(new Date(backendMessage.created_at))
+
+  // Debug log for user info extraction and timestamp
   console.log('🔄 [TripChat] Transforming message:', {
     messageId: backendMessage.group_message_id,
     userId: backendMessage.user_id,
@@ -132,7 +164,10 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
     username: backendMessage.username,
     avatar_url: backendMessage.avatar_url,
     finalDisplayName: displayName,
-    finalAvatarUrl: avatarUrl
+    finalAvatarUrl: avatarUrl,
+    rawTimestamp: backendMessage.created_at,
+    timestampType: typeof backendMessage.created_at,
+    formattedTimestamp: formatMessageTimestamp(backendMessage.created_at)
   });
 
   return {

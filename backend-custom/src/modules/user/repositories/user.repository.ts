@@ -153,7 +153,7 @@ export class UserRepository {
     UPDATE users
     SET
       password = $1,
-      updated_at = NOW()
+      updated_at = CURRENT_TIMESTAMP
     WHERE user_id = $2
     RETURNING *
     `;

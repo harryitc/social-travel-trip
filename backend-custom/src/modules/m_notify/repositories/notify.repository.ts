@@ -22,7 +22,7 @@ export class NotifyRepository {
       INSERT INTO notifications (
         type, json_data, is_read, created_at, user_created
       )
-      VALUES ($1, $2, B'0', NOW(), $3)
+      VALUES ($1, $2, B'0', CURRENT_TIMESTAMP, $3)
       RETURNING *
     `;
 
