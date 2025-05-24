@@ -14,7 +14,7 @@ export default function GroupChatLayout({
     return (
         <>
             <TabMenu />
-            <div className="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
+            <div className="flex h-[100vh] bg-gray-50 dark:bg-gray-900">
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <TripBreadcrumb></TripBreadcrumb>
                     {/* <WebSocketProvider> */}
