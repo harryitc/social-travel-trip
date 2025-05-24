@@ -5,6 +5,7 @@ export { JoinGroupDialog } from './join-group-dialog';
 export { GroupSearchBar } from './group-search-bar';
 export { QRCodeDisplayDialog } from './qr-code-display-dialog';
 export { InviteMemberDialog } from './invite-member-dialog';
+export { UserAutocomplete } from './user-autocomplete';
 export { GroupActionsMenu } from './group-actions-menu';
 export { GroupCreatedSuccessDialog } from './group-created-success-dialog';
 export { TripBreadcrumb } from './trip-breadcrumb';

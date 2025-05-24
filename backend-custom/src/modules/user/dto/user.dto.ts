@@ -143,6 +143,10 @@ export class SearchUserDTO {
   @IsNumber()
   @IsOptional()
   limit?: number = 10;
+
+  @ApiProperty({ example: false, required: false, description: 'For autocomplete, return minimal user info' })
+  @IsOptional()
+  autocomplete?: boolean = false;
 }
 
 export class DeleteUserDTO {

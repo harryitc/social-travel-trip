@@ -162,7 +162,7 @@ export class UserRepository {
   }
 
   async searchUsers(searchDTO: SearchUserDTO) {
-    const { search_term, page = 1, limit = 10 } = searchDTO;
+    const { search_term, page = 1, limit = 10, autocomplete = false } = searchDTO;
     const offset = (page - 1) * limit;
 
     const params = [];
@@ -181,23 +181,22 @@ export class UserRepository {
 
     params.push(limit, offset);
 
+    // For autocomplete, return minimal fields for better performance
+    const selectFields = autocomplete
+      ? `user_id, username, full_name, avatar_url`
+      : `user_id, username, full_name, email, phone_number, date_of_birth, gender, address, avatar_url, json_data, created_at, updated_at`;
+
     const query = `
-    SELECT
-      user_id,
-      username,
-      full_name,
-      email,
-      phone_number,
-      date_of_birth,
-      gender,
-      address,
-      avatar_url,
-      json_data,
-      created_at,
-      updated_at
+    SELECT ${selectFields}
     FROM users
     ${whereClause}
-    ORDER BY created_at DESC
+    ORDER BY
+      CASE
+        WHEN username ILIKE $1 THEN 1
+        WHEN full_name ILIKE $1 THEN 2
+        ELSE 3
+      END,
+      created_at DESC
     LIMIT $${params.length - 1} OFFSET $${params.length}
     `;
 
@@ -208,6 +207,15 @@ export class UserRepository {
     `;
 
     const result = await this.client.execute(query, params);
+
+    // For autocomplete, skip count query for better performance
+    if (autocomplete) {
+      return {
+        data: result.rows,
+        total: result.rows.length,
+      };
+    }
+
     const countResult = await this.client.execute(
       countQuery,
       params.slice(0, -2),

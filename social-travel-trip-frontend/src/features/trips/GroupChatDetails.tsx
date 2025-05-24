@@ -14,6 +14,9 @@ import { TRAVEL_PLAN_TEMPLATES } from '../planning/mock-data';
 import TripPlanEditor from './TripPlanEditor';
 import { TripPlan } from './types';
 import { getTripPlanByGroupId, updateTripPlan } from './mock-trip-plans';
+import { MemberListDialog } from './member-list-dialog';
+import { InviteMemberDialog, InviteMemberData } from './components/invite-member-dialog';
+import { tripGroupService } from './services/trip-group.service';
 
 type GroupChatDetailsProps = {
   group: TripGroup;
@@ -46,6 +49,10 @@ export function GroupChatDetails({ group, isCollapsed = false }: GroupChatDetail
   const handleOpenInviteDialog = () => {
     setShowInviteDialog(true);
     setShowMemberList(false);
+  };
+
+  const handleInviteMember = async (data: InviteMemberData) => {
+    return await tripGroupService.inviteMember(data);
   };
 
   // Copy join code to clipboard
@@ -288,25 +295,22 @@ export function GroupChatDetails({ group, isCollapsed = false }: GroupChatDetail
         </div>
       )}
 
-      {/* TODO: Fix type conflicts and re-enable dialogs */}
       {/* Dialog hiển thị đầy đủ danh sách thành viên */}
-      {/* <MemberListDialog
-        members={members}
-        maxMembers={group.members.max}
+      <MemberListDialog
+        groupId={group.id}
         isOpen={showMemberList}
         onClose={() => setShowMemberList(false)}
         onInvite={handleOpenInviteDialog}
-      /> */}
+      />
 
       {/* Dialog mời thành viên */}
-      {/* <InviteMembersDialog
-        tripId={group.id}
-        currentMembers={members}
-        maxMembers={group.members.max}
-        onInvite={handleInviteMembers}
+      <InviteMemberDialog
         open={showInviteDialog}
         onOpenChange={setShowInviteDialog}
-      /> */}
+        groupId={group.id}
+        groupName={group.title}
+        onInviteMember={handleInviteMember}
+      />
 
       {/* Plan section - Simplified for vertical layout */}
       {(tripPlan || matchingTemplate) && isCollapsed ? (

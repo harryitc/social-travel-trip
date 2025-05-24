@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/radix-ui/dialog';
 import { Button } from '@/components/ui/radix-ui/button';
-import { Input } from '@/components/ui/radix-ui/input';
 import { Label } from '@/components/ui/radix-ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/radix-ui/select';
-import { UserPlus, Mail, User } from 'lucide-react';
-import { notification } from 'antd';
+import { UserPlus } from 'lucide-react';
+import { Input, notification } from 'antd';
+import { UserAutocomplete } from './user-autocomplete';
+import { UserSearchResult } from '../services/user-search.service';
 
 interface InviteMemberDialogProps {
   open: boolean;
@@ -24,17 +25,18 @@ export interface InviteMemberData {
   nickname?: string;
 }
 
-export function InviteMemberDialog({ 
-  open, 
-  onOpenChange, 
-  groupId, 
+export function InviteMemberDialog({
+  open,
+  onOpenChange,
+  groupId,
   groupName,
-  onInviteMember 
+  onInviteMember
 }: InviteMemberDialogProps) {
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [role, setRole] = useState('member');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +53,7 @@ export function InviteMemberDialog({
 
     try {
       setLoading(true);
-      
+
       const inviteData: InviteMemberData = {
         groupId,
         usernameOrEmail: usernameOrEmail.trim(),
@@ -60,7 +62,7 @@ export function InviteMemberDialog({
       };
 
       const result = await onInviteMember(inviteData);
-      
+
       // Reset form
       setUsernameOrEmail('');
       setRole('member');
@@ -69,13 +71,13 @@ export function InviteMemberDialog({
 
       notification.success({
         message: 'Mời thành viên thành công',
-        description: `Đã mời ${result.invited_user?.username || usernameOrEmail} tham gia nhóm "${groupName}"`,
+        description: `Đã mời ${result.invited_user?.username || selectedUser?.username || usernameOrEmail} tham gia nhóm "${groupName}"`,
         placement: 'topRight',
         duration: 4,
       });
     } catch (error: any) {
       console.error('Error inviting member:', error);
-      
+
       notification.error({
         message: 'Lỗi mời thành viên',
         description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi mời thành viên',
@@ -87,11 +89,20 @@ export function InviteMemberDialog({
     }
   };
 
+  const handleUserSelect = (user: UserSearchResult) => {
+    setSelectedUser(user);
+    // Auto-fill nickname with full name if available
+    if (user.full_name && !nickname) {
+      setNickname(user.full_name);
+    }
+  };
+
   const handleClose = () => {
     if (!loading) {
       setUsernameOrEmail('');
       setRole('member');
       setNickname('');
+      setSelectedUser(null);
       onOpenChange(false);
     }
   };
@@ -110,31 +121,30 @@ export function InviteMemberDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Username or Email */}
+          {/* Username or Email with Autocomplete */}
           <div className="space-y-2">
             <Label htmlFor="usernameOrEmail" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Username hoặc Email *
             </Label>
-            <div className="relative">
-              <Input
-                id="usernameOrEmail"
-                placeholder="Nhập username hoặc email"
-                value={usernameOrEmail}
-                onChange={(e) => setUsernameOrEmail(e.target.value)}
-                className="pl-10 h-10 border-gray-300 focus:border-green-500 focus:ring-green-500 dark:border-gray-600"
-                disabled={loading}
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                {usernameOrEmail.includes('@') ? (
-                  <Mail className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <User className="h-4 w-4 text-gray-400" />
-                )}
-              </div>
-            </div>
+            <UserAutocomplete
+              value={usernameOrEmail}
+              onChange={setUsernameOrEmail}
+              onUserSelect={handleUserSelect}
+              placeholder="Nhập username hoặc email để tìm kiếm"
+              disabled={loading}
+              className="h-10 border-gray-300 focus:border-green-500 focus:ring-green-500 dark:border-gray-600"
+            />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Nhập username (ví dụ: john_doe) hoặc email (ví dụ: john@example.com)
+              Bắt đầu nhập để tìm kiếm người dùng. Chọn từ danh sách gợi ý hoặc nhập trực tiếp username/email.
             </p>
+            {selectedUser && (
+              <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-green-800 dark:text-green-200">
+                  Đã chọn: {selectedUser.full_name || selectedUser.username} (@{selectedUser.username})
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Role Selection */}
@@ -162,7 +172,7 @@ export function InviteMemberDialog({
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {role === 'member' 
+              {role === 'member'
                 ? 'Thành viên có thể tham gia trò chuyện và xem thông tin nhóm'
                 : 'Điều hành viên có thể quản lý thành viên và tin nhắn'
               }
