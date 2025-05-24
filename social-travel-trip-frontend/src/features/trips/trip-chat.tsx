@@ -78,6 +78,28 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
   const displayName = backendMessage.nickname || backendMessage.username || backendMessage.user?.username || `User ${backendMessage.user_id}`;
   const avatarUrl = backendMessage.avatar_url || backendMessage.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
 
+  // Extract attachments from json_data
+  let attachments: Array<{
+    type: 'image' | 'file';
+    url: string;
+    name: string;
+    size?: number;
+  }> = [];
+
+  if (backendMessage.json_data) {
+    try {
+      const jsonData = typeof backendMessage.json_data === 'string'
+        ? JSON.parse(backendMessage.json_data)
+        : backendMessage.json_data;
+
+      if (jsonData.attachments && Array.isArray(jsonData.attachments)) {
+        attachments = jsonData.attachments;
+      }
+    } catch (error) {
+      console.warn('Failed to parse json_data for attachments:', error);
+    }
+  }
+
   // Debug log for user info extraction and timestamp
   console.log('🔄 [TripChat] Transforming message:', {
     messageId: backendMessage.group_message_id,
@@ -89,7 +111,8 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
     finalAvatarUrl: avatarUrl,
     rawTimestamp: backendMessage.created_at,
     timestampType: typeof backendMessage.created_at,
-    formattedTimestamp: formatMessageTimestamp(backendMessage.created_at)
+    formattedTimestamp: formatMessageTimestamp(backendMessage.created_at),
+    attachments: attachments
   });
 
   return {
@@ -104,7 +127,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
     rawTimestamp: backendMessage.created_at, // Store raw timestamp for tooltip
     pinned: backendMessage.is_pinned || false,
     likeCount: backendMessage.like_count || 0,
-    attachments: backendMessage.attachments || [],
+    attachments: attachments,
     replyTo: backendMessage.reply_to_message_id ? {
       id: backendMessage.reply_to_message_id.toString(),
       content: backendMessage.reply_to_message || '',
@@ -128,6 +151,8 @@ export function TripChat({ tripId }: TripChatProps) {
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
+  const [newMessageIds, setNewMessageIds] = useState<Set<string>>(new Set());
+  const [sendingMessage, setSendingMessage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -201,6 +226,19 @@ export function TripChat({ tripId }: TripChatProps) {
       if (data.groupId.toString() == tripId) {
         const transformedMessage = transformMessage(data.message);
         console.log('✅ [TripChat] Adding message to chat:', transformedMessage);
+
+        // Mark as new message for animation
+        setNewMessageIds(prev => new Set([...prev, transformedMessage.id]));
+
+        // Remove animation class after animation completes
+        setTimeout(() => {
+          setNewMessageIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(transformedMessage.id);
+            return newSet;
+          });
+        }, 1000);
+
         setMessages(prev => {
           // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg.id == transformedMessage.id);
@@ -313,10 +351,17 @@ export function TripChat({ tripId }: TripChatProps) {
     };
   }, [tripId, emit]);
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages change with smooth animation
   useEffect(() => {
     if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      // Add a small delay to ensure the message is rendered
+      setTimeout(() => {
+        messageEndRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end',
+          inline: 'nearest'
+        });
+      }, 100);
     }
   }, [messages]);
 
@@ -378,15 +423,26 @@ export function TripChat({ tripId }: TripChatProps) {
           ? { ...msg, pinned: !msg.pinned }
           : msg
       ));
-    } catch (error) {
+    } catch (error: any) {
+      notification.error({
+        message: 'Lỗi',
+        description: error?.response?.data?.reasons?.message || 'Không thể ghim tin nhắn. Vui lòng thử lại sau.',
+        placement: 'topRight',
+      })
       console.error('Error toggling pin message:', error);
     }
   };
 
   const handleLikeMessage = async (messageId: string) => {
     try {
-      await tripGroupService.toggleMessageLike(parseInt(messageId));
+      await tripGroupService.toggleMessageLike(parseInt(messageId), 2); // 2 = like, 1 = no like
       // The WebSocket will handle updating the UI
+      notification.success({
+        message: 'Thành công',
+        description: 'Đã thích tin nhắn',
+        placement: 'topRight',
+        duration: 1,
+      });
     } catch (error) {
       console.error('Error liking message:', error);
       notification.error({
@@ -429,6 +485,9 @@ export function TripChat({ tripId }: TripChatProps) {
       });
       return;
     }
+
+    // Set sending state for loading animation
+    setSendingMessage(true);
 
     // Validate group ID
     if (!tripId || isNaN(parseInt(tripId))) {
@@ -600,6 +659,9 @@ export function TripChat({ tripId }: TripChatProps) {
         placement: 'topRight',
         duration: 4,
       });
+    } finally {
+      // Always reset sending state
+      setSendingMessage(false);
     }
   };
 
@@ -709,14 +771,21 @@ export function TripChat({ tripId }: TripChatProps) {
                     // Compare with user ID from auth context - convert both to string for comparison
                     const isOwnMessage = user?.user_id ? message.sender.id == user.user_id.toString() : false;
 
+                    // Check if this is a new message for animation
+                    const isNewMessage = newMessageIds.has(message.id);
+
                     // Use combination of id and index to ensure unique keys
                     const uniqueKey = `${message.id}-${index}`;
                     return (
                       <div
                         id={`message-${message.id}`}
                         key={uniqueKey}
-                        className={`flex gap-3 transition-all duration-200 ${
+                        className={`flex gap-3 transition-all duration-500 ease-out ${
                           isOwnMessage ? 'flex-row-reverse' : ''
+                        } ${
+                          isNewMessage
+                            ? 'animate-in slide-in-from-bottom-4 fade-in duration-500'
+                            : ''
                         }`}
                       >
                         {/* Avatar */}
@@ -752,10 +821,12 @@ export function TripChat({ tripId }: TripChatProps) {
                           </div>
 
                           {/* Message Bubble */}
-                          <div className={`relative px-4 py-2.5 group shadow-sm ${
+                          <div className={`relative px-4 py-2.5 group shadow-sm transform transition-all duration-300 hover:scale-[1.02] ${
                             isOwnMessage
-                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md'
-                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md'
+                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md hover:shadow-lg hover:shadow-purple-500/25'
+                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600'
+                          } ${
+                            isNewMessage ? 'animate-pulse' : ''
                           }`}>
                             {/* Reply indicator */}
                             {message.replyTo && (
@@ -862,9 +933,9 @@ export function TripChat({ tripId }: TripChatProps) {
 
                   {/* Typing indicator */}
                   {typingUsers.size > 0 && (
-                    <div className="flex gap-3 items-center px-2">
+                    <div className="flex gap-3 items-center px-2 animate-in slide-in-from-bottom-2 fade-in duration-300">
                       <div className="flex-shrink-0">
-                        <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center animate-pulse">
                           <div className="flex space-x-1">
                             <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
                             <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -872,7 +943,7 @@ export function TripChat({ tripId }: TripChatProps) {
                           </div>
                         </div>
                       </div>
-                      <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700">
+                      <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm">
                         <span className="text-sm text-gray-600 dark:text-gray-400 italic">
                           {typingUsers.size == 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
                         </span>
@@ -888,19 +959,19 @@ export function TripChat({ tripId }: TripChatProps) {
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">{/* Input area */}
               {/* Image preview area */}
               {imagePreviewUrls.length > 0 && (
-                <div className="mb-3">
+                <div className="mb-3 animate-in slide-in-from-bottom-2 fade-in duration-300">
                   <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Hình ảnh ({imagePreviewUrls.length})
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {imagePreviewUrls.map((url, index) => (
-                      <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+                      <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm transform transition-all duration-200 hover:scale-105">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt="preview" className="w-full h-full object-cover" />
+                        <img src={url} alt="preview" className="w-full h-full object-cover transition-transform duration-200 hover:scale-110" />
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 rounded-full shadow-md"
+                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 rounded-full shadow-md transition-all duration-200 hover:scale-110"
                           onClick={() => handleRemoveImage(index)}
                         >
                           <X className="h-3 w-3 text-white" />
@@ -913,15 +984,15 @@ export function TripChat({ tripId }: TripChatProps) {
 
               {/* File preview area */}
               {selectedFiles.length > 0 && (
-                <div className="mb-3">
+                <div className="mb-3 animate-in slide-in-from-bottom-2 fade-in duration-300">
                   <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Tệp đính kèm ({selectedFiles.length})
                   </div>
                   <div className="space-y-2">
                     {selectedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
                         <div className="flex items-center gap-2">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md transition-colors duration-200">
                             <FileIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div className="flex flex-col">
@@ -932,7 +1003,7 @@ export function TripChat({ tripId }: TripChatProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30"
+                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 hover:scale-110"
                           onClick={() => handleRemoveFile(index)}
                         >
                           <X className="h-3 w-3 text-red-500" />
@@ -945,7 +1016,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
               {/* Reply preview */}
               {replyingTo && (
-                <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between animate-in slide-in-from-bottom-2 fade-in duration-300 transform hover:scale-[1.02] transition-transform">
                   <div className="flex items-center gap-2">
                     <MessageSquareQuote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     <div>
@@ -960,7 +1031,7 @@ export function TripChat({ tripId }: TripChatProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800"
+                    className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-110"
                     onClick={cancelReply}
                   >
                     <X className="h-3 w-3 text-blue-600 dark:text-blue-400" />
@@ -969,7 +1040,7 @@ export function TripChat({ tripId }: TripChatProps) {
               )}
 
               {/* Input controls */}
-              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 transition-all duration-200 focus-within:border-purple-300 focus-within:shadow-lg focus-within:shadow-purple-500/10">
                 <input
                   type="file"
                   accept="image/*"
@@ -993,7 +1064,7 @@ export function TripChat({ tripId }: TripChatProps) {
                     size="icon"
                     onClick={() => imageInputRef.current?.click()}
                     title="Tải lên hình ảnh"
-                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full transition-all duration-200 hover:scale-110"
                   >
                     <ImageIcon className="h-4 w-4" />
                   </Button>
@@ -1002,7 +1073,7 @@ export function TripChat({ tripId }: TripChatProps) {
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
                     title="Đính kèm tệp"
-                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full transition-all duration-200 hover:scale-110"
                   >
                     <Paperclip className="h-4 w-4" />
                   </Button>
@@ -1028,17 +1099,29 @@ export function TripChat({ tripId }: TripChatProps) {
                   value={newMessage}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
-                  className="flex-1 h-9 bg-white dark:bg-gray-900 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
+                  className="flex-1 h-9 bg-white dark:bg-gray-900 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
 
                 {/* Send button */}
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!newMessage.trim() && selectedImages.length == 0 && selectedFiles.length == 0}
-                  className="h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                  title={newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0 ? "Gửi tin nhắn" : "Nhập tin nhắn để gửi"}
+                  disabled={(!newMessage.trim() && selectedImages.length == 0 && selectedFiles.length == 0) || sendingMessage}
+                  className={`h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+                    sendingMessage ? 'animate-spin' : 'hover:scale-110'
+                  }`}
+                  title={
+                    sendingMessage
+                      ? "Đang gửi..."
+                      : newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0
+                        ? "Gửi tin nhắn"
+                        : "Nhập tin nhắn để gửi"
+                  }
                 >
-                  <SendHorizontal className="h-4 w-4" />
+                  {sendingMessage ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <SendHorizontal className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>

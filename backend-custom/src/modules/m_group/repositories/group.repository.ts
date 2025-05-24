@@ -71,7 +71,7 @@ export class GroupRepository {
       cover_url,
       plan_id,
       json_data ? JSON.stringify(json_data) : null,
-      groupId
+      groupId,
     ];
 
     const query = `
@@ -275,7 +275,11 @@ export class GroupRepository {
     return this.client.execute(query, [groupId, userId, role]);
   }
 
-  async updateGroupMemberNickname(groupId: number, userId: number, nickname?: string) {
+  async updateGroupMemberNickname(
+    groupId: number,
+    userId: number,
+    nickname?: string,
+  ) {
     const query = `
       UPDATE group_members
       SET nickname = $3
@@ -288,27 +292,37 @@ export class GroupRepository {
 
   // Message operations
   async sendMessage(data: SendMessageDto, userId: number) {
-    const { group_id, message, reply_to_message_id } = data;
+    const { group_id, message, reply_to_message_id, attachments } = data;
+
+    // Prepare json_data with attachments
+    const json_data =
+      attachments && attachments.length > 0 ? { attachments } : null;
 
     let query: string;
     let params: any[];
 
     if (reply_to_message_id) {
-      params = [group_id, userId, message, reply_to_message_id];
+      params = [
+        group_id,
+        userId,
+        message || '',
+        reply_to_message_id,
+        JSON.stringify(json_data),
+      ];
       query = `
         INSERT INTO group_messages (
-          group_id, user_id, message, reply_to_message_id, created_at, updated_at
+          group_id, user_id, message, reply_to_message_id, json_data, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
       `;
     } else {
-      params = [group_id, userId, message];
+      params = [group_id, userId, message || '', JSON.stringify(json_data)];
       query = `
         INSERT INTO group_messages (
-          group_id, user_id, message, created_at, updated_at
+          group_id, user_id, message, json_data, created_at, updated_at
         )
-        VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
       `;
     }

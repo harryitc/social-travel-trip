@@ -75,6 +75,7 @@ export class GroupMessage {
   updated_at: Date;
   like_count?: number;
   is_pinned?: boolean;
+  json_data?: any; // For storing attachments, images, and other metadata
   // Reply information
   reply_to_message_id?: number;
   reply_to_message?: string;
@@ -98,6 +99,7 @@ export class GroupMessage {
 
     this.like_count = data.like_count;
     this.is_pinned = data.is_pinned;
+    this.json_data = data.json_data;
     // Map reply information
     this.reply_to_message_id = data.reply_to_message_id;
     this.reply_to_message = data.reply_to_message;

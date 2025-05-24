@@ -17,6 +17,7 @@ export interface TripGroupMessage {
   updated_at: string;
   like_count?: number;
   is_pinned?: boolean;
+  json_data?: any; // For storing attachments and other metadata
   // Reply information
   reply_to_message_id?: number;
   reply_to_message?: string;
@@ -324,7 +325,7 @@ class TripGroupService {
 
   async pinMessage(messageId: number, groupId: string): Promise<void> {
     try {
-      await Http.post(`${API_ENDPOINT.social_travel_trip}/group/add-message-pin`, {
+      await Http.post(`${API_ENDPOINT.social_travel_trip}/group/messages/add-pin`, {
         group_message_id: messageId,
         group_id: parseInt(groupId),
       });
@@ -336,7 +337,7 @@ class TripGroupService {
 
   async unpinMessage(messageId: number, groupId: string): Promise<void> {
     try {
-      await Http.post(`${API_ENDPOINT.social_travel_trip}/group/remove-message-pin`, {
+      await Http.post(`${API_ENDPOINT.social_travel_trip}/group/messages/remove-pin`, {
         group_message_id: messageId,
         group_id: parseInt(groupId),
       });
