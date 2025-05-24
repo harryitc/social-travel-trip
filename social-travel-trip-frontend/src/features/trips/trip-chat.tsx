@@ -957,13 +957,17 @@ export function TripChat({ tripId }: TripChatProps) {
                             <div className="flex items-end gap-1 flex-wrap">
                               <p className="text-sm leading-relaxed message-content">{message.content}</p>
                               {/* Inline Message Reactions */}
-                              <MessageReactions
-                                messageId={message.id}
-                                likeCount={message.likeCount || 0}
-                                reactions={message.reactions || []}
-                                onReactionUpdate={handleReactionUpdate}
-                                isOwnMessage={isOwnMessage}
-                              />
+                              {
+                                message.likeCount > 0 && (
+                                  <MessageReactions
+                                    messageId={message.id}
+                                    likeCount={message.likeCount || 0}
+                                    reactions={message.reactions || []}
+                                    onReactionUpdate={handleReactionUpdate}
+                                    isOwnMessage={isOwnMessage}
+                                  />
+                                )
+                              }
                             </div>
 
                             {/* Attachments */}
