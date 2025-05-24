@@ -49,6 +49,24 @@ export class WebsocketService {
 
   setServer(server: Server) {
     this.server = server;
+    this.logger.log('✅ WebSocket server initialized successfully');
+  }
+
+  /**
+   * Check if WebSocket server is properly initialized
+   */
+  private isServerReady(): boolean {
+    if (!this.server) {
+      this.logger.error('❌ WebSocket server not initialized');
+      return false;
+    }
+
+    if (!this.server.sockets) {
+      this.logger.error('❌ WebSocket server sockets not available');
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -58,13 +76,18 @@ export class WebsocketService {
    * @param data Event data
    */
   sendToUser(userId: number, event: WebsocketEvent, data: any) {
-    if (!this.server) {
-      this.logger.error('WebSocket server not initialized');
+    if (!this.isServerReady()) {
       return;
     }
 
-    this.logger.debug(`Sending ${event} to user ${userId}`);
-    this.server.to(`user-${userId}`).emit(event, data);
+    try {
+      this.logger.debug(`Sending ${event} to user ${userId}`);
+      this.server.to(`user-${userId}`).emit(event, data);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send ${event} to user ${userId}: ${error.message}`,
+      );
+    }
   }
 
   /**
@@ -74,8 +97,7 @@ export class WebsocketService {
    * @param data Event data
    */
   sendToUsers(userIds: number[], event: WebsocketEvent, data: any) {
-    if (!this.server) {
-      this.logger.error('WebSocket server not initialized');
+    if (!this.isServerReady()) {
       return;
     }
 
@@ -90,8 +112,7 @@ export class WebsocketService {
    * @param data Event data
    */
   sendToAll(event: WebsocketEvent, data: any) {
-    if (!this.server) {
-      this.logger.error('WebSocket server not initialized');
+    if (!this.isServerReady()) {
       return;
     }
 
@@ -301,26 +322,60 @@ export class WebsocketService {
     senderId: number,
     messageData: any,
   ) {
-    if (!this.server) {
-      this.logger.error('WebSocket server not initialized');
+    if (!this.isServerReady()) {
       return;
     }
 
     // Send to group room (including sender for real-time updates)
     const roomName = `group-${groupId}`;
     this.logger.debug(
-      `Sending message notification to group room: ${roomName}`,
+      `📡 Sending message notification to group room: ${roomName}`,
+    );
+    this.logger.debug(
+      `📨 Message data: ${JSON.stringify({ groupId, senderId, messageId: messageData.group_message_id })}`,
     );
 
-    this.server.to(roomName).emit(WebsocketEvent.GROUP_MESSAGE_SENT, {
-      groupId,
-      senderId,
-      message: messageData,
-    });
+    // Get room info for debugging (with null checks)
+    let roomSize = 0;
+    try {
+      if (
+        this.server.sockets &&
+        this.server.sockets.adapter &&
+        this.server.sockets.adapter.rooms
+      ) {
+        const room = this.server.sockets.adapter.rooms.get(roomName);
+        roomSize = room ? room.size : 0;
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not get room info for ${roomName}: ${error.message}`,
+      );
+    }
+    this.logger.debug(`🏠 Room ${roomName} has ${roomSize} connected clients`);
+
+    try {
+      this.server.to(roomName).emit(WebsocketEvent.GROUP_MESSAGE_SENT, {
+        groupId,
+        senderId,
+        message: messageData,
+      });
+
+      this.logger.debug(
+        `✅ Emitted ${WebsocketEvent.GROUP_MESSAGE_SENT} to room ${roomName}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to emit ${WebsocketEvent.GROUP_MESSAGE_SENT} to room ${roomName}: ${error.message}`,
+      );
+      throw error; // Re-throw to be caught by the calling function
+    }
 
     // Also send to individual users as fallback
     const recipientIds = memberIds.filter((id) => id !== senderId);
     if (recipientIds.length > 0) {
+      this.logger.debug(
+        `📤 Sending fallback notifications to individual users: ${recipientIds.join(', ')}`,
+      );
       this.sendToGroup(
         groupId,
         recipientIds,
@@ -476,10 +531,16 @@ export class WebsocketService {
    * Get connected users count for debugging
    */
   getConnectedUsersCount(): number {
-    if (!this.server) {
+    if (!this.isServerReady()) {
       return 0;
     }
-    return this.server.sockets.sockets.size;
+
+    try {
+      return this.server.sockets.sockets.size;
+    } catch (error) {
+      this.logger.warn(`Could not get connected users count: ${error.message}`);
+      return 0;
+    }
   }
 
   /**
@@ -491,7 +552,21 @@ export class WebsocketService {
       return false;
     }
 
-    const room = this.server.sockets.adapter.rooms.get(`user-${userId}`);
-    return room && room.size > 0;
+    try {
+      if (
+        this.server.sockets &&
+        this.server.sockets.adapter &&
+        this.server.sockets.adapter.rooms
+      ) {
+        const room = this.server.sockets.adapter.rooms.get(`user-${userId}`);
+        return room && room.size > 0;
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not check user connection for user ${userId}: ${error.message}`,
+      );
+    }
+
+    return false;
   }
 }

@@ -42,6 +42,10 @@ export class SendMessageCommandHandler
       // Get all group members for WebSocket notification
       const memberIds = membersResult.rows.map((m) => m.user_id);
 
+      this.logger.debug(
+        `Preparing WebSocket notification for group ${dto.group_id}, members: ${memberIds.join(', ')}, sender: ${userId}`,
+      );
+
       // Send WebSocket notification to group members
       this.websocketService.notifyGroupMessage(
         dto.group_id,
@@ -51,11 +55,11 @@ export class SendMessageCommandHandler
       );
 
       this.logger.debug(
-        `Sent WebSocket notification for new message in group ${dto.group_id}`,
+        `✅ Sent WebSocket notification for new message in group ${dto.group_id}`,
       );
     } catch (error) {
       this.logger.error(
-        `Failed to send WebSocket notification for message in group ${dto.group_id}: ${error.message}`,
+        `❌ Failed to send WebSocket notification for message in group ${dto.group_id}: ${error.message}`,
       );
       // Don't fail the command if WebSocket notification fails
     }

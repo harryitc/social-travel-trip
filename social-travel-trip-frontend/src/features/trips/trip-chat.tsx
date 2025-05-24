@@ -68,6 +68,55 @@ type TripChatProps = {
   tripId: string;
 };
 
+// Helper function to format message timestamp
+const formatMessageTimestamp = (dateString: string): string => {
+  const messageDate = new Date(dateString);
+  const now = new Date();
+  const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+
+  // If message is from today, show only time
+  if (diffInHours < 24 && messageDate.toDateString() === now.toDateString()) {
+    return messageDate.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
+  // If message is from yesterday
+  if (diffInHours < 48) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (messageDate.toDateString() === yesterday.toDateString()) {
+      return `Hôm qua ${messageDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })}`;
+    }
+  }
+
+  // If message is from this week, show day name
+  if (diffInHours < 168) { // 7 days
+    return messageDate.toLocaleDateString('vi-VN', {
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
+  // For older messages, show full date
+  return messageDate.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
 // Helper function to transform backend message to UI message
 const transformMessage = (backendMessage: TripGroupMessage): Message => {
   // Extract user info from multiple possible sources - prioritize nickname
@@ -82,11 +131,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
       name: displayName,
       avatar: avatarUrl,
     },
-    timestamp: new Date(backendMessage.created_at).toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }),
+    timestamp: formatMessageTimestamp(backendMessage.created_at),
     pinned: backendMessage.is_pinned || false,
     likeCount: backendMessage.like_count || 0,
     attachments: backendMessage.attachments || [],
@@ -171,17 +216,23 @@ export function TripChat({ tripId }: TripChatProps) {
   useEffect(() => {
     if (!tripId) return;
 
-    // Connect to WebSocket
-    websocketService.connect();
+    console.log('🔌 [TripChat] Setting up WebSocket for group:', tripId);
 
-    // Join group room
-    websocketService.joinGroup(tripId);
-
-    // Set up event listeners
+    // Set up event listeners first
     const handleNewMessage = (data: { groupId: number; senderId: number; message: any }) => {
+      console.log('📨 [TripChat] Received new message:', data);
       if (data.groupId.toString() === tripId) {
         const transformedMessage = transformMessage(data.message);
-        setMessages(prev => [...prev, transformedMessage]);
+        console.log('✅ [TripChat] Adding message to chat:', transformedMessage);
+        setMessages(prev => {
+          // Check if message already exists to prevent duplicates
+          const exists = prev.some(msg => msg.id === transformedMessage.id);
+          if (exists) {
+            console.log('⚠️ [TripChat] Message already exists, skipping:', transformedMessage.id);
+            return prev;
+          }
+          return [...prev, transformedMessage];
+        });
 
         // Emit event for other components
         emit('chat:message_received', {
@@ -225,24 +276,62 @@ export function TripChat({ tripId }: TripChatProps) {
       }
     };
 
-    // Subscribe to events
-    websocketService.onEvent('group:message:sent', handleNewMessage);
-    websocketService.onEvent('group:message:liked', handleMessageLike);
-    websocketService.onEvent('group:message:unliked', handleMessageLike);
-    websocketService.onEvent('group:message:pinned', handleMessagePin);
-    websocketService.onEvent('group:message:unpinned', handleMessagePin);
-    websocketService.onEvent('group:member:typing', handleTyping);
-    websocketService.onEvent('group:member:stop_typing', handleTyping);
+    // Subscribe to events with detailed logging
+    console.log('🎧 [TripChat] Subscribing to WebSocket events');
+
+    // Test event listener to verify WebSocket is working
+    const handleTestEvent = (data: any) => {
+      console.log('🧪 [TripChat] Test event received:', data);
+    };
+
+    websocketService.on('group:message:sent', handleNewMessage);
+    websocketService.on('group:message:liked', handleMessageLike);
+    websocketService.on('group:message:unliked', handleMessageLike);
+    websocketService.on('group:message:pinned', handleMessagePin);
+    websocketService.on('group:message:unpinned', handleMessagePin);
+    websocketService.on('group:member:typing', handleTyping);
+    websocketService.on('group:member:stop_typing', handleTyping);
+
+    // Also listen for user typing events (alternative event names)
+    websocketService.on('user:typing', handleTyping);
+
+    // Listen for connection events
+    websocketService.on('connection_established', handleTestEvent);
+    websocketService.on('user:online', handleTestEvent);
+
+    // Connect to WebSocket after setting up event listeners
+    websocketService.connect().then(() => {
+      console.log('✅ [TripChat] WebSocket connected, joining group:', tripId);
+      console.log('🔍 [TripChat] WebSocket debug info:', websocketService.getDebugInfo());
+      // Join group room after connection is established
+      websocketService.joinGroup(tripId);
+    }).catch(error => {
+      console.error('❌ [TripChat] WebSocket connection failed:', error);
+      console.log('🔍 [TripChat] WebSocket debug info on error:', websocketService.getDebugInfo());
+    });
+
+    // Add a timeout to check WebSocket status after a delay
+    const checkTimeout = setTimeout(() => {
+      console.log('⏰ [TripChat] WebSocket status check after 3 seconds:', websocketService.getDebugInfo());
+    }, 3000);
 
     // Cleanup on unmount
     return () => {
-      websocketService.offEvent('group:message:sent', handleNewMessage);
-      websocketService.offEvent('group:message:liked', handleMessageLike);
-      websocketService.offEvent('group:message:unliked', handleMessageLike);
-      websocketService.offEvent('group:message:pinned', handleMessagePin);
-      websocketService.offEvent('group:message:unpinned', handleMessagePin);
-      websocketService.offEvent('group:member:typing', handleTyping);
-      websocketService.offEvent('group:member:stop_typing', handleTyping);
+      console.log('🧹 [TripChat] Cleaning up WebSocket events for group:', tripId);
+
+      // Clear timeout
+      clearTimeout(checkTimeout);
+
+      websocketService.off('group:message:sent', handleNewMessage);
+      websocketService.off('group:message:liked', handleMessageLike);
+      websocketService.off('group:message:unliked', handleMessageLike);
+      websocketService.off('group:message:pinned', handleMessagePin);
+      websocketService.off('group:message:unpinned', handleMessagePin);
+      websocketService.off('group:member:typing', handleTyping);
+      websocketService.off('group:member:stop_typing', handleTyping);
+      websocketService.off('user:typing', handleTyping);
+      websocketService.off('connection_established', handleTestEvent);
+      websocketService.off('user:online', handleTestEvent);
 
       websocketService.leaveGroup(tripId);
     };
@@ -611,6 +700,21 @@ export function TripChat({ tripId }: TripChatProps) {
     }
   };
 
+  // Debug function to test WebSocket
+  const handleTestWebSocket = () => {
+    console.log('🧪 [TripChat] Testing WebSocket connection...');
+    console.log('🔍 [TripChat] Current WebSocket state:', websocketService.getDebugInfo());
+
+    // Try to emit a test event
+    websocketService.emit('test:ping', { groupId: tripId, timestamp: Date.now() })
+      .then(() => {
+        console.log('✅ [TripChat] Test ping sent successfully');
+      })
+      .catch(error => {
+        console.error('❌ [TripChat] Test ping failed:', error);
+      });
+  };
+
   // Handle search from empty state
   const handleSearchFromEmpty = () => {
     // Focus on search input
@@ -927,6 +1031,19 @@ export function TripChat({ tripId }: TripChatProps) {
                     <Paperclip className="h-4 w-4" />
                   </Button>
                   <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+
+                  {/* Debug WebSocket button (development only) */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleTestWebSocket}
+                      title="Test WebSocket (Dev only)"
+                      className="h-8 w-8 text-gray-500 hover:text-green-600 hover:bg-green-100 dark:text-gray-400 dark:hover:text-green-400 dark:hover:bg-green-900/20 rounded-full"
+                    >
+                      <span className="text-xs font-bold">WS</span>
+                    </Button>
+                  )}
                 </div>
 
                 {/* Text input */}

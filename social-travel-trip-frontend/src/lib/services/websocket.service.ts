@@ -126,6 +126,11 @@ class WebSocketService {
           console.log('WebSocket Service: Successfully connected with ID:', this.socket?.id);
           this.reconnectAttempts = 0;
           this.isConnecting = false;
+
+          // Register event handlers after successful connection
+          console.log('WebSocket Service: Registering event handlers after connection...');
+          this.registerEventHandlers();
+
           resolve();
         });
 
@@ -150,8 +155,7 @@ class WebSocketService {
           reject(error);
         });
 
-        // Register event handlers
-        this.registerEventHandlers();
+        // Event handlers will be registered after successful connection
       } catch (error) {
         this.isConnecting = false;
         console.error('Error initializing WebSocket:', error);
@@ -201,50 +205,76 @@ class WebSocketService {
    * Register event handlers
    */
   private registerEventHandlers(): void {
-    if (!this.socket) return;
+    if (!this.socket) {
+      console.warn('WebSocket Service: Cannot register event handlers - socket not available');
+      return;
+    }
+
+    console.log('WebSocket Service: Registering event handlers for', this.eventHandlers.size, 'events');
 
     // Register all event handlers
     this.eventHandlers.forEach((handlers, event) => {
-      this.socket?.off(event); // Remove existing handlers
+      console.log(`WebSocket Service: Registering ${handlers.length} handlers for event "${event}"`);
+
+      // Remove existing handlers first
+      this.socket?.off(event);
+
+      // Add new combined handler
       this.socket?.on(event, (data) => {
-        handlers.forEach(handler => handler(data));
+        console.log(`WebSocket Service: Event "${event}" received, calling ${handlers.length} handlers`, data);
+        handlers.forEach(handler => {
+          try {
+            handler(data);
+          } catch (error) {
+            console.error(`WebSocket Service: Error in handler for event "${event}":`, error);
+          }
+        });
       });
     });
   }
 
   /**
-   * Add event listener
-   * @param event Event type
+   * Add event listener - supports both string and enum event types
+   * @param event Event type (string or WebsocketEvent enum)
    * @param handler Event handler
    */
-  on(event: WebsocketEvent, handler: EventHandler): void {
-    const handlers = this.eventHandlers.get(event) || [];
-    handlers.push(handler);
-    this.eventHandlers.set(event, handlers);
+  on<K extends keyof typeof WebsocketEvent>(
+    event: K | WebsocketEvent | string,
+    handler: EventHandler
+  ): void {
+    const eventName = typeof event === 'string' ? event : WebsocketEvent[event as keyof typeof WebsocketEvent];
 
-    // Register handler if socket is connected
-    if (this.socket?.connected) {
-      this.socket.on(event, handler);
-    }
+    console.log(`WebSocket Service: Adding handler for event "${eventName}" (original: "${event}")`);
+
+    const handlers = this.eventHandlers.get(eventName) || [];
+    handlers.push(handler);
+    this.eventHandlers.set(eventName, handlers);
+
+    console.log(`WebSocket Service: Handler for "${eventName}" will be registered when connected`);
   }
 
   /**
-   * Remove event listener
-   * @param event Event type
+   * Remove event listener - supports both string and enum event types
+   * @param event Event type (string or WebsocketEvent enum)
    * @param handler Event handler
    */
-  off(event: WebsocketEvent, handler: EventHandler): void {
-    const handlers = this.eventHandlers.get(event) || [];
+  off<K extends keyof typeof WebsocketEvent>(
+    event: K | WebsocketEvent | string,
+    handler: EventHandler
+  ): void {
+    const eventName = typeof event === 'string' ? event : WebsocketEvent[event as keyof typeof WebsocketEvent];
+
+    const handlers = this.eventHandlers.get(eventName) || [];
     const index = handlers.indexOf(handler);
 
     if (index !== -1) {
       handlers.splice(index, 1);
-      this.eventHandlers.set(event, handlers);
+      this.eventHandlers.set(eventName, handlers);
     }
 
     // Remove handler if socket is connected
     if (this.socket?.connected) {
-      this.socket.off(event, handler);
+      this.socket.off(eventName, handler);
     }
   }
 
@@ -305,6 +335,20 @@ class WebSocketService {
     return this.socket?.connected || false;
   }
 
+  /**
+   * Get debug information about WebSocket state
+   */
+  getDebugInfo(): any {
+    return {
+      isConnected: this.socket?.connected || false,
+      socketId: this.socket?.id || null,
+      isConnecting: this.isConnecting,
+      reconnectAttempts: this.reconnectAttempts,
+      eventHandlersCount: this.eventHandlers.size,
+      eventHandlers: Array.from(this.eventHandlers.keys()),
+    };
+  }
+
   // Group messaging methods
   /**
    * Join a group room
@@ -347,47 +391,7 @@ class WebSocketService {
     }
   }
 
-  /**
-   * Enhanced on method that supports both old and new event types
-   */
-  onEvent<K extends keyof typeof WebsocketEvent>(
-    event: K | WebsocketEvent | string,
-    handler: EventHandler
-  ): void {
-    const eventName = typeof event === 'string' ? event : WebsocketEvent[event as keyof typeof WebsocketEvent];
 
-    const handlers = this.eventHandlers.get(eventName) || [];
-    handlers.push(handler);
-    this.eventHandlers.set(eventName, handlers);
-
-    // Register handler if socket is connected
-    if (this.socket?.connected) {
-      this.socket.on(eventName, handler);
-    }
-  }
-
-  /**
-   * Enhanced off method that supports both old and new event types
-   */
-  offEvent<K extends keyof typeof WebsocketEvent>(
-    event: K | WebsocketEvent | string,
-    handler: EventHandler
-  ): void {
-    const eventName = typeof event === 'string' ? event : WebsocketEvent[event as keyof typeof WebsocketEvent];
-
-    const handlers = this.eventHandlers.get(eventName) || [];
-    const index = handlers.indexOf(handler);
-
-    if (index !== -1) {
-      handlers.splice(index, 1);
-      this.eventHandlers.set(eventName, handlers);
-    }
-
-    // Remove handler if socket is connected
-    if (this.socket?.connected) {
-      this.socket.off(eventName, handler);
-    }
-  }
 }
 
 // Create singleton instance

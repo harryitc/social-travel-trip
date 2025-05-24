@@ -184,7 +184,7 @@ export class GroupRepository {
     // Get user details to use username as default nickname
     const userResult = await this.client.execute(
       'SELECT username FROM users WHERE user_id = $1',
-      [user_id]
+      [user_id],
     );
     const defaultNickname = nickname || userResult.rows[0]?.username;
 
@@ -337,7 +337,7 @@ export class GroupRepository {
       LEFT JOIN users reply_user ON reply_msg.user_id = reply_user.user_id
       LEFT JOIN group_members reply_gm_info ON reply_msg.user_id = reply_gm_info.user_id AND reply_gm_info.group_id = gm.group_id
       WHERE gm.group_id = $1 ${whereClause}
-      ORDER BY gm.created_at DESC
+      ORDER BY gm.created_at ASC
       LIMIT $2 OFFSET $3
     `;
 
