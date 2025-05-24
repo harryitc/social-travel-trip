@@ -28,10 +28,14 @@ export class GetGroupDetailsQueryHandler
 
     // First verify that the user is a member of this group
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    const userMember = membersResult.rows.find((member) => member.user_id == userId);
+    const userMember = membersResult.rows.find(
+      (member) => member.user_id == userId,
+    );
 
     if (!userMember) {
-      this.logger.warn(`User ${userId} attempted to access group ${dto.group_id} without membership`);
+      this.logger.warn(
+        `User ${userId} attempted to access group ${dto.group_id} without membership`,
+      );
       throw new UnauthorizedException('You are not a member of this group');
     }
 
@@ -44,7 +48,7 @@ export class GetGroupDetailsQueryHandler
 
     // Get member count
     const countResult = await this.repository.countGroupMembers(dto.group_id);
-    const memberCount = countResult.rowCount;
+    const memberCount = countResult.rows[0].total;
 
     // Get message count
     const messageCountResult = await this.repository.countMessages(
@@ -52,7 +56,9 @@ export class GetGroupDetailsQueryHandler
     );
     const messageCount = messageCountResult.rowCount;
 
-    this.logger.debug(`User ${userId} (member) accessed group ${dto.group_id} details`);
+    this.logger.debug(
+      `User ${userId} (member) accessed group ${dto.group_id} details`,
+    );
 
     // Map to model and add additional info
     const group = new Group(result.rows[0]);

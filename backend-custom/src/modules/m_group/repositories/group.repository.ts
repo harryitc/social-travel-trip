@@ -423,14 +423,17 @@ export class GroupRepository {
   }
 
   async getMessages(data: GetMessagesDto) {
-    const { group_id, page = 1, limit = 10, before_id } = data;
-    const offset = (page - 1) * limit;
-    const params = [group_id, limit, offset];
-
+    const { group_id, limit = 10, before_id } = data;
+    let params: any[];
     let whereClause = '';
+
     if (before_id) {
-      whereClause = 'AND gm.group_message_id < $4';
-      params.push(before_id);
+      // Load messages older than before_id
+      whereClause = 'AND gm.group_message_id < $2';
+      params = [group_id, before_id, limit];
+    } else {
+      // Initial load - get latest messages
+      params = [group_id, limit];
     }
 
     const query = `
@@ -519,11 +522,18 @@ export class GroupRepository {
       LEFT JOIN users reply_user ON reply_msg.user_id = reply_user.user_id
       LEFT JOIN group_members reply_gm_info ON reply_msg.user_id = reply_gm_info.user_id AND reply_gm_info.group_id = gm.group_id
       WHERE gm.group_id = $1 ${whereClause}
-      ORDER BY gm.created_at ASC
-      LIMIT $2 OFFSET $3
+      ORDER BY gm.created_at DESC
+      LIMIT ${before_id ? '$3' : '$2'}
     `;
 
-    return this.client.execute(query, params);
+    const result = await this.client.execute(query, params);
+
+    // Always reverse to get chronological order (oldest first)
+    if (result.rows) {
+      result.rows = result.rows.reverse();
+    }
+
+    return result;
   }
 
   async countMessages(groupId: number) {

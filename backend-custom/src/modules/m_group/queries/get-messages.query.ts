@@ -40,16 +40,16 @@ export class GetMessagesQueryHandler
       throw new NotFoundException(`Group with ID ${dto.group_id} not found`);
     }
 
-    // Get messages with pagination
+    // Get messages with beforeId-based pagination
     const messagesResult = await this.repository.getMessages(dto);
 
-    if (messagesResult.rowCount == 0 && dto.page > 1) {
+    if (messagesResult.rowCount == 0 && dto.before_id) {
       throw new NotFoundException('No more messages found');
     }
 
     // Get total count
     const countResult = await this.repository.countMessages(dto.group_id);
-    const total = countResult.rowCount;
+    const total = countResult.rows[0].total;
 
     // Add user's like status to each message and map to model
     const messages = messagesResult.rows.map((message) => {
@@ -59,14 +59,14 @@ export class GetMessagesQueryHandler
       };
     });
 
+    // For beforeId-based pagination, hasMore is true if we got the full limit
+    // This means there might be more older messages
+    const hasMore = messages.length === (dto.limit || 10);
+
     return {
       messages,
-      pagination: {
-        total,
-        page: dto.page || 1,
-        limit: dto.limit || 10,
-        hasMore: (dto.page || 1) * (dto.limit || 10) < total,
-      },
+      hasMore,
+      total,
     };
   }
 }
