@@ -198,7 +198,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
       try {
         setLoading(true);
-        const result = await tripGroupService.getMessages(tripId, 50); // Load latest 50 messages
+        const result = await tripGroupService.getMessages(tripId, 10); // Load latest 50 messages
 
         if (result && result.messages) {
           const transformedMessages = result.messages.map(transformMessage);
@@ -217,6 +217,18 @@ export function TripChat({ tripId }: TripChatProps) {
             groupId: tripId,
             messages: transformedMessages
           });
+
+          // Scroll to bottom after initial load
+          setTimeout(() => {
+            if (messageEndRef.current) {
+              messageEndRef.current.scrollIntoView({
+                behavior: 'auto', // Use 'auto' for immediate scroll on initial load
+                block: 'end',
+                inline: 'nearest'
+              });
+              setIsUserNearBottom(true);
+            }
+          }, 100);
         } else {
           setMessages([]);
           setHasMoreMessages(false);
@@ -227,6 +239,9 @@ export function TripChat({ tripId }: TripChatProps) {
             groupId: tripId,
             messages: []
           });
+
+          // Ensure scroll is at bottom even for empty state
+          setIsUserNearBottom(true);
         }
       } catch (error: any) {
         console.error('❌ [TripChat] Error loading messages:', error);
@@ -251,6 +266,26 @@ export function TripChat({ tripId }: TripChatProps) {
 
     loadMessages();
   }, [tripId]);
+
+  // Ensure scroll to bottom on component mount
+  useEffect(() => {
+    // Set initial state to be at bottom
+    setIsUserNearBottom(true);
+    setShowScrollToBottom(false);
+
+    // Scroll to bottom after a short delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (messageEndRef.current) {
+        messageEndRef.current.scrollIntoView({
+          behavior: 'auto',
+          block: 'end',
+          inline: 'nearest'
+        });
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [tripId]); // Re-run when tripId changes
 
   // Load older messages function
   const loadOlderMessages = useCallback(async () => {
@@ -404,12 +439,12 @@ export function TripChat({ tripId }: TripChatProps) {
 
           const newMessages = [...prev, transformedMessage];
 
-        // Update oldest message ID if this is the first message
-        if (prev.length === 0) {
-          setOldestMessageId(parseInt(transformedMessage.id));
-        }
+          // Update oldest message ID if this is the first message
+          if (prev.length === 0) {
+            setOldestMessageId(parseInt(transformedMessage.id));
+          }
 
-        return newMessages;
+          return newMessages;
         });
 
         // Emit event for other components
@@ -524,20 +559,22 @@ export function TripChat({ tripId }: TripChatProps) {
     };
   }, [tripId, emit]);
 
-  // Smart scroll behavior - only auto-scroll if user is near bottom
+  // Smart scroll behavior - auto-scroll to bottom when messages change
   useEffect(() => {
-    if (messageEndRef.current && isUserNearBottom) {
-      // Add a small delay to ensure the message is rendered
-      setTimeout(() => {
-        messageEndRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-          inline: 'nearest'
-        });
-      }, 100);
-    } else if (!isUserNearBottom) {
-      // Show scroll to bottom button when user is not at bottom and new messages arrive
-      setShowScrollToBottom(true);
+    if (messageEndRef.current) {
+      if (isUserNearBottom || messages.length === 0) {
+        // Auto-scroll if user is near bottom or no messages yet
+        setTimeout(() => {
+          messageEndRef.current?.scrollIntoView({
+            behavior: messages.length === 0 ? 'auto' : 'smooth', // Immediate scroll for initial load
+            block: 'end',
+            inline: 'nearest'
+          });
+        }, 50);
+      } else {
+        // Show scroll to bottom button when user is not at bottom and new messages arrive
+        setShowScrollToBottom(true);
+      }
     }
   }, [messages, isUserNearBottom]);
 
@@ -548,6 +585,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
     let scrollTimeout: NodeJS.Timeout | null = null;
     let isScrolling = false;
+    let hasUserScrolled = false; // Track if user has manually scrolled
 
     const handleScroll = () => {
       const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
@@ -560,13 +598,18 @@ export function TripChat({ tripId }: TripChatProps) {
       setIsUserNearBottom(isNearBottom);
       setIsUserNearTop(isNearTop);
 
+      // Mark that user has scrolled (to prevent auto-load on initial render)
+      if (!hasUserScrolled && scrollTop > 0) {
+        hasUserScrolled = true;
+      }
+
       // Hide scroll to bottom button when user scrolls to bottom
       if (isNearBottom) {
         setShowScrollToBottom(false);
       }
 
-      // Debounce load more messages when near top
-      if (isNearTop && hasMoreMessages && !loadingOlderMessages && !isScrolling) {
+      // Only trigger load more if user has manually scrolled and we have messages
+      if (isNearTop && hasMoreMessages && !loadingOlderMessages && !isScrolling && hasUserScrolled && messages.length > 0) {
         if (scrollTimeout) {
           clearTimeout(scrollTimeout);
         }
