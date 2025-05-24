@@ -455,9 +455,9 @@ export function TripChat({ tripId }: TripChatProps) {
                         <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
                       </Avatar>
 
-                      <div className="flex flex-col gap-1 max-w-[80%] ${
+                      <div className={`flex flex-col gap-1 max-w-[80%] ${
                 message.sender.id === (user?.id || '1') ? 'items-end' : ''
-              }">
+              }`}>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-medium">{message.sender.name}</span>
                           <span className="text-xs text-muted-foreground">{message.timestamp}</span>
@@ -467,17 +467,18 @@ export function TripChat({ tripId }: TripChatProps) {
                           )}
                         </div>
 
-                        <div className="relative rounded-lg p-2.5 group ${
+                        <div className={`relative rounded-lg p-2.5 group ${
                   message.sender.id === (user?.id || '1')
                     ? 'bg-purple-600 text-white shadow-xs'
                     : 'bg-secondary shadow-xs'
-                }">
+                }`}>
                           {message.replyTo && (
-                            <div className="mb-2 p-2 rounded text-xs flex items-start gap-1 ${
-                      message.sender.id === (user?.id || '1')
-                        ? 'bg-purple-700/50'
-                        : 'bg-secondary-foreground/10'
-                    }">
+                            <div className={
+                              `mb-2 p-2 rounded text-xs flex items-start gap-1 ${message.sender.id === (user?.id || '1')
+                                ? 'bg-purple-700/50'
+                                : 'bg-secondary-foreground/10'
+                              }`
+                            }>
                               <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
                               <div>
                                 <div className="font-medium">{message.replyTo.sender.name}</div>
@@ -535,7 +536,7 @@ export function TripChat({ tripId }: TripChatProps) {
                             </div>
                           )}
 
-                          <div className="absolute ${message.sender.id === (user?.id || '1') ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === (user?.id || '1') ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className={`absolute ${message.sender.id === (user?.id || '1') ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === (user?.id || '1') ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-xs shadow-xs">
@@ -582,7 +583,7 @@ export function TripChat({ tripId }: TripChatProps) {
               )}
             </ScrollArea>
 
-            <div className="p-2 ${isVerticalLayout ? 'border-t-0' : 'border-t'} border-purple-100 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-900/10">
+            <div className={`p-2 border-t border-purple-100 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-900/10`}>
               {/* Image preview area */}
               {imagePreviewUrls.length > 0 && (
                 <div className="mb-1.5">

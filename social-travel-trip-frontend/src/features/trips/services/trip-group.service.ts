@@ -128,6 +128,27 @@ class TripGroupService {
         limit,
       });
 
+      // Map backend response to frontend format
+      if (response && response.members) {
+        const mappedMembers = response.members.map((member: any) => ({
+          group_member_id: member.group_member_id,
+          group_id: member.group_id,
+          user_id: member.user_id,
+          nickname: member.nickname,
+          role: member.role,
+          join_at: member.join_at,
+          // Map user info
+          name: member.username || member.nickname || 'Unknown User',
+          avatar: member.avatar_url || '',
+          isAdmin: () => member.role === 'admin'
+        }));
+
+        return {
+          ...response,
+          members: mappedMembers
+        };
+      }
+
       return response;
     } catch (error) {
       console.error('Error fetching group members:', error);

@@ -37,14 +37,54 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
   const [tripPlan, setTripPlan] = useState<TripPlan | undefined>(undefined);
 
   // Find a matching template for this group (in a real app, this would come from the database)
-  const matchingTemplate = TRAVEL_PLAN_TEMPLATES.find(
+  const matchingTemplate = group ? TRAVEL_PLAN_TEMPLATES.find(
     template => group.location && template.destination.includes(group.getLocationShort())
-  );
+  ) : undefined;
 
-  const handleInviteMembers = (newMembers: TripGroupMember[]) => {
-    setMembers([...members, ...newMembers]);
-    setMemberCount(memberCount + newMembers.length);
-  };
+  // Fetch group details and members when component mounts or groupId changes
+  useEffect(() => {
+    const fetchGroupDetails = async () => {
+      if (!groupId) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch group details
+        const groupData = await tripGroupService.getGroupById(groupId);
+        setGroup(groupData);
+
+        // Fetch group members
+        const membersData = await tripGroupService.getGroupMembers(groupId);
+        if (membersData && membersData.members) {
+          setMembers(membersData.members);
+          setMemberCount(membersData.members.length);
+        } else {
+          setMembers(groupData.members?.list || []);
+          setMemberCount(groupData.members?.count || 0);
+        }
+
+        // Load trip plan if group has one
+        if (groupData.plan_id) {
+          const plan = getTripPlanByGroupId(groupData.id);
+          setTripPlan(plan);
+        }
+
+      } catch (error) {
+        console.error('Error fetching group details:', error);
+        setError('Không thể tải thông tin nhóm');
+        notification.error({
+          message: 'Lỗi',
+          description: 'Không thể tải thông tin nhóm',
+          placement: 'topRight',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroupDetails();
+  }, [groupId]);
 
   const handleOpenInviteDialog = () => {
     setShowInviteDialog(true);
@@ -52,12 +92,28 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
   };
 
   const handleInviteMember = async (data: InviteMemberData) => {
-    return await tripGroupService.inviteMember(data);
+    try {
+      const result = await tripGroupService.inviteMember(data);
+
+      // Refresh members list after successful invite
+      if (result) {
+        const membersData = await tripGroupService.getGroupMembers(groupId);
+        if (membersData && membersData.members) {
+          setMembers(membersData.members);
+          setMemberCount(membersData.members.length);
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error inviting member:', error);
+      throw error;
+    }
   };
 
   // Copy join code to clipboard
   const copyJoinCode = async () => {
-    if (group.join_code) {
+    if (group?.join_code) {
       try {
         await navigator.clipboard.writeText(group.join_code);
         notification.success({
@@ -90,10 +146,55 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center animate-pulse">
+            <Users className="h-8 w-8 text-gray-400" />
+          </div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Đang tải...
+          </h4>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Đang tải thông tin nhóm
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+            <Users className="h-8 w-8 text-red-400" />
+          </div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Lỗi tải dữ liệu
+          </h4>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {error}
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            size="sm"
+          >
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {
-        groupId ? (
+        groupId && group ? (
           <div className="flex flex-col h-full">
             {/* Group info header */}
             <div className="p-2 border-b border-purple-100 dark:border-purple-900 bg-teal-50/50 dark:bg-teal-900/10">
@@ -143,7 +244,7 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
                 )}
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Users className="h-4 w-4 text-teal-500" />
-                  <span>{memberCount}/{group.members.max}</span>
+                  <span>{memberCount}/{group.members?.max || 10}</span>
                 </div>
               </div>
             </div>
@@ -186,7 +287,7 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <h3 className="font-medium text-sm">Thành viên</h3>
-                  <Badge variant="outline" className="text-xs h-5">{memberCount}/{group.members.max}</Badge>
+                  <Badge variant="outline" className="text-xs h-5">{memberCount}/{group.members?.max || 10}</Badge>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Button
@@ -216,8 +317,8 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
 
               {/* Member list */}
               <div className="space-y-1">
-                {members.slice(0, 5).map((member) => (
-                  <div key={member.id || member.group_member_id} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
+                {members.slice(0, 5).map((member, index) => (
+                  <div key={member.group_member_id || member.user_id || index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
                     <Avatar className="h-7 w-7">
                       <AvatarImage src={member.avatar} alt={member.name || 'Unknown'} />
                       <AvatarFallback>{(member.name || 'U')[0]}</AvatarFallback>

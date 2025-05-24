@@ -1,45 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { TripGroup } from '@/features/trips/models/trip-group.model';
-import { tripGroupService } from '@/features/trips/services/trip-group.service';
 import { GroupChatList } from '@/features/trips/components/group-chat-list';
 import { GroupListSkeleton } from '@/features/trips/components/chat-skeleton';
 import { useEventListeners } from '@/features/stores/useEventListeners';
-import { useEventStore } from '@/features/stores/event.store';
+import { useEventStore, useGroupStore } from '@/features/stores/event.store';
+import { groupStoreService } from '@/features/trips/services/group-store.service';
 
 /**
- * Parallel Route: @groups/trips
- * Left column - Group list without pre-selection
+ * Parallel Route: @groups/trips/[id]
+ * Left column - Group list with specific group selected
  */
 export default function GroupsDetailPage() {
   const router = useRouter();
+  const params = useParams();
   const { emit } = useEventStore();
 
-  const [allGroups, setAllGroups] = useState<TripGroup[]>([]);
-  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-
-  // Load groups from API
-  const loadGroups = async () => {
-    try {
-      setLoading(true);
-      console.log('📋 [GroupsPage] Loading groups list');
-      const groups = await tripGroupService.getAllGroups();
-      console.log('✅ [GroupsPage] Groups loaded:', groups.length, 'groups');
-      setAllGroups(groups);
-    } catch (error) {
-      console.error('❌ [GroupsPage] Error loading groups:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Sử dụng store thay vì local state
+  const { groups, selectedGroupId, loading } = useGroupStore();
 
   // Handle group selection with Zustand events
   const handleSelectGroup = (group: TripGroup) => {
-    console.log('🎯 [GroupsPage] Selected group:', group.id, group.title);
-    setSelectedGroupId(group.id);
+    console.log('🎯 [GroupsDetailPage] Selected group:', group.id, group.title);
+    groupStoreService.setSelectedGroup(group.id);
 
     // Update URL to specific trip
     router.push(`/trips/${group.id}`);
@@ -49,26 +34,30 @@ export default function GroupsDetailPage() {
   };
 
   useEffect(() => {
-    loadGroups();
+    console.log("📋 [GroupsDetailPage] Component mounted/params changed");
+
+    // Load groups chỉ khi chưa có data (không force reload)
+    groupStoreService.loadGroups(false);
   }, []);
+
+  useEffect(() => {
+    // Set selected group từ URL params khi params.id thay đổi
+    if (params.id) {
+      console.log("🎯 [GroupsDetailPage] Setting selected group from URL:", params.id);
+      groupStoreService.setSelectedGroup(params.id as string);
+    }
+  }, [params.id]);
 
   // Listen to group events
   useEventListeners({
     'group:created': (data) => {
       console.log('Group created event received:', data);
-      setAllGroups(prev => [data.group, ...prev]);
-      handleSelectGroup(data.group);
-    },
-    'group:joined': (data) => {
-      console.log('Group joined event received:', data);
-      loadGroups(); // Reload to get updated data
+      groupStoreService.addGroup(data.group);
       handleSelectGroup(data.group);
     },
     'group:updated': (data) => {
       console.log('Group updated event received:', data);
-      setAllGroups(prev => prev.map(group =>
-        group.id === data.group.id ? data.group : group
-      ));
+      groupStoreService.updateGroup(data.group);
     },
   });
 
@@ -78,7 +67,7 @@ export default function GroupsDetailPage() {
         <GroupListSkeleton />
       ) : (
         <GroupChatList
-          groups={allGroups}
+          groups={groups}
           selectedGroupId={selectedGroupId}
           onSelectGroup={handleSelectGroup}
         />
