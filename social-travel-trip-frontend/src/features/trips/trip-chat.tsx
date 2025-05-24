@@ -36,6 +36,7 @@ import { useEventStore } from '@/features/stores/event.store';
 import { websocketService } from '@/lib/services/websocket.service';
 import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
+import { formatMessageTimestamp, getRelativeTime, formatDetailedTimestamp } from '@/lib/utils';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -46,7 +47,8 @@ interface Message {
     name: string;
     avatar: string;
   };
-  timestamp: string;
+  timestamp: string; // Formatted timestamp for display
+  rawTimestamp: string; // Raw timestamp from backend for tooltip
   pinned?: boolean;
   likeCount?: number;
   attachments?: Array<{
@@ -69,92 +71,11 @@ type TripChatProps = {
   tripId: string;
 };
 
-// Helper function to format message timestamp
-const formatMessageTimestamp = (dateString: string): string => {
-  // Parse the timestamp and ensure it's treated as local time
-  // Backend sends timestamp in format: "2024-01-01T08:29:00.000Z" or "2024-01-01 08:29:00"
-  let messageDate: Date;
-
-  try {
-    // Handle different timestamp formats from backend
-    if (dateString.includes('T') && dateString.includes('Z')) {
-      // ISO format with timezone: "2024-01-01T08:29:00.000Z"
-      messageDate = new Date(dateString);
-    } else if (dateString.includes('T')) {
-      // ISO format without timezone: "2024-01-01T08:29:00"
-      messageDate = new Date(dateString);
-    } else {
-      // PostgreSQL format: "2024-01-01 08:29:00"
-      messageDate = new Date(dateString.replace(' ', 'T'));
-    }
-
-    // If the date is invalid, fallback to current time
-    if (isNaN(messageDate.getTime())) {
-      console.warn('Invalid timestamp received:', dateString);
-      messageDate = new Date();
-    }
-  } catch (error) {
-    console.error('Error parsing timestamp:', dateString, error);
-    messageDate = new Date();
-  }
-
-  const now = new Date();
-  const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
-
-  // If message is from today, show only time
-  if (diffInHours < 24 && messageDate.toDateString() === now.toDateString()) {
-    return messageDate.toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'Asia/Ho_Chi_Minh' // Ensure Vietnam timezone
-    });
-  }
-
-  // If message is from yesterday
-  if (diffInHours < 48) {
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (messageDate.toDateString() === yesterday.toDateString()) {
-      return `Hôm qua ${messageDate.toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: 'Asia/Ho_Chi_Minh'
-      })}`;
-    }
-  }
-
-  // If message is from this week, show day name
-  if (diffInHours < 168) { // 7 days
-    return messageDate.toLocaleDateString('vi-VN', {
-      weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'Asia/Ho_Chi_Minh'
-    });
-  }
-
-  // For older messages, show full date
-  return messageDate.toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Ho_Chi_Minh'
-  });
-};
-
 // Helper function to transform backend message to UI message
 const transformMessage = (backendMessage: TripGroupMessage): Message => {
   // Extract user info from multiple possible sources - prioritize nickname
   const displayName = backendMessage.nickname || backendMessage.username || backendMessage.user?.username || `User ${backendMessage.user_id}`;
   const avatarUrl = backendMessage.avatar_url || backendMessage.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
-
-  console.log(new Date(backendMessage.created_at))
 
   // Debug log for user info extraction and timestamp
   console.log('🔄 [TripChat] Transforming message:', {
@@ -179,6 +100,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
       avatar: avatarUrl,
     },
     timestamp: formatMessageTimestamp(backendMessage.created_at),
+    rawTimestamp: backendMessage.created_at, // Store raw timestamp for tooltip
     pinned: backendMessage.is_pinned || false,
     likeCount: backendMessage.like_count || 0,
     attachments: backendMessage.attachments || [],
@@ -811,7 +733,10 @@ export function TripChat({ tripId }: TripChatProps) {
                             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                               {message.sender.name}
                             </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span
+                              className="text-xs text-gray-500 dark:text-gray-400 cursor-help"
+                              title={formatDetailedTimestamp(message.rawTimestamp)}
+                            >
                               {message.timestamp}
                             </span>
                             {message.pinned && (
