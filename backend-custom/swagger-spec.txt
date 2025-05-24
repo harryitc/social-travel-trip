@@ -53,6 +53,7 @@ group/messages/like
 group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
+group/messages/reaction-users
 group/messages/get-pinned
 group/generate-join-qrcode
 group/join-by-code

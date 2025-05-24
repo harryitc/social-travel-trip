@@ -13,6 +13,7 @@ import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
 import { AddMessagePinDto } from '../dto/add-message-pin.dto';
 import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
 import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
+import { GetMessageReactionUsersDto } from '../dto/get-message-reaction-users.dto';
 import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
@@ -36,6 +37,7 @@ import { GetListGroupsQuery } from '../queries/get-list-groups.query';
 import { GetGroupMembersQuery } from '../queries/get-group-members.query';
 import { GetGroupDetailsQuery } from '../queries/get-group-details.query';
 import { GetMessageReactionsQuery } from '../queries/get-message-reactions.query';
+import { GetMessageReactionUsersQuery } from '../queries/get-message-reaction-users.query';
 
 @Injectable()
 export class GroupService {
@@ -79,7 +81,9 @@ export class GroupService {
   }
 
   async updateMemberNickname(dto: UpdateMemberNicknameDto, userId: number) {
-    return this.commandBus.execute(new UpdateMemberNicknameCommand(dto, userId));
+    return this.commandBus.execute(
+      new UpdateMemberNicknameCommand(dto, userId),
+    );
   }
 
   async generateJoinQRCode(dto: GenerateJoinQRCodeDto, userId: number) {
@@ -117,6 +121,13 @@ export class GroupService {
 
   async getMessageReactions(dto: GetMessageReactionsDto, userId: number) {
     return this.queryBus.execute(new GetMessageReactionsQuery(dto, userId));
+  }
+
+  async getMessageReactionUsers(
+    dto: GetMessageReactionUsersDto,
+    userId: number,
+  ) {
+    return this.queryBus.execute(new GetMessageReactionUsersQuery(dto, userId));
   }
 
   async getPinnedMessages(groupId: number, userId: number) {

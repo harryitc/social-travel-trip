@@ -4,6 +4,7 @@ import { GetPinnedMessagesQueryHandler } from './get-pinned-messages.query';
 import { GetGroupMembersQueryHandler } from './get-group-members.query';
 import { GetGroupDetailsQueryHandler } from './get-group-details.query';
 import { GetMessageReactionsQueryHandler } from './get-message-reactions.query';
+import { GetMessageReactionUsersQueryHandler } from './get-message-reaction-users.query';
 
 export const QueryHandlers = [
   GetMessagesQueryHandler,
@@ -12,4 +13,5 @@ export const QueryHandlers = [
   GetGroupMembersQueryHandler,
   GetGroupDetailsQueryHandler,
   GetMessageReactionsQueryHandler,
+  GetMessageReactionUsersQueryHandler,
 ];

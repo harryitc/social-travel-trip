@@ -1,25 +1,25 @@
 import { Logger } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
-import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
+import { GetMessageReactionUsersDto } from '../dto/get-message-reaction-users.dto';
 import { NotFoundException, UnauthorizedException } from '@common/exceptions';
 
-export class GetMessageReactionsQuery implements IQuery {
+export class GetMessageReactionUsersQuery implements IQuery {
   constructor(
-    public readonly dto: GetMessageReactionsDto,
+    public readonly dto: GetMessageReactionUsersDto,
     public readonly userId: number,
   ) {}
 }
 
-@QueryHandler(GetMessageReactionsQuery)
-export class GetMessageReactionsQueryHandler
-  implements IQueryHandler<GetMessageReactionsQuery>
+@QueryHandler(GetMessageReactionUsersQuery)
+export class GetMessageReactionUsersQueryHandler
+  implements IQueryHandler<GetMessageReactionUsersQuery>
 {
-  private readonly logger = new Logger(GetMessageReactionsQuery.name);
+  private readonly logger = new Logger(GetMessageReactionUsersQuery.name);
 
   constructor(private readonly repository: GroupRepository) {}
 
-  async execute(query: GetMessageReactionsQuery): Promise<any> {
+  async execute(query: GetMessageReactionUsersQuery): Promise<any> {
     const { dto, userId } = query;
 
     // Check if message exists and get group_id
@@ -41,31 +41,16 @@ export class GetMessageReactionsQueryHandler
 
     if (!member) {
       this.logger.warn(
-        `User ${userId} attempted to access reactions for message ${dto.group_message_id} without group membership`,
+        `User ${userId} attempted to access reaction users for message ${dto.group_message_id} without group membership`,
       );
       throw new UnauthorizedException('You are not a member of this group');
     }
 
-    // Get reactions
-    const result = await this.repository.getMessageReactions(
+    // Get users who reacted to the message
+    const usersResult = await this.repository.getMessageReactionUsersByType(
       dto.group_message_id,
+      dto.reaction_id,
     );
-
-    // Get users who reacted
-    const usersResult = await this.repository.getMessageReactionUsers(
-      dto.group_message_id,
-    );
-
-    if (result.rowCount == 0) {
-      return {
-        total: 0,
-        reactions: [],
-        users: [],
-      };
-    }
-
-    // Tổng tất cả reaction
-    const total = result.rows.reduce((sum, row) => sum + Number(row.count), 0);
 
     // Format users data
     const users = usersResult.rows.map((row) => ({
@@ -78,10 +63,12 @@ export class GetMessageReactionsQueryHandler
     }));
 
     return {
-      total,
-      reactions: result.rows,
-      users: users,
-      message_id: dto.group_message_id,
+      data: users,
+      meta: {
+        total: usersResult.rowCount || 0,
+        message_id: dto.group_message_id,
+        reaction_id: dto.reaction_id || null,
+      },
     };
   }
 }

@@ -21,6 +21,7 @@ import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
 import { AddMessagePinDto } from '../dto/add-message-pin.dto';
 import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
 import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
+import { GetMessageReactionUsersDto } from '../dto/get-message-reaction-users.dto';
 import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
 import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
@@ -150,6 +151,16 @@ export class GroupController {
   ) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.getMessageReactions(dto, +userId);
+  }
+
+  @Post('messages/reaction-users')
+  @ApiOperation({ summary: 'Get users who reacted to a message' })
+  async getMessageReactionUsers(
+    @Body() dto: GetMessageReactionUsersDto,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getMessageReactionUsers(dto, +userId);
   }
 
   @Post('messages/get-pinned')

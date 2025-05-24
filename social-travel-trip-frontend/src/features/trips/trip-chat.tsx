@@ -16,7 +16,6 @@ import {
   MessageSquareQuote,
   Download,
   File as FileIcon,
-  Heart,
   Search,
   Plus,
   Users
@@ -29,6 +28,7 @@ import {
 } from '@/components/ui/radix-ui/dropdown-menu';
 import { PinnedMessages } from './pinned-messages';
 import { EmojiPicker } from './emoji-picker';
+import { MessageReactions } from './components/message-reactions';
 import { tripGroupService, TripGroupMessage } from './services/trip-group.service';
 import { ChatSkeleton } from './components/chat-skeleton';
 import { notification } from 'antd';
@@ -36,7 +36,7 @@ import { useEventStore } from '@/features/stores/event.store';
 import { websocketService } from '@/lib/services/websocket.service';
 import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
-import { formatMessageTimestamp, getRelativeTime, formatDetailedTimestamp } from '@/lib/utils';
+import { formatMessageTimestamp, formatDetailedTimestamp } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 
 // Transform TripGroupMessage to Message format for UI compatibility
@@ -52,6 +52,7 @@ interface Message {
   rawTimestamp: string; // Raw timestamp from backend for tooltip
   pinned?: boolean;
   likeCount?: number;
+  reactions?: Array<{ reaction_id: number; count: number }>; // Reaction details
   attachments?: Array<{
     type: 'image' | 'file';
     url: string;
@@ -127,6 +128,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
     rawTimestamp: backendMessage.created_at, // Store raw timestamp for tooltip
     pinned: backendMessage.is_pinned || false,
     likeCount: backendMessage.like_count || 0,
+    reactions: [], // Will be populated when needed
     attachments: attachments,
     replyTo: backendMessage.reply_to_message_id ? {
       id: backendMessage.reply_to_message_id.toString(),
@@ -433,24 +435,12 @@ export function TripChat({ tripId }: TripChatProps) {
     }
   };
 
-  const handleLikeMessage = async (messageId: string) => {
-    try {
-      await tripGroupService.toggleMessageLike(parseInt(messageId), 2); // 2 = like, 1 = no like
-      // The WebSocket will handle updating the UI
-      notification.success({
-        message: 'Thành công',
-        description: 'Đã thích tin nhắn',
-        placement: 'topRight',
-        duration: 1,
-      });
-    } catch (error) {
-      console.error('Error liking message:', error);
-      notification.error({
-        message: 'Lỗi',
-        description: 'Không thể thích tin nhắn. Vui lòng thử lại sau.',
-        placement: 'topRight',
-      });
-    }
+  const handleReactionUpdate = (messageId: string, newLikeCount: number) => {
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId
+        ? { ...msg, likeCount: newLikeCount }
+        : msg
+    ));
   };
 
   const handleReplyMessage = (message: Message) => {
@@ -569,11 +559,11 @@ export function TripChat({ tripId }: TripChatProps) {
               });
             }
           }
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error('Error uploading files:', uploadError);
           notification.error({
             message: 'Lỗi tải lên tệp',
-            description: 'Không thể tải lên tệp. Vui lòng thử lại.',
+            description: uploadError?.response?.data?.reasons?.message || 'Không thể tải lên tệp. Vui lòng thử lại.',
             placement: 'topRight',
           });
           return;
@@ -854,10 +844,10 @@ export function TripChat({ tripId }: TripChatProps) {
                                     <div key={index} className="rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:opacity-90 transition-opacity">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img
-                                        src={attachment.url}
+                                        src={ API_ENDPOINT.file_image_v2 + attachment.url}
                                         alt={attachment.name}
                                         className="max-w-sm max-h-64 object-cover rounded-lg"
-                                        onClick={() => window.open(attachment.url, '_blank')}
+                                        onClick={() => window.open(API_ENDPOINT.file_image_v2 + attachment.url, '_blank')}
                                         title="Click để xem ảnh full size"
                                       />
                                     </div>
@@ -875,7 +865,7 @@ export function TripChat({ tripId }: TripChatProps) {
                                         </div>
                                       </div>
                                       <a
-                                        href={attachment.url}
+                                        href={ API_ENDPOINT.file_image_v2 + attachment.url}
                                         download={attachment.name}
                                         target="_blank"
                                         rel="noopener noreferrer"
@@ -891,13 +881,15 @@ export function TripChat({ tripId }: TripChatProps) {
                               </div>
                             )}
 
-                            {/* Like count */}
-                            {message.likeCount && message.likeCount > 0 && (
-                              <div className="flex items-center gap-1 mt-2">
-                                <Heart className="h-3 w-3 text-red-500 fill-current" />
-                                <span className="text-xs opacity-70">{message.likeCount}</span>
-                              </div>
-                            )}
+                            {/* Message Reactions */}
+                            <div className="mt-2">
+                              <MessageReactions
+                                messageId={message.id}
+                                likeCount={message.likeCount}
+                                reactions={message.reactions}
+                                onReactionUpdate={handleReactionUpdate}
+                              />
+                            </div>
 
                             {/* Message actions */}
                             <div className={`absolute ${isOwnMessage ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${
@@ -910,10 +902,6 @@ export function TripChat({ tripId }: TripChatProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align={isOwnMessage ? "end" : "start"}>
-                                  <DropdownMenuItem onClick={() => handleLikeMessage(message.id)}>
-                                    <Heart className="h-4 w-4 mr-2" />
-                                    Thích
-                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
                                     <Reply className="h-4 w-4 mr-2" />
                                     Phản hồi

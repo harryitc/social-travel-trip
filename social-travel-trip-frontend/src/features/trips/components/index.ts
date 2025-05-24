@@ -16,3 +16,5 @@ export { MemberManagementDialog } from './member-management-dialog';
 export { ChatColumn } from './chat-column';
 export { GroupDetailsColumn } from './group-details-column';
 export { ImageUploadDemo } from './image-upload-demo';
+export { MessageReactions } from './message-reactions';
+export { MessageLikesModal } from './message-likes-modal';

@@ -462,7 +462,7 @@ export class GroupRepository {
 
   async getMessageReactionUsers(messageId: number) {
     const query = `
-      SELECT ml.user_id, ml.reaction_id, u.username, u.avatar_url
+      SELECT ml.user_id, ml.reaction_id, ml.created_at, u.username, u.full_name, u.avatar_url
       FROM message_likes ml
       JOIN users u ON ml.user_id = u.user_id
       WHERE ml.group_message_id = $1 AND reaction_id > 1
@@ -470,6 +470,26 @@ export class GroupRepository {
     `;
 
     return this.client.execute(query, [messageId]);
+  }
+
+  async getMessageReactionUsersByType(messageId: number, reactionId?: number) {
+    let query = `
+      SELECT ml.user_id, ml.reaction_id, ml.created_at, u.username, u.full_name, u.avatar_url
+      FROM message_likes ml
+      JOIN users u ON ml.user_id = u.user_id
+      WHERE ml.group_message_id = $1 AND ml.reaction_id > 1
+    `;
+
+    const params = [messageId];
+
+    if (reactionId) {
+      query += ` AND ml.reaction_id = $2`;
+      params.push(reactionId);
+    }
+
+    query += ` ORDER BY ml.created_at DESC`;
+
+    return this.client.execute(query, params);
   }
 
   // Message pin operations
