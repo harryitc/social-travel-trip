@@ -23,27 +23,49 @@ export const fileService = {
    * @param file File to upload
    * @returns Promise with file upload response
    */
-  async uploadFile(file: File): Promise<FileUploadResponse> {
-    try {
-      // Create form data
-      const formData = new FormData();
-      // Xác định extension từ file type
-      const ext = file.type === 'image/jpeg' ? 'jpg' : 'png';
+async uploadFile(file: File): Promise<FileUploadResponse> {
+  try {
+    const formData = new FormData();
 
-      formData.append('files', file);
-      formData.append('type', 'image');
-      formData.append('ext', ext);
-      formData.append('resize1', JSON.stringify(3));
+    // Xác định loại file
+    const mimeType = file.type;
+    let ext = '';
+    let fileCategory = '';
 
-      // Upload file
-      const response = await Http.post(`${API_ENDPOINT.file_v2}/upload`, formData);
-
-      return response as any;
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      throw error;
+    // Xử lý dựa trên loại MIME
+    if (mimeType.startsWith('image/')) {
+      ext = mimeType === 'image/jpeg' ? 'jpg' : mimeType.split('/')[1];
+      fileCategory = 'image';
+      formData.append('resize1', JSON.stringify(3)); // Chỉ dùng resize với ảnh
+    } else if (mimeType.startsWith('video/')) {
+      ext = mimeType.split('/')[1];
+      fileCategory = 'file';
+    } else if (mimeType.startsWith('audio/')) {
+      ext = mimeType.split('/')[1];
+      fileCategory = 'file';
+    } else if (mimeType === 'application/pdf') {
+      ext = 'pdf';
+      fileCategory = 'file';
+    } else {
+      ext = mimeType.split('/')[1] || 'bin';
+      fileCategory = 'file';
     }
-  },
+
+    // Gắn dữ liệu vào form
+    formData.append('files', file);
+    formData.append('type', fileCategory);
+    formData.append('ext', ext);
+
+    // Upload file
+    const response = await Http.post(`${API_ENDPOINT.file_v2}/upload`, formData);
+
+    return response as any;
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+},
+
 
   /**
    * Upload multiple files to the server
