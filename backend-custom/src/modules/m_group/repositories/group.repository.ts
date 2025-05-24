@@ -46,7 +46,7 @@ export class GroupRepository {
       name,
       description || null,
       cover_url || null,
-      status || 'private', // Default to private for groups with join codes
+      status || 'private', // Use provided status or default to private
       plan_id || null,
       JSON.stringify(json_data || {}), // json_data
       joinCode,
