@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import './chat-animations.css';
 import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
@@ -171,24 +171,43 @@ export function TripChat({ tripId }: TripChatProps) {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
+  // Pagination states for load more messages
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [loadingOlderMessages, setLoadingOlderMessages] = useState(false);
+  const [oldestMessageId, setOldestMessageId] = useState<number | null>(null);
+  const [isUserNearTop, setIsUserNearTop] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load messages from API
+  // Load initial messages from API
   useEffect(() => {
     const loadMessages = async () => {
       if (!tripId) return;
 
+      // Reset pagination states when tripId changes
+      setMessages([]);
+      setHasMoreMessages(true);
+      setOldestMessageId(null);
+      setLoadingOlderMessages(false);
+      setIsUserNearTop(false);
+
       try {
         setLoading(true);
-        const result = await tripGroupService.getMessages(tripId);
+        const result = await tripGroupService.getMessages(tripId, 1, 5); // Load first 50 messages
 
         if (result && result.messages) {
           const transformedMessages = result.messages.map(transformMessage);
           setMessages(transformedMessages);
+
+          // Set pagination states
+          setHasMoreMessages(result.hasMore || false);
+          if (transformedMessages.length > 0) {
+            setOldestMessageId(parseInt(transformedMessages[0].id));
+          }
 
           // Emit event that messages have been loaded
           emit('chat:messages_loaded', {
@@ -197,6 +216,8 @@ export function TripChat({ tripId }: TripChatProps) {
           });
         } else {
           setMessages([]);
+          setHasMoreMessages(false);
+          setOldestMessageId(null);
 
           // Emit event with empty messages
           emit('chat:messages_loaded', {
@@ -212,6 +233,8 @@ export function TripChat({ tripId }: TripChatProps) {
           placement: 'topRight',
         });
         setMessages([]);
+        setHasMoreMessages(false);
+        setOldestMessageId(null);
 
         // Emit event with empty messages on error
         emit('chat:messages_loaded', {
@@ -225,6 +248,86 @@ export function TripChat({ tripId }: TripChatProps) {
 
     loadMessages();
   }, [tripId]);
+
+  // Load older messages function
+  const loadOlderMessages = useCallback(async () => {
+    if (!tripId || !hasMoreMessages || loadingOlderMessages || !oldestMessageId) {
+      console.log('🚫 [TripChat] Skipping load older messages:', {
+        tripId: !!tripId,
+        hasMoreMessages,
+        loadingOlderMessages,
+        oldestMessageId
+      });
+      return;
+    }
+
+    try {
+      setLoadingOlderMessages(true);
+      console.log('🔄 [TripChat] Loading older messages before ID:', oldestMessageId);
+
+      const result = await tripGroupService.getMessages(tripId, 1, 30, oldestMessageId);
+
+      if (result && result.messages && result.messages.length > 0) {
+        const transformedMessages = result.messages.map(transformMessage);
+
+        // Store current scroll position
+        const scrollArea = scrollAreaRef.current;
+        const viewport = scrollArea?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+        const previousScrollHeight = viewport?.scrollHeight || 0;
+        const previousScrollTop = viewport?.scrollTop || 0;
+
+        console.log('📏 [TripChat] Before adding messages:', {
+          previousScrollHeight,
+          previousScrollTop,
+          messagesCount: transformedMessages.length
+        });
+
+        // Prepend older messages to the beginning of the array
+        setMessages(prev => [...transformedMessages, ...prev]);
+
+        // Update pagination states
+        setHasMoreMessages(result.hasMore || false);
+        if (transformedMessages.length > 0) {
+          setOldestMessageId(parseInt(transformedMessages[0].id));
+        }
+
+        // Maintain scroll position after new messages are added
+        // Use requestAnimationFrame for better timing
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (viewport) {
+              const newScrollHeight = viewport.scrollHeight;
+              const heightDifference = newScrollHeight - previousScrollHeight;
+              const newScrollTop = previousScrollTop + heightDifference;
+
+              console.log('📏 [TripChat] After adding messages:', {
+                newScrollHeight,
+                heightDifference,
+                newScrollTop
+              });
+
+              viewport.scrollTop = newScrollTop;
+            }
+          });
+        });
+
+        console.log('✅ [TripChat] Loaded', transformedMessages.length, 'older messages');
+      } else {
+        setHasMoreMessages(false);
+        console.log('📭 [TripChat] No more older messages available');
+      }
+    } catch (error: any) {
+      console.error('❌ [TripChat] Error loading older messages:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể tải tin nhắn cũ hơn. Vui lòng thử lại.',
+        placement: 'topRight',
+        duration: 3,
+      });
+    } finally {
+      setLoadingOlderMessages(false);
+    }
+  }, [tripId, hasMoreMessages, loadingOlderMessages, oldestMessageId]);
 
   // WebSocket integration for real-time messaging
   useEffect(() => {
@@ -284,7 +387,14 @@ export function TripChat({ tripId }: TripChatProps) {
             return prev;
           }
 
-          return [...prev, transformedMessage];
+          const newMessages = [...prev, transformedMessage];
+
+        // Update oldest message ID if this is the first message
+        if (prev.length === 0) {
+          setOldestMessageId(parseInt(transformedMessage.id));
+        }
+
+        return newMessages;
         });
 
         // Emit event for other components
@@ -416,10 +526,13 @@ export function TripChat({ tripId }: TripChatProps) {
     }
   }, [messages, isUserNearBottom]);
 
-  // Monitor scroll position to determine if user is near bottom
+  // Monitor scroll position to determine if user is near bottom or top
   useEffect(() => {
     const scrollArea = scrollAreaRef.current;
     if (!scrollArea) return;
+
+    let scrollTimeout: NodeJS.Timeout | null = null;
+    let isScrolling = false;
 
     const handleScroll = () => {
       const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
@@ -427,21 +540,47 @@ export function TripChat({ tripId }: TripChatProps) {
 
       const { scrollTop, scrollHeight, clientHeight } = viewport;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px threshold
+      const isNearTop = scrollTop < 150; // 150px from top for better UX
 
       setIsUserNearBottom(isNearBottom);
+      setIsUserNearTop(isNearTop);
 
       // Hide scroll to bottom button when user scrolls to bottom
       if (isNearBottom) {
         setShowScrollToBottom(false);
       }
+
+      // Debounce load more messages when near top
+      if (isNearTop && hasMoreMessages && !loadingOlderMessages && !isScrolling) {
+        if (scrollTimeout) {
+          clearTimeout(scrollTimeout);
+        }
+
+        isScrolling = true;
+        scrollTimeout = setTimeout(() => {
+          console.log('🔄 [TripChat] Triggering load more from scroll detection');
+          loadOlderMessages().finally(() => {
+            isScrolling = false;
+          });
+        }, 200); // Reduced debounce for better responsiveness
+      }
     };
 
     const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
     if (viewport) {
-      viewport.addEventListener('scroll', handleScroll);
-      return () => viewport.removeEventListener('scroll', handleScroll);
+      viewport.addEventListener('scroll', handleScroll, { passive: true });
+
+      // Initial check
+      handleScroll();
+
+      return () => {
+        viewport.removeEventListener('scroll', handleScroll);
+        if (scrollTimeout) {
+          clearTimeout(scrollTimeout);
+        }
+      };
     }
-  }, [tripId]); // Re-setup when tripId changes
+  }, [tripId, hasMoreMessages, loadingOlderMessages, loadOlderMessages]); // Re-setup when dependencies change
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -881,6 +1020,42 @@ export function TripChat({ tripId }: TripChatProps) {
                 <ChatSkeleton />
               ) : (
                 <div className={`space-y-4 px-2 message-container ${isTyping ? 'typing-mode' : ''}`}>
+                  {/* Loading indicator for older messages */}
+                  {loadingOlderMessages && (
+                    <div className="flex justify-center py-4 animate-in fade-in duration-300">
+                      <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Đang tải tin nhắn cũ hơn...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Load more button (optional - shown when not auto-loading) */}
+                  {!loadingOlderMessages && hasMoreMessages && !isUserNearTop && messages.length > 0 && (
+                    <div className="flex justify-center py-2">
+                      <button
+                        onClick={loadOlderMessages}
+                        className="px-4 py-2 text-sm bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-full border border-purple-200 dark:border-purple-700 transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                      >
+                        Tải tin nhắn cũ hơn
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Debug info - remove in production */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="flex justify-center py-2">
+                      <div className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+                        Messages: {messages.length} | HasMore: {hasMoreMessages ? 'Yes' : 'No'} |
+                        OldestID: {oldestMessageId} | Loading: {loadingOlderMessages ? 'Yes' : 'No'} |
+                        NearTop: {isUserNearTop ? 'Yes' : 'No'}
+                      </div>
+                    </div>
+                  )}
                   {messages.map((message, index) => {
                     // Compare with user ID from auth context - convert both to string for comparison
                     const isOwnMessage = user?.user_id ? message.sender.id == user.user_id.toString() : false;
@@ -958,7 +1133,7 @@ export function TripChat({ tripId }: TripChatProps) {
                               <p className="text-sm leading-relaxed message-content">{message.content}</p>
                               {/* Inline Message Reactions */}
                               {
-                                message.likeCount > 0 && (
+                                (message.likeCount || 0) > 0 && (
                                   <MessageReactions
                                     messageId={message.id}
                                     likeCount={message.likeCount || 0}

@@ -43,7 +43,7 @@ export class GetGroupMembersQueryHandler
 
     // Get total count
     const countResult = await this.repository.countGroupMembers(dto.group_id);
-    const total = countResult.rowCount;
+    const total = countResult.rows[0].total;
 
     // Map to model
     const members = result.rows.map((member) => new GroupMember(member));
