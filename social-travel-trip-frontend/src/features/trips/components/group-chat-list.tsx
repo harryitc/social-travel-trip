@@ -75,10 +75,13 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       const result = await tripGroupService.joinGroup(joinData);
       setShowJoinDialog(false);
 
-      // Show success notification
+      console.log('🎉 [GroupChatList] Join group result:', result);
+
+      // Show success notification with proper group name
+      const groupName = result.title || result.name || 'nhóm';
       notification.success({
         message: 'Tham gia nhóm thành công',
-        description: `Bạn đã tham gia nhóm "${result.title}" thành công!`,
+        description: `Bạn đã tham gia nhóm "${groupName}" thành công!`,
         placement: 'topRight',
         duration: 3,
       });
@@ -88,10 +91,20 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
     } catch (error: any) {
       console.error('Error joining group:', error);
 
-      // Show error notification
+      // Show error notification with better error handling
+      let errorMessage = 'Có lỗi xảy ra khi tham gia nhóm';
+
+      if (error.response?.data?.reasons?.message) {
+        errorMessage = error.response.data.reasons.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       notification.error({
         message: 'Lỗi tham gia nhóm',
-        description: error.response?.data?.reasons?.message || error.message || 'Có lỗi xảy ra khi tham gia nhóm',
+        description: errorMessage,
         placement: 'topRight',
         duration: 5,
       });

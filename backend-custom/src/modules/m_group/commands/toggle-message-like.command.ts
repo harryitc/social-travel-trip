@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
@@ -29,22 +29,30 @@ export class ToggleMessageLikeCommandHandler
     // Get message details to find group_id
     const messageResult = await this.repository.getMessageById(dto.group_message_id);
     if (!messageResult.rows.length) {
-      throw new Error('Message not found');
+      throw new NotFoundException('Message not found');
     }
 
     const message = messageResult.rows[0];
     const groupId = message.group_id;
+
+    // Verify user is a member of the group that contains this message
+    const membersResult = await this.repository.getGroupMembers(groupId);
+    const member = membersResult.rows.find((m) => m.user_id == userId);
+
+    if (!member) {
+      this.logger.warn(`User ${userId} attempted to like/unlike message ${dto.group_message_id} without group membership`);
+      throw new UnauthorizedException('You are not a member of this group');
+    }
 
     // Toggle like
     const result = await this.repository.toggleMessageLike(dto, userId);
     const likeData = new MessageLike(result.rows[0]);
 
     // Determine if this is a like or unlike (reaction_id = 1 means 'no like')
-    const isLiked = dto.reaction_id !== 1;
+    const isLiked = dto.reaction_id != 1;
 
     try {
-      // Get group members for WebSocket notification
-      const membersResult = await this.repository.getGroupMembers(groupId);
+      // Use already fetched group members for WebSocket notification
       const memberIds = membersResult.rows.map((m) => m.user_id);
 
       // Get updated like count

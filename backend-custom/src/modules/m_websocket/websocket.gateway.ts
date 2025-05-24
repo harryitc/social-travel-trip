@@ -171,7 +171,7 @@ export class WebsocketGateway
       const [type, token] = authorization.split(' ');
       this.logger.debug(`Auth type: ${type}, Token exists: ${!!token}`);
 
-      if (type === 'Bearer' && token) {
+      if (type == 'Bearer' && token) {
         this.logger.debug(`Token extracted from authorization header`);
         return token;
       }

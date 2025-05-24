@@ -30,7 +30,7 @@ export class Group {
     this.join_code_expires_at = data.join_code_expires_at;
 
     // Handle member count from query
-    if (data.member_count !== undefined) {
+    if (data.member_count != undefined) {
       this.members = {
         count: parseInt(data.member_count) || 0,
         max: 10, // Default max members

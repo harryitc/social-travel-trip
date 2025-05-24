@@ -29,7 +29,7 @@ export class GetPostReactionUsersQueryHandler
         reactionId,
       );
 
-      if (result.rowCount === 0) {
+      if (result.rowCount == 0) {
         return {
           data: [],
           meta: {

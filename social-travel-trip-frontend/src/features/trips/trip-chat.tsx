@@ -633,19 +633,7 @@ export function TripChat({ tripId }: TripChatProps) {
       console.error('❌ [TripChat] Error sending message:', error);
 
       // Show appropriate error message
-      let errorMessage = 'Không thể gửi tin nhắn. Vui lòng thử lại sau.';
-
-      if (error?.response?.status === 401) {
-        errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-      } else if (error?.response?.status === 403) {
-        errorMessage = 'Bạn không có quyền gửi tin nhắn trong nhóm này.';
-      } else if (error?.response?.status === 404) {
-        errorMessage = 'Không tìm thấy nhóm. Nhóm có thể đã bị xóa.';
-      } else if (error?.response?.data?.reasons?.message) {
-        errorMessage = error.response.data.reasons.message;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      }
+      let errorMessage = error?.response?.data?.reasons?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.';
 
       notification.error({
         message: 'Lỗi gửi tin nhắn',

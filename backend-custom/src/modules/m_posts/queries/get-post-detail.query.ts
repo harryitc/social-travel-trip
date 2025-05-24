@@ -26,7 +26,7 @@ export class GetPostDetailQueryHandler
       // Get post details
       const postResult = await this.repository.getPostDetail(postId, userId);
 
-      if (postResult.rowCount === 0) {
+      if (postResult.rowCount == 0) {
         throw new NotFoundException(`Post with ID ${postId} not found`);
       }
 

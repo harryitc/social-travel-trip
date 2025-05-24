@@ -110,6 +110,9 @@ class TripGroupService {
     try {
       const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/join-by-code`, data.toBackendDTO());
 
+      console.log('🔍 [TripGroupService] Join group response:', response);
+
+      // The response now contains full group information
       const groupDTO: TripGroupDTO = response;
 
       // Map DTO to class instance

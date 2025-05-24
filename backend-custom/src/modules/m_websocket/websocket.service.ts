@@ -127,7 +127,7 @@ export class WebsocketService {
    * @param postData Post data
    */
   notifyNewPost(authorId: number, followerIds: number[], postData: any) {
-    if (!followerIds || followerIds.length === 0) {
+    if (!followerIds || followerIds.length == 0) {
       this.logger.debug(
         `No followers to notify for post from user ${authorId}`,
       );
@@ -165,13 +165,13 @@ export class WebsocketService {
     };
 
     // Always notify the post author (unless they liked their own post)
-    if (postAuthorId !== likerId) {
+    if (postAuthorId != likerId) {
       this.sendToUser(postAuthorId, WebsocketEvent.POST_LIKED, eventData);
     }
 
     // Notify other users who have interacted with this post (commented, liked, etc.)
     const uniqueInterestedUsers = [...new Set(interestedUserIds)].filter(
-      (userId) => userId !== likerId && userId !== postAuthorId,
+      (userId) => userId != likerId && userId != postAuthorId,
     );
 
     if (uniqueInterestedUsers.length > 0) {
@@ -211,13 +211,13 @@ export class WebsocketService {
     };
 
     // Always notify the post author (unless they commented on their own post)
-    if (postAuthorId !== commenterId) {
+    if (postAuthorId != commenterId) {
       this.sendToUser(postAuthorId, WebsocketEvent.COMMENT_CREATED, eventData);
     }
 
     // Notify other users who participated in this comment thread
     const uniqueParticipants = [...new Set(threadParticipantIds)].filter(
-      (userId) => userId !== commenterId && userId !== postAuthorId,
+      (userId) => userId != commenterId && userId != postAuthorId,
     );
 
     if (uniqueParticipants.length > 0) {
@@ -254,15 +254,15 @@ export class WebsocketService {
     };
 
     // Notify the comment author (unless they liked their own comment)
-    if (commentAuthorId !== likerId) {
+    if (commentAuthorId != likerId) {
       this.sendToUser(commentAuthorId, WebsocketEvent.COMMENT_LIKED, eventData);
     }
 
     // Also notify the post author if different from comment author and liker
     if (
       postAuthorId &&
-      postAuthorId !== commentAuthorId &&
-      postAuthorId !== likerId
+      postAuthorId != commentAuthorId &&
+      postAuthorId != likerId
     ) {
       this.sendToUser(postAuthorId, WebsocketEvent.COMMENT_LIKED, eventData);
     }
@@ -298,7 +298,7 @@ export class WebsocketService {
     event: WebsocketEvent,
     data: any,
   ) {
-    if (!memberIds || memberIds.length === 0) {
+    if (!memberIds || memberIds.length == 0) {
       this.logger.debug(`No members to notify for group ${groupId}`);
       return;
     }
@@ -379,7 +379,7 @@ export class WebsocketService {
     }
 
     // Also send to individual users as fallback
-    const recipientIds = memberIds.filter((id) => id !== senderId);
+    const recipientIds = memberIds.filter((id) => id != senderId);
     if (recipientIds.length > 0) {
       this.logger.debug(
         `📤 Sending fallback notifications to individual users: ${recipientIds.join(', ')}`,
@@ -505,9 +505,9 @@ export class WebsocketService {
     isTyping: boolean,
   ) {
     // Don't send typing notification to the typer
-    const recipientIds = memberIds.filter((id) => id !== typingUserId);
+    const recipientIds = memberIds.filter((id) => id != typingUserId);
 
-    if (recipientIds.length === 0) {
+    if (recipientIds.length == 0) {
       return;
     }
 

@@ -29,14 +29,14 @@ export class GenerateJoinQRCodeCommandHandler
 
     // Check if group exists
     const groupResult = await this.repository.getGroupById(dto.group_id);
-    if (groupResult.rowCount === 0) {
+    if (groupResult.rowCount == 0) {
       throw new NotFoundException(`Group with ID ${dto.group_id} not found`);
     }
 
     // Verify admin permission
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
     const adminMember = membersResult.rows.find(
-      (member) => member.user_id === userId && member.role === 'admin',
+      (member) => member.user_id == userId && member.role == 'admin',
     );
 
     if (!adminMember) {

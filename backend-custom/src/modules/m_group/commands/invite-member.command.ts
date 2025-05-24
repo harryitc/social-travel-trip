@@ -37,7 +37,7 @@ export class InviteMemberCommandHandler
 
     // Check if group exists
     const groupResult = await this.repository.getGroupById(dto.group_id);
-    if (groupResult.rowCount === 0) {
+    if (groupResult.rowCount == 0) {
       throw new NotFoundException(`Group with ID ${dto.group_id} not found`);
     }
 
@@ -45,8 +45,8 @@ export class InviteMemberCommandHandler
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
     const adminMember = membersResult.rows.find(
       (member) =>
-        member.user_id === adminUserId &&
-        (member.role === 'admin' || member.role === 'moderator'),
+        member.user_id == adminUserId &&
+        (member.role == 'admin' || member.role == 'moderator'),
     );
 
     if (!adminMember) {
@@ -59,7 +59,7 @@ export class InviteMemberCommandHandler
     const userResult = await this.repository.findUserByUsernameOrEmail(
       dto.username_or_email,
     );
-    if (userResult.rowCount === 0) {
+    if (userResult.rowCount == 0) {
       throw new NotFoundException(
         `User with username/email "${dto.username_or_email}" not found`,
       );
@@ -69,7 +69,7 @@ export class InviteMemberCommandHandler
 
     // Check if user is already a member
     const existingMember = membersResult.rows.find(
-      (member) => member.user_id === targetUser.user_id,
+      (member) => member.user_id == targetUser.user_id,
     );
 
     if (existingMember) {

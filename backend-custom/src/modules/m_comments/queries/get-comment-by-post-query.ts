@@ -24,7 +24,7 @@ export class GetCommentByPostQueryHandler
     try {
       const queryResult = await this.repository.getComments(postId, userId);
 
-      if (queryResult.rowCount === 0) {
+      if (queryResult.rowCount == 0) {
         return {
           data: [],
           meta: {

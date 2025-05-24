@@ -23,6 +23,7 @@ export interface TripGroupMemberDTO {
 export interface TripGroupDTO {
   group_id: number;
   name: string;
+  title?: string; // For frontend compatibility
   description?: string;
   cover_url?: string;
   status: string;
@@ -37,6 +38,9 @@ export interface TripGroupDTO {
     max?: number;
     list: TripGroupMemberDTO[];
   };
+  // Additional fields from join response
+  success?: boolean;
+  message?: string;
 }
 
 // Frontend Models (classes for UI)
@@ -115,6 +119,15 @@ export class TripGroup {
   public join_code_expires_at?: Date;
 
   constructor(dto: TripGroupDTO) {
+    console.log('🏗️ [TripGroup] Creating TripGroup from DTO:', {
+      group_id: dto.group_id,
+      name: dto.name,
+      title: dto.title,
+      hasTitle: !!dto.title,
+      success: dto.success,
+      message: dto.message
+    });
+
     // Backend fields
     this.group_id = dto.group_id;
     this.name = dto.name;
@@ -130,7 +143,7 @@ export class TripGroup {
 
     // UI computed fields
     this.id = dto.group_id.toString();
-    this.title = dto.name;
+    this.title = dto.title || dto.name; // Use title if available, fallback to name
     this.image = dto.cover_url || '';
     this.isPrivate = dto.status === 'private';
     this.hasPlan = !!dto.plan_id;

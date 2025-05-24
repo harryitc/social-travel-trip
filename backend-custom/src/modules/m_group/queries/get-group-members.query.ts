@@ -1,12 +1,9 @@
-import {
-  Logger,
-  UnauthorizedException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { GetGroupMembersDto } from '../dto/get-group-members.dto';
 import { GroupMember } from '../models/group.model';
+import { NotFoundException, UnauthorizedException } from '@common/exceptions';
 
 export class GetGroupMembersQuery implements IQuery {
   constructor(
@@ -26,13 +23,16 @@ export class GetGroupMembersQueryHandler
   async execute(query: GetGroupMembersQuery): Promise<any> {
     const { dto, userId } = query;
 
-    // // Verify member is in group
-    // const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    // const member = membersResult.rows.find((m) => m.user_id == userId);
+    // Verify member is in group
+    const membersResult = await this.repository.getGroupMembers(dto.group_id);
+    const member = membersResult.rows.find((m) => m.user_id == userId);
 
-    // if (!member) {
-    //   throw new UnauthorizedException('User is not a member of this group');
-    // }
+    if (!member) {
+      this.logger.warn(
+        `User ${userId} attempted to access members of group ${dto.group_id} without membership`,
+      );
+      throw new UnauthorizedException('User is not a member of this group');
+    }
 
     // Get members with pagination
     const result = await this.repository.getGroupMembersWithPagination(dto);
