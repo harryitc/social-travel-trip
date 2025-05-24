@@ -147,6 +147,82 @@ export function isToday(dateString: string): boolean {
   }
 }
 
+/**
+ * Format post timestamp using dayjs (for posts, comments, etc.)
+ * @param dateString - The timestamp string from database
+ * @returns Formatted relative time string
+ */
+export function formatPostTimestamp(dateString: string): string {
+  if (!dateString) {
+    return ''
+  }
+
+  try {
+    const postTime = dayjs.tz(dateString, 'Asia/Ho_Chi_Minh')
+    const now = dayjs().tz('Asia/Ho_Chi_Minh')
+
+    if (!postTime.isValid()) {
+      console.warn('Invalid post timestamp received:', dateString)
+      return ''
+    }
+
+    const diffInSeconds = now.diff(postTime, 'second')
+    const diffInMinutes = now.diff(postTime, 'minute')
+    const diffInHours = now.diff(postTime, 'hour')
+    const diffInDays = now.diff(postTime, 'day')
+
+    // Less than 1 minute
+    if (diffInSeconds < 60) {
+      return 'Vừa xong'
+    }
+
+    // Less than 1 hour
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} phút trước`
+    }
+
+    // Less than 24 hours
+    if (diffInHours < 24) {
+      return `${diffInHours} giờ trước`
+    }
+
+    // Less than 7 days
+    if (diffInDays < 7) {
+      return `${diffInDays} ngày trước`
+    }
+
+    // More than 7 days - show date
+    return postTime.format('DD/MM/YYYY')
+  } catch (error) {
+    console.error('Error formatting post timestamp:', dateString, error)
+    return ''
+  }
+}
+
+/**
+ * Format post timestamp for detailed tooltip
+ * @param dateString - The timestamp string from database
+ * @returns Detailed formatted time string
+ */
+export function formatPostDetailedTimestamp(dateString: string): string {
+  if (!dateString) {
+    return ''
+  }
+
+  try {
+    const postTime = dayjs.tz(dateString, 'Asia/Ho_Chi_Minh')
+
+    if (!postTime.isValid()) {
+      return ''
+    }
+
+    return postTime.format('dddd, DD/MM/YYYY lúc HH:mm')
+  } catch (error) {
+    console.error('Error formatting detailed post timestamp:', dateString, error)
+    return ''
+  }
+}
+
 export function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371; // Radius of the earth in km
   const dLat = deg2rad(lat2 - lat1);

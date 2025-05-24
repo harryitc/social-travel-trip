@@ -24,6 +24,7 @@ import { notification } from 'antd';
 import { PostComment } from './post-comment';
 import { LikesModal } from './likes-modal';
 import { postLikesAdapter } from '../services/likes-adapters';
+import { formatPostTimestamp, formatPostDetailedTimestamp } from '@/lib/utils';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -83,28 +84,8 @@ export function PostItem({ post }: PostItemProps) {
     };
   }, [showReactionPicker]);
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHour = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHour / 24);
-
-    if (diffSec < 60) {
-      return 'Vừa xong';
-    } else if (diffMin < 60) {
-      return `${diffMin} phút trước`;
-    } else if (diffHour < 24) {
-      return `${diffHour} giờ trước`;
-    } else if (diffDay < 7) {
-      return `${diffDay} ngày trước`;
-    } else {
-      return date.toLocaleDateString('vi-VN');
-    }
-  };
+  // Format date using dayjs utility
+  // Removed old formatDate function - now using formatPostTimestamp from utils
 
   const handleReaction = async (reactionId: number) => {
     if (isLiking) return; // Prevent double clicks
@@ -194,7 +175,16 @@ export function PostItem({ post }: PostItemProps) {
           <div>
             <div className="font-semibold">{post.author.full_name}</div>
             <div className="flex items-center text-xs text-muted-foreground">
-              <span>{formatDate(post.created_at)}</span>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help">{formatPostTimestamp(post.created_at)}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{formatPostDetailedTimestamp(post.created_at)}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               {post.location && post.location.name && (
                 <span className="flex items-center ml-2">
                   <MapPin className="h-3 w-3 mr-1" />

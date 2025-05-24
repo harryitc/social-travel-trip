@@ -18,6 +18,13 @@ import { notification } from 'antd';
 import { LikesModal } from './likes-modal';
 import { commentLikesAdapter } from '../services/likes-adapters';
 import { API_ENDPOINT } from '@/config/api.config';
+import { formatPostTimestamp, formatPostDetailedTimestamp } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/radix-ui/tooltip';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -237,28 +244,8 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
     }
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHour = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHour / 24);
-
-    if (diffSec < 60) {
-      return 'Vừa xong';
-    } else if (diffMin < 60) {
-      return `${diffMin} phút trước`;
-    } else if (diffHour < 24) {
-      return `${diffHour} giờ trước`;
-    } else if (diffDay < 7) {
-      return `${diffDay} ngày trước`;
-    } else {
-      return date.toLocaleDateString('vi-VN');
-    }
-  };
+  // Format date using dayjs utility
+  // Removed old formatDate function - now using formatPostTimestamp from utils
 
   // Render a comment and its replies
   const renderComment = (item: Comment, isReply = false) => {
@@ -290,7 +277,16 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
             <p className="text-sm">{item.content}</p>
           </div>
           <div className="flex space-x-4 text-xs text-muted-foreground">
-            <span>{formatDate(item.created_at)}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help">{formatPostTimestamp(item.created_at)}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{formatPostDetailedTimestamp(item.created_at)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <div className="relative flex items-center" ref={showReactionPicker === item.comment_id ? reactionsMenuRef : null}>
               <button
                 className={`hover:text-foreground flex items-center ${isLiked ? 'text-purple-600 dark:text-purple-400' : ''}`}
