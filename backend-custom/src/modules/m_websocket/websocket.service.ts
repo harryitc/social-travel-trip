@@ -301,21 +301,37 @@ export class WebsocketService {
     senderId: number,
     messageData: any,
   ) {
-    // Don't send notification to the sender
-    const recipientIds = memberIds.filter((id) => id !== senderId);
-
-    if (recipientIds.length === 0) {
-      this.logger.debug(
-        `No recipients to notify for message in group ${groupId}`,
-      );
+    if (!this.server) {
+      this.logger.error('WebSocket server not initialized');
       return;
     }
 
-    this.sendToGroup(groupId, recipientIds, WebsocketEvent.GROUP_MESSAGE_SENT, {
+    // Send to group room (including sender for real-time updates)
+    const roomName = `group-${groupId}`;
+    this.logger.debug(
+      `Sending message notification to group room: ${roomName}`,
+    );
+
+    this.server.to(roomName).emit(WebsocketEvent.GROUP_MESSAGE_SENT, {
       groupId,
       senderId,
       message: messageData,
     });
+
+    // Also send to individual users as fallback
+    const recipientIds = memberIds.filter((id) => id !== senderId);
+    if (recipientIds.length > 0) {
+      this.sendToGroup(
+        groupId,
+        recipientIds,
+        WebsocketEvent.GROUP_MESSAGE_SENT,
+        {
+          groupId,
+          senderId,
+          message: messageData,
+        },
+      );
+    }
   }
 
   /**

@@ -49,6 +49,7 @@ export class GroupMember {
   join_at: Date;
   // User information from join query
   username?: string;
+  full_name?: string;
   avatar_url?: string;
 
   constructor(data: any) {
@@ -60,6 +61,7 @@ export class GroupMember {
     this.join_at = data.join_at;
     // Map user information from join query
     this.username = data.username;
+    this.full_name = data.full_name;
     this.avatar_url = data.avatar_url;
   }
 }
@@ -73,6 +75,16 @@ export class GroupMessage {
   updated_at: Date;
   like_count?: number;
   is_pinned?: boolean;
+  // Reply information
+  reply_to_message_id?: number;
+  reply_to_message?: string;
+  reply_to_username?: string;
+  reply_to_nickname?: string;
+  // User information from join query
+  username?: string;
+  full_name?: string;
+  nickname?: string;
+  avatar_url?: string;
 
   constructor(data: any) {
     this.group_message_id = data.group_message_id;
@@ -83,6 +95,16 @@ export class GroupMessage {
     this.updated_at = data.updated_at;
     this.like_count = data.like_count;
     this.is_pinned = data.is_pinned;
+    // Map reply information
+    this.reply_to_message_id = data.reply_to_message_id;
+    this.reply_to_message = data.reply_to_message;
+    this.reply_to_username = data.reply_to_username;
+    this.reply_to_nickname = data.reply_to_nickname;
+    // Map user information from join query
+    this.username = data.username;
+    this.full_name = data.full_name;
+    this.nickname = data.nickname;
+    this.avatar_url = data.avatar_url;
   }
 }
 

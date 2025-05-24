@@ -70,12 +70,12 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
           setTripPlan(plan);
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching group details:', error);
         setError('Không thể tải thông tin nhóm');
         notification.error({
           message: 'Lỗi',
-          description: 'Không thể tải thông tin nhóm',
+          description: error?.response?.data?.reasons?.message || 'Không thể tải thông tin nhóm',
           placement: 'topRight',
         });
       } finally {
@@ -317,20 +317,33 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
 
               {/* Member list */}
               <div className="space-y-1">
-                {members.slice(0, 5).map((member, index) => (
-                  <div key={member.group_member_id || member.user_id || index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
-                    <Avatar className="h-7 w-7">
-                      <AvatarImage src={member.avatar} alt={member.name || 'Unknown'} />
-                      <AvatarFallback>{(member.name || 'U')[0]}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-sm">{member.name || 'Unknown User'}</span>
-                      {member.role === 'admin' && (
-                        <Badge variant="outline" className="text-xs h-5 bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800">Admin</Badge>
-                      )}
+                {members.slice(0, 5).map((member, index) => {
+                  const displayName = member.nickname || member.name || 'Unknown User';
+                  const username = member.username || member.name;
+                  const fullName = (member as any).full_name;
+
+                  return (
+                    <div key={member.group_member_id || member.user_id || index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={member.avatar} alt={displayName} />
+                        <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-sm font-medium truncate">{displayName}</span>
+                          {(username !== displayName || fullName) && (
+                            <span className="text-xs text-gray-500 truncate">
+                              {fullName ? `${fullName} (@${username})` : `@${username}`}
+                            </span>
+                          )}
+                        </div>
+                        {member.role === 'admin' && (
+                          <Badge variant="outline" className="text-xs h-5 bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800">Admin</Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {/* Show remaining members count */}
                 {members.length > 5 && (

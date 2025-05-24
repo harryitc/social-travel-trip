@@ -13,3 +13,4 @@ export { ChatSkeleton, GroupListSkeleton } from './chat-skeleton';
 export { GroupListColumn } from './group-list-column';
 export { ChatColumn } from './chat-column';
 export { GroupDetailsColumn } from './group-details-column';
+export { ImageUploadDemo } from './image-upload-demo';

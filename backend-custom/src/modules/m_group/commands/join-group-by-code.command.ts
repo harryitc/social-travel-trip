@@ -50,12 +50,12 @@ export class JoinGroupByCodeCommandHandler
       throw new BadRequestException('You are already a member of this group');
     }
 
-    // Add user to the group as a regular member
+    // Add user to the group as a regular member (nickname will default to username)
     const result = await this.repository.addGroupMember({
       group_id: group.group_id,
       user_id: userId,
       role: 'member',
-      nickname: null,
+      nickname: undefined, // Let the repository set default nickname to username
     });
 
     return {

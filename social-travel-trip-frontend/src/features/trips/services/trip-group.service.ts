@@ -17,6 +17,24 @@ export interface TripGroupMessage {
   updated_at: string;
   like_count?: number;
   is_pinned?: boolean;
+  // Reply information
+  reply_to_message_id?: number;
+  reply_to_message?: string;
+  reply_to_username?: string;
+  reply_to_nickname?: string;
+  // User information from join query (direct fields)
+  username?: string;
+  full_name?: string;
+  nickname?: string;
+  avatar_url?: string;
+  // Attachments information
+  attachments?: Array<{
+    type: 'image' | 'file';
+    url: string;
+    name: string;
+    size?: number;
+  }>;
+  // Legacy nested user object (for backward compatibility)
   user?: {
     user_id: number;
     username: string;
@@ -27,6 +45,13 @@ export interface TripGroupMessage {
 export interface SendMessageData {
   group_id: number;
   message: string;
+  reply_to_message_id?: number;
+  attachments?: Array<{
+    type: 'image' | 'file';
+    url: string;
+    name: string;
+    size?: number;
+  }>;
 }
 
 class TripGroupService {
@@ -139,8 +164,9 @@ class TripGroupService {
           join_at: member.join_at,
           // Map user info - now properly available from backend
           username: member.username,
+          full_name: member.full_name,
           avatar_url: member.avatar_url,
-          // Computed fields for UI compatibility
+          // Computed fields for UI compatibility - prioritize nickname
           name: member.nickname || member.username || 'Unknown User',
           avatar: member.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
           isAdmin: () => member.role === 'admin'

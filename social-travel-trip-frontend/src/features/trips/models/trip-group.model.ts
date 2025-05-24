@@ -8,11 +8,13 @@ export interface TripGroupMemberDTO {
   join_at: string;
   // User information from join query (direct fields)
   username?: string;
+  full_name?: string;
   avatar_url?: string;
   // Legacy nested user object (for backward compatibility)
   user?: {
     user_id: number;
     username: string;
+    full_name?: string;
     avatar_url?: string;
     email?: string;
   };
@@ -59,7 +61,7 @@ export class TripGroupMember {
     this.role = dto.role;
     this.joinAt = new Date(dto.join_at);
 
-    // Computed UI fields - prioritize direct fields over nested user object
+    // Computed UI fields - prioritize nickname, then username, then fallback
     this.id = dto.group_member_id.toString();
     this.name = dto.nickname || dto.username || dto.user?.username || 'Unknown User';
     this.avatar = dto.avatar_url || dto.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
@@ -72,6 +74,14 @@ export class TripGroupMember {
 
   getDisplayName(): string {
     return this.nickname || this.name;
+  }
+
+  getFullDisplayInfo(): { displayName: string; username: string; fullName?: string } {
+    return {
+      displayName: this.nickname || this.name,
+      username: this.name, // This contains the username
+      fullName: (this as any).full_name // Access full_name if available
+    };
   }
 }
 

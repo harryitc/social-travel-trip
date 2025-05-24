@@ -37,7 +37,7 @@ export class CreateGroupCommandHandler
         group_id: groupCreated.group_id,
         user_id: userId,
         role: 'admin',
-        nickname: null, // Default nickname
+        nickname: undefined, // Let the repository set default nickname to username
       });
     }
 

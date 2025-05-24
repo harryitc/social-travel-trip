@@ -55,7 +55,7 @@ export function MemberListDialog({ groupId, isOpen, onClose, onInvite }: MemberL
     try {
       setLoading(true);
       const response = await tripGroupService.getGroupMembers(groupId, 1, 50);
-      console.log('🔍 [MemberListDialog] API response:', response);
+
       setMembers(response.members || []);
       setTotal(response.pagination?.total || response.total || 0);
     } catch (error: any) {
