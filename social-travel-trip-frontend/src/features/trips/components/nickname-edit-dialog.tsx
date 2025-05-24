@@ -35,7 +35,7 @@ export function NicknameEditDialog({
       
       await tripGroupService.updateMemberNickname({
         group_id: parseInt(groupId),
-        user_id: currentUserId,
+        user_id: +currentUserId,
         nickname: nickname.trim() || undefined
       });
 

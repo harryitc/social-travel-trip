@@ -116,7 +116,7 @@ export function MemberManagementDialog({
 
       await tripGroupService.kickMember({
         group_id: parseInt(groupId),
-        user_id: member.user_id
+        user_id: +member.user_id
       });
 
       notification.success({
@@ -156,7 +156,7 @@ export function MemberManagementDialog({
 
       await tripGroupService.updateMemberRole({
         group_id: parseInt(groupId),
-        user_id: member.user_id,
+        user_id: +member.user_id,
         role: newRole
       });
 
@@ -188,7 +188,7 @@ export function MemberManagementDialog({
 
       await tripGroupService.updateMemberNickname({
         group_id: parseInt(groupId),
-        user_id: member.user_id,
+        user_id: +member.user_id,
         nickname: newNickname.trim() || undefined
       });
 
