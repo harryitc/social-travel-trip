@@ -40,6 +40,7 @@ import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
 import { formatMessageTimestamp, formatDetailedTimestamp } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { DebugLoadMoreTest } from './debug-load-more-test';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -197,7 +198,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
       try {
         setLoading(true);
-        const result = await tripGroupService.getMessages(tripId, 1, 5); // Load first 50 messages
+        const result = await tripGroupService.getMessages(tripId, 50); // Load latest 50 messages
 
         if (result && result.messages) {
           const transformedMessages = result.messages.map(transformMessage);
@@ -206,7 +207,9 @@ export function TripChat({ tripId }: TripChatProps) {
           // Set pagination states
           setHasMoreMessages(result.hasMore || false);
           if (transformedMessages.length > 0) {
+            // For initial load, oldest message is the first one (chronologically oldest)
             setOldestMessageId(parseInt(transformedMessages[0].id));
+            console.log('🔢 [TripChat] Initial load - oldest message ID:', transformedMessages[0].id);
           }
 
           // Emit event that messages have been loaded
@@ -265,7 +268,7 @@ export function TripChat({ tripId }: TripChatProps) {
       setLoadingOlderMessages(true);
       console.log('🔄 [TripChat] Loading older messages before ID:', oldestMessageId);
 
-      const result = await tripGroupService.getMessages(tripId, 1, 30, oldestMessageId);
+      const result = await tripGroupService.getMessages(tripId, 10, oldestMessageId);
 
       if (result && result.messages && result.messages.length > 0) {
         const transformedMessages = result.messages.map(transformMessage);
@@ -288,7 +291,19 @@ export function TripChat({ tripId }: TripChatProps) {
         // Update pagination states
         setHasMoreMessages(result.hasMore || false);
         if (transformedMessages.length > 0) {
-          setOldestMessageId(parseInt(transformedMessages[0].id));
+          // Debug: log all message IDs and timestamps
+          console.log('📋 [TripChat] New batch messages:', transformedMessages.map(m => ({
+            id: m.id,
+            content: m.content.substring(0, 20) + '...',
+            timestamp: m.rawTimestamp
+          })));
+
+          // For load more, oldest message is the first one in the new batch (chronologically oldest)
+          const newOldestId = parseInt(transformedMessages[0].id);
+          setOldestMessageId(newOldestId);
+          console.log('🔢 [TripChat] Previous oldest ID:', oldestMessageId);
+          console.log('🔢 [TripChat] New oldest ID:', newOldestId);
+          console.log('🔢 [TripChat] HasMore:', result.hasMore);
         }
 
         // Maintain scroll position after new messages are added
@@ -1046,16 +1061,6 @@ export function TripChat({ tripId }: TripChatProps) {
                     </div>
                   )}
 
-                  {/* Debug info - remove in production */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="flex justify-center py-2">
-                      <div className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-                        Messages: {messages.length} | HasMore: {hasMoreMessages ? 'Yes' : 'No'} |
-                        OldestID: {oldestMessageId} | Loading: {loadingOlderMessages ? 'Yes' : 'No'} |
-                        NearTop: {isUserNearTop ? 'Yes' : 'No'}
-                      </div>
-                    </div>
-                  )}
                   {messages.map((message, index) => {
                     // Compare with user ID from auth context - convert both to string for comparison
                     const isOwnMessage = user?.user_id ? message.sender.id == user.user_id.toString() : false;
