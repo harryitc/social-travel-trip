@@ -69,9 +69,9 @@ class WebSocketService {
 
     console.log('WebSocket Service: Token from getAccessToken:', token ? `${token.substring(0, 20)}...` : 'null');
 
+    // Allow connection without token for debugging
     if (!token) {
-      console.error('WebSocket Service: No authentication token available');
-      return Promise.reject(new Error('No authentication token available'));
+      console.warn('WebSocket Service: No authentication token available - connecting without auth for debugging');
     }
 
     console.log('WebSocket Service: Token available, checking connection state');
@@ -100,22 +100,30 @@ class WebSocketService {
       try {
         const socketUrl = `${environment.apiUrl || 'http://localhost:3000'}/social`;
         console.log('WebSocket Service: Connecting to', socketUrl);
-        console.log('WebSocket Service: Using token:', token.substring(0, 10) + '...');
+        console.log('WebSocket Service: Using token:', token ? token.substring(0, 10) + '...' : 'none');
 
         // Create socket with detailed options
-        this.socket = io(socketUrl, {
-          extraHeaders: {
-            Authorization: `Bearer ${token}`,
-          },
-          auth: {
-            token: `Bearer ${token}`, // Thêm token vào auth object
-          },
-          reconnection: false, // We'll handle reconnection manually
-          timeout: 10000, // 10 seconds
+        const socketOptions: any = {
+          reconnection: true, // Enable auto-reconnection for debugging
+          reconnectionAttempts: 3,
+          reconnectionDelay: 1000,
+          timeout: 20000, // Increase timeout to 20 seconds
           transports: ['websocket', 'polling'],
           forceNew: true,
           autoConnect: true,
-        });
+        };
+
+        // Add auth only if token is available
+        if (token) {
+          socketOptions.extraHeaders = {
+            Authorization: `Bearer ${token}`,
+          };
+          socketOptions.auth = {
+            token: token, // Send token without Bearer prefix in auth object
+          };
+        }
+
+        this.socket = io(socketUrl, socketOptions);
 
         // Log all socket events for debugging
         this.socket.onAny((event, ...args) => {
@@ -140,6 +148,7 @@ class WebSocketService {
 
         this.socket.on('connect_error', (error) => {
           console.error('WebSocket Service: Connection error:', error);
+          console.error('WebSocket Service: Error details:', JSON.stringify(error, null, 2));
           this.isConnecting = false;
           this.handleReconnect();
           reject(error);
@@ -153,6 +162,23 @@ class WebSocketService {
         this.socket.on('error', (error) => {
           console.error('WebSocket error:', error);
           reject(error);
+        });
+
+        // Add more debug events
+        this.socket.on('reconnect', (attemptNumber) => {
+          console.log('WebSocket reconnected after', attemptNumber, 'attempts');
+        });
+
+        this.socket.on('reconnect_attempt', (attemptNumber) => {
+          console.log('WebSocket reconnect attempt', attemptNumber);
+        });
+
+        this.socket.on('reconnect_error', (error) => {
+          console.error('WebSocket reconnect error:', error);
+        });
+
+        this.socket.on('reconnect_failed', () => {
+          console.error('WebSocket reconnect failed - giving up');
         });
 
         // Event handlers will be registered after successful connection
@@ -346,7 +372,32 @@ class WebSocketService {
       reconnectAttempts: this.reconnectAttempts,
       eventHandlersCount: this.eventHandlers.size,
       eventHandlers: Array.from(this.eventHandlers.keys()),
+      socketUrl: `${environment.apiUrl || 'http://localhost:3000'}/social`,
+      hasToken: !!getAccessToken(),
     };
+  }
+
+  /**
+   * Test WebSocket connection with simple ping
+   */
+  testConnection(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!this.socket?.connected) {
+        console.log('WebSocket Service: Not connected, attempting to connect...');
+        this.connect()
+          .then(() => {
+            console.log('WebSocket Service: Connected successfully for test');
+            resolve(true);
+          })
+          .catch((error) => {
+            console.error('WebSocket Service: Connection test failed:', error);
+            resolve(false);
+          });
+      } else {
+        console.log('WebSocket Service: Already connected');
+        resolve(true);
+      }
+    });
   }
 
   // Group messaging methods

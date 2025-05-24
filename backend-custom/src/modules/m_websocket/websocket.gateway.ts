@@ -40,35 +40,74 @@ export class WebsocketGateway
 
   afterInit(server: Server) {
     this.websocketService.setServer(server);
-    this.logger.debug('WebSocket Gateway initialized');
-    this.logger.debug('WebSocket server is listening on namespace: /social');
+    this.logger.debug('🚀 WebSocket Gateway initialized');
+    this.logger.debug('🚀 WebSocket server is listening on namespace: /social');
+    this.logger.debug('🚀 Server instance:', !!server);
+    this.logger.debug(
+      '🚀 CORS configuration: origin=*, methods=[GET,POST], credentials=true',
+    );
 
     // Log when a new socket connects to the server
     server.on('connection', (socket) => {
-      this.logger.log(`New socket connected: ${socket.id}`);
+      this.logger.debug(`🔌 New socket connected to server: ${socket.id}`);
     });
+
+    // Log server events
+    server.on('error', (error) => {
+      this.logger.error('🚨 Server error:', error);
+    });
+
+    // // Log namespace events
+    // const socialNamespace = server.of('/social');
+    // socialNamespace.on('connection', (socket) => {
+    //   this.logger.debug(
+    //     `🔌 New socket connected to /social namespace: ${socket.id}`,
+    //   );
+    // });
+
+    // this.logger.debug('🚀 WebSocket Gateway setup complete');
   }
 
   async handleConnection(client: Socket) {
-    this.logger.log(`Client attempting to connect: ${client.id}`);
-    this.logger.log(
-      `Client handshake headers: ${JSON.stringify(client.handshake.headers)}`,
+    this.logger.debug(`🔌 Client attempting to connect: ${client.id}`);
+    this.logger.debug(`🔍 Client IP: ${client.handshake.address}`);
+    this.logger.debug(
+      `🔍 Client headers:`,
+      JSON.stringify(client.handshake.headers, null, 2),
+    );
+    this.logger.debug(
+      `🔍 Client auth:`,
+      JSON.stringify(client.handshake.auth, null, 2),
+    );
+    this.logger.debug(
+      `🔍 Client query:`,
+      JSON.stringify(client.handshake.query, null, 2),
     );
 
     try {
       const token = this.extractTokenFromHeader(client);
       if (!token) {
-        this.logger.error(`No token provided for client: ${client.id}`);
-        this.disconnect(client, 'Unauthorized: No token provided');
+        this.logger.warn(`No token provided for client: ${client.id} - allowing connection for debugging`);
+
+        // For debugging: allow connection without token
+        client.data.user = { sub: 'anonymous', username: 'anonymous' };
+        client.join(`user-anonymous`);
+
+        this.logger.debug(`Anonymous client connected: ${client.id}`);
+
+        client.emit('connection_established', {
+          message: 'Connected without authentication (debug mode)',
+          userId: 'anonymous',
+        });
         return;
       }
 
-      this.logger.log(`Token extracted for client: ${client.id}`);
+      this.logger.debug(`Token extracted for client: ${client.id}`);
 
       try {
         // Sử dụng hardcoded JWT Secret giống như trong Auth module
         const jwtSecret = 'CAK_HARRYITC';
-        this.logger.log(`Using hardcoded JWT_SECRET`);
+        this.logger.debug(`Using hardcoded JWT_SECRET`);
 
         const payload = await this.jwtService.verifyAsync(token, {
           secret: jwtSecret,
@@ -84,7 +123,7 @@ export class WebsocketGateway
         // Join user to their personal room
         client.join(`user-${payload.sub}`);
 
-        this.logger.log(
+        this.logger.debug(
           `Client connected: ${client.id}, User ID: ${payload.sub}`,
         );
 
@@ -108,11 +147,11 @@ export class WebsocketGateway
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.debug(`Client disconnected: ${client.id}`);
 
     // Log user ID if available
     if (client.data && client.data.user) {
-      this.logger.log(`User ${client.data.user.sub} disconnected`);
+      this.logger.debug(`User ${client.data.user.sub} disconnected`);
     }
   }
 
@@ -120,25 +159,37 @@ export class WebsocketGateway
     const { authorization } = client.handshake.headers;
     const authToken = client.handshake.auth?.token;
 
-    this.logger.log(`Authorization header: ${authorization || 'not provided'}`);
-    this.logger.log(`Auth token: ${authToken || 'not provided'}`);
+    this.logger.debug(`Authorization header: ${authorization || 'not provided'}`);
+    this.logger.debug(`Auth token: ${authToken || 'not provided'}`);
+    this.logger.debug(
+      `Full handshake auth:`,
+      JSON.stringify(client.handshake.auth),
+    );
 
     // Try to get token from authorization header first
     if (authorization) {
       const [type, token] = authorization.split(' ');
-      this.logger.log(`Auth type: ${type}, Token exists: ${!!token}`);
+      this.logger.debug(`Auth type: ${type}, Token exists: ${!!token}`);
 
       if (type === 'Bearer' && token) {
+        this.logger.debug(`Token extracted from authorization header`);
         return token;
       }
     }
 
-    // Try to get token from auth object
+    // Try to get token from auth object (without Bearer prefix)
     if (authToken) {
+      // If token has Bearer prefix, remove it
       if (authToken.startsWith('Bearer ')) {
-        const token = authToken.substring(7); // Remove 'Bearer ' prefix
-        this.logger.log(`Token extracted from auth object: ${!!token}`);
+        const token = authToken.substring(7);
+        this.logger.debug(
+          `Token extracted from auth object (with Bearer prefix removed)`,
+        );
         return token;
+      } else {
+        // Token without Bearer prefix
+        this.logger.debug(`Token extracted from auth object (no Bearer prefix)`);
+        return authToken;
       }
     }
 
@@ -158,7 +209,7 @@ export class WebsocketGateway
       // Disconnect the client
       client.disconnect();
 
-      this.logger.log(`Client ${client.id} disconnected successfully`);
+      this.logger.debug(`Client ${client.id} disconnected successfully`);
     } catch (error) {
       this.logger.error(
         `Error disconnecting client ${client.id}: ${error.message}`,
@@ -175,7 +226,9 @@ export class WebsocketGateway
     try {
       const userId = client.data.user?.sub;
       if (!userId) {
-        this.logger.error(`User not authenticated for group join: ${client.id}`);
+        this.logger.error(
+          `User not authenticated for group join: ${client.id}`,
+        );
         return;
       }
 
@@ -206,7 +259,9 @@ export class WebsocketGateway
     try {
       const userId = client.data.user?.sub;
       if (!userId) {
-        this.logger.error(`User not authenticated for group leave: ${client.id}`);
+        this.logger.error(
+          `User not authenticated for group leave: ${client.id}`,
+        );
         return;
       }
 
@@ -239,7 +294,9 @@ export class WebsocketGateway
     try {
       const userId = client.data.user?.sub;
       if (!userId) {
-        this.logger.error(`User not authenticated for typing start: ${client.id}`);
+        this.logger.error(
+          `User not authenticated for typing start: ${client.id}`,
+        );
         return;
       }
 
@@ -270,7 +327,9 @@ export class WebsocketGateway
     try {
       const userId = client.data.user?.sub;
       if (!userId) {
-        this.logger.error(`User not authenticated for typing stop: ${client.id}`);
+        this.logger.error(
+          `User not authenticated for typing stop: ${client.id}`,
+        );
         return;
       }
 

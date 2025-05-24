@@ -230,7 +230,7 @@ class TripGroupService {
     }
   }
 
-  async getMessages(groupId: string, page: number = 1, limit: number = 20, beforeId?: number): Promise<{
+  async getMessages(groupId: string, page: number = 1, limit: number = 200, beforeId?: number): Promise<{
     messages: TripGroupMessage[];
     hasMore: boolean;
     total: number;
