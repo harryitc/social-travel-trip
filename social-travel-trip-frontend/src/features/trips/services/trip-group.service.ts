@@ -201,6 +201,54 @@ class TripGroupService {
     }
   }
 
+  // Group management APIs
+  async updateGroup(data: {
+    group_id: number;
+    name?: string;
+    description?: string;
+    cover_url?: string;
+    plan_id?: number;
+    json_data?: any;
+  }): Promise<TripGroup> {
+    try {
+      const response: any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/update`, data);
+      return new TripGroup(response);
+    } catch (error) {
+      console.error('Error updating group:', error);
+      throw error;
+    }
+  }
+
+  async kickMember(data: { group_id: number; user_id: number }): Promise<any> {
+    try {
+      const response: any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/kick-member`, data);
+      return response;
+    } catch (error) {
+      console.error('Error kicking member:', error);
+      throw error;
+    }
+  }
+
+  async updateMemberRole(data: { group_id: number; user_id: number; role: string }): Promise<any> {
+    try {
+      const response: any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/update-member-role`, data);
+      return response;
+    } catch (error) {
+      console.error('Error updating member role:', error);
+      throw error;
+    }
+  }
+
+  async updateMemberNickname(data: { group_id: number; user_id: number; nickname?: string }): Promise<any> {
+    try {
+      const response: any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/update-member-nickname`, data);
+      return response;
+    } catch (error) {
+      console.error('Error updating member nickname:', error);
+      throw error;
+    }
+  }
+
   async inviteMember(data: {
     groupId: string;
     usernameOrEmail: string;

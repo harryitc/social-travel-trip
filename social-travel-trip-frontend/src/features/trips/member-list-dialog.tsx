@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/radix-ui/badge';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/radix-ui/dialog';
 import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
-import { Search, UserPlus, X, Users, Loader2 } from 'lucide-react';
+import { Search, UserPlus, X, Users, Loader2, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/radix-ui/input';
 import { tripGroupService } from './services/trip-group.service';
+import { getUserInfo } from '@/features/auth/auth.service';
 import { notification } from 'antd';
 
 export interface GroupMember {
@@ -28,9 +29,10 @@ type MemberListDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   onInvite: () => void;
+  onManageMembers?: () => void;
 };
 
-export function MemberListDialog({ groupId, isOpen, onClose, onInvite }: MemberListDialogProps) {
+export function MemberListDialog({ groupId, isOpen, onClose, onInvite, onManageMembers }: MemberListDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,6 +72,12 @@ export function MemberListDialog({ groupId, isOpen, onClose, onInvite }: MemberL
       setLoading(false);
     }
   };
+
+  // Get current user info from auth
+  const currentUser = getUserInfo();
+  const currentUserId = currentUser?.user_id || currentUser?.id;
+  const currentUserMember = members.find(m => m.user_id === currentUserId);
+  const isCurrentUserAdmin = currentUserMember?.role === 'admin';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -167,17 +175,34 @@ export function MemberListDialog({ groupId, isOpen, onClose, onInvite }: MemberL
           )}
         </ScrollArea>
 
-        <Button
-          onClick={() => {
-            onClose(); // Đóng dialog danh sách thành viên
-            onInvite(); // Mở dialog mời thành viên
-          }}
-          className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white"
-          disabled={loading}
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Mời thêm thành viên
-        </Button>
+        <div className="flex gap-2 mt-4">
+          <Button
+            onClick={() => {
+              onClose(); // Đóng dialog danh sách thành viên
+              onInvite(); // Mở dialog mời thành viên
+            }}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+            disabled={loading}
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Mời thêm thành viên
+          </Button>
+
+          {isCurrentUserAdmin && onManageMembers && (
+            <Button
+              onClick={() => {
+                onClose(); // Đóng dialog danh sách thành viên
+                onManageMembers(); // Mở dialog quản lý thành viên
+              }}
+              variant="outline"
+              className="flex-1"
+              disabled={loading}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Quản lý
+            </Button>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

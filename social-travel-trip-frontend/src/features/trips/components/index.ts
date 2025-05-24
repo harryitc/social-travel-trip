@@ -11,6 +11,8 @@ export { GroupCreatedSuccessDialog } from './group-created-success-dialog';
 export { TripBreadcrumb } from './trip-breadcrumb';
 export { ChatSkeleton, GroupListSkeleton } from './chat-skeleton';
 export { GroupListColumn } from './group-list-column';
+export { GroupManagementDialog } from './group-management-dialog';
+export { MemberManagementDialog } from './member-management-dialog';
 export { ChatColumn } from './chat-column';
 export { GroupDetailsColumn } from './group-details-column';
 export { ImageUploadDemo } from './image-upload-demo';
