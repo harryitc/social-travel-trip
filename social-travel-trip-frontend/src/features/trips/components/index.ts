@@ -18,4 +18,3 @@ export { GroupDetailsColumn } from './group-details-column';
 export { ImageUploadDemo } from './image-upload-demo';
 export { MessageReactions } from './message-reactions';
 export { MessageLikesModal } from './message-likes-modal';
-export { ReactionPicker, QuickLikeButton } from './reaction-picker';

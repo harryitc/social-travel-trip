@@ -18,6 +18,20 @@ export interface TripGroupMessage {
   like_count?: number;
   is_pinned?: boolean;
   json_data?: any; // For storing attachments and other metadata
+  // Reactions information
+  reactions?: Array<{
+    reaction_id: number;
+    count: number;
+    icon?: string;
+    label?: string;
+    users?: Array<{
+      user_id: number;
+      username: string;
+      full_name: string;
+      avatar_url: string;
+      created_at: string;
+    }>;
+  }>;
   // Reply information
   reply_to_message_id?: number;
   reply_to_message?: string;
@@ -347,15 +361,57 @@ class TripGroupService {
     }
   }
 
-  async getMessageReactions(messageId: number): Promise<any[]> {
+  async getMessageReactions(messageId: number): Promise<{
+    total: number;
+    reactions: Array<{ reaction_id: number; count: number }>;
+    users: Array<{
+      user_id: number;
+      username: string;
+      full_name: string;
+      avatar_url: string;
+      reaction_id: number;
+      created_at: string;
+    }>;
+    message_id: number;
+  }> {
     try {
-      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-message-reactions`, {
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/messages/get-reactions`, {
         group_message_id: messageId,
       });
 
-      return response || [];
+      return response || { total: 0, reactions: [], users: [], message_id: messageId };
     } catch (error) {
       console.error('Error fetching message reactions:', error);
+      throw error;
+    }
+  }
+
+  async getMessageReactionUsers(messageId: number, reactionId?: number): Promise<{
+    data: Array<{
+      user_id: number;
+      username: string;
+      full_name: string;
+      avatar_url: string;
+      reaction_id: number;
+      created_at: string;
+    }>;
+    meta: {
+      total: number;
+      message_id: number;
+      reaction_id: number | null;
+    };
+  }> {
+    try {
+      const body: any = { group_message_id: messageId };
+      if (reactionId) {
+        body.reaction_id = reactionId;
+      }
+
+      const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/messages/reaction-users`, body);
+
+      return response || { data: [], meta: { total: 0, message_id: messageId, reaction_id: reactionId || null } };
+    } catch (error) {
+      console.error('Error fetching message reaction users:', error);
       throw error;
     }
   }

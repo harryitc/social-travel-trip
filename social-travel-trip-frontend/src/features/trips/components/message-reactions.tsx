@@ -31,8 +31,6 @@ export function MessageReactions({
 }: MessageReactionsProps) {
   const [showLikesModal, setShowLikesModal] = useState(false);
 
-  console.log("likeCount = ", likeCount)
-
   // Get the most popular reactions for display (top 3)
   const getTopReactions = () => {
     if (!reactions || reactions.length === 0) return [];

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import './chat-animations.css';
 import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Input } from '@/components/ui/radix-ui/input';
@@ -168,9 +169,12 @@ export function TripChat({ tripId }: TripChatProps) {
   const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
   const [newMessageIds, setNewMessageIds] = useState<Set<string>>(new Set());
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [isUserNearBottom, setIsUserNearBottom] = useState(true);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load messages from API
@@ -252,6 +256,12 @@ export function TripChat({ tripId }: TripChatProps) {
             newSet.delete(transformedMessage.id);
             return newSet;
           });
+
+          // Clean up animation optimization
+          const messageElement = document.getElementById(`message-${transformedMessage.id}`);
+          if (messageElement) {
+            messageElement.classList.add('animation-complete');
+          }
         }, 1000);
 
         setMessages(prev => {
@@ -285,11 +295,34 @@ export function TripChat({ tripId }: TripChatProps) {
       }
     };
 
-    const handleMessageLike = (data: { groupId: number; messageId: number; likerId: number; likeCount: number; isLiked: boolean }) => {
+    const handleMessageLike = (data: {
+      groupId: number;
+      messageId: number;
+      likerId: number;
+      likeCount: number;
+      isLiked: boolean;
+      reactions?: Array<{
+        reaction_id: number;
+        count: number;
+        icon?: string;
+        label?: string;
+        users?: Array<{
+          user_id: number;
+          username: string;
+          full_name: string;
+          avatar_url: string;
+          created_at: string;
+        }>;
+      }>;
+    }) => {
       if (data.groupId.toString() == tripId) {
         setMessages(prev => prev.map(msg =>
           msg.id == data.messageId.toString()
-            ? { ...msg, likeCount: data.likeCount }
+            ? {
+              ...msg,
+              likeCount: data.likeCount,
+              reactions: data.reactions || msg.reactions || []
+            }
             : msg
         ));
       }
@@ -366,9 +399,9 @@ export function TripChat({ tripId }: TripChatProps) {
     };
   }, [tripId, emit]);
 
-  // Scroll to bottom when messages change with smooth animation
+  // Smart scroll behavior - only auto-scroll if user is near bottom
   useEffect(() => {
-    if (messageEndRef.current) {
+    if (messageEndRef.current && isUserNearBottom) {
       // Add a small delay to ensure the message is rendered
       setTimeout(() => {
         messageEndRef.current?.scrollIntoView({
@@ -377,8 +410,38 @@ export function TripChat({ tripId }: TripChatProps) {
           inline: 'nearest'
         });
       }, 100);
+    } else if (!isUserNearBottom) {
+      // Show scroll to bottom button when user is not at bottom and new messages arrive
+      setShowScrollToBottom(true);
     }
-  }, [messages]);
+  }, [messages, isUserNearBottom]);
+
+  // Monitor scroll position to determine if user is near bottom
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    const handleScroll = () => {
+      const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+      if (!viewport) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = viewport;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px threshold
+
+      setIsUserNearBottom(isNearBottom);
+
+      // Hide scroll to bottom button when user scrolls to bottom
+      if (isNearBottom) {
+        setShowScrollToBottom(false);
+      }
+    };
+
+    const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
+    if (viewport) {
+      viewport.addEventListener('scroll', handleScroll);
+      return () => viewport.removeEventListener('scroll', handleScroll);
+    }
+  }, [tripId]); // Re-setup when tripId changes
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -448,7 +511,9 @@ export function TripChat({ tripId }: TripChatProps) {
     }
   };
 
-  const handleReactionUpdate = (messageId: string, newLikeCount: number) => {
+  const handleReactionUpdate = async (messageId: string, newLikeCount: number) => {
+    // Since reactions data will be updated via WebSocket, we just need to update the count
+    // The full reactions data will come from the server via WebSocket events
     setMessages(prev => prev.map(msg =>
       msg.id === messageId
         ? { ...msg, likeCount: newLikeCount }
@@ -462,6 +527,7 @@ export function TripChat({ tripId }: TripChatProps) {
       // The WebSocket will handle updating the UI
 
       const reactionLabels: { [key: number]: string } = {
+        1: 'hủy reaction',
         2: 'thích',
         3: 'yêu thích',
         4: 'haha',
@@ -471,7 +537,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
       // notification.success({
       //   message: 'Thành công',
-      //   description: `Đã ${reactionLabels[reactionId]} tin nhắn`,
+      //   description: `Đã ${reactionLabels[reactionId] || 'react'} tin nhắn`,
       //   placement: 'topRight',
       //   duration: 1,
       // });
@@ -502,6 +568,18 @@ export function TripChat({ tripId }: TripChatProps) {
       setTimeout(() => {
         messageElement.classList.remove('bg-purple-100', 'dark:bg-purple-900/30');
       }, 2000);
+    }
+  };
+
+  const scrollToBottom = () => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest'
+      });
+      setShowScrollToBottom(false);
+      setIsUserNearBottom(true);
     }
   };
 
@@ -657,6 +735,10 @@ export function TripChat({ tripId }: TripChatProps) {
       setImagePreviewUrls([]);
       setReplyingTo(null);
 
+      // Ensure user is marked as near bottom when they send a message
+      setIsUserNearBottom(true);
+      setShowScrollToBottom(false);
+
       // Stop typing indicator
       if (isTyping) {
         setIsTyping(false);
@@ -788,7 +870,7 @@ export function TripChat({ tripId }: TripChatProps) {
       {
         tripId ? (
           <div className="flex flex-col h-full">
-            <ScrollArea className={`flex-1 p-3`}>
+            <ScrollArea ref={scrollAreaRef} className={`flex-1 p-3 relative chat-scroll-area`}>
               <PinnedMessages
                 messages={messages}
                 onUnpin={handlePinMessage}
@@ -798,7 +880,7 @@ export function TripChat({ tripId }: TripChatProps) {
               {loading ? (
                 <ChatSkeleton />
               ) : (
-                <div className="space-y-4 px-2">
+                <div className={`space-y-4 px-2 message-container ${isTyping ? 'typing-mode' : ''}`}>
                   {messages.map((message, index) => {
                     // Compare with user ID from auth context - convert both to string for comparison
                     const isOwnMessage = user?.user_id ? message.sender.id == user.user_id.toString() : false;
@@ -814,9 +896,12 @@ export function TripChat({ tripId }: TripChatProps) {
                         key={uniqueKey}
                         className={`flex gap-3 transition-all duration-500 ease-out ${isOwnMessage ? 'flex-row-reverse' : ''
                           } ${isNewMessage
-                            ? 'animate-in slide-in-from-bottom-4 fade-in duration-500'
+                            ? 'new-message-enter new-message-fade animate-optimized'
                             : ''
                           }`}
+                        style={isNewMessage ? {
+                          animationFillMode: 'both',
+                        } : undefined}
                       >
                         {/* Avatar */}
                         <div className="flex-shrink-0">
@@ -833,8 +918,8 @@ export function TripChat({ tripId }: TripChatProps) {
                           {/* Header */}
                           <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
                             <span className={`text-sm font-semibold ${isOwnMessage
-                                ? 'text-purple-600 dark:text-purple-400'
-                                : 'text-gray-700 dark:text-gray-300'
+                              ? 'text-purple-600 dark:text-purple-400'
+                              : 'text-gray-700 dark:text-gray-300'
                               }`}>
                               {isOwnMessage ? 'Bạn' : message.sender.name}
                             </span>
@@ -850,16 +935,15 @@ export function TripChat({ tripId }: TripChatProps) {
                           </div>
 
                           {/* Message Bubble */}
-                          <div className={`relative px-4 py-2.5 group shadow-sm transform transition-all duration-300 hover:scale-[1.02] ${isOwnMessage
-                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md hover:shadow-lg hover:shadow-purple-500/25'
-                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600'
-                            } ${isNewMessage ? 'animate-pulse' : ''
+                          <div className={`relative px-4 py-2.5 group shadow-sm message-bubble ${isOwnMessage
+                            ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md hover:shadow-lg hover:shadow-purple-500/25'
+                            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600'
                             }`}>
                             {/* Reply indicator */}
                             {message.replyTo && (
                               <div className={`mb-2 p-2 rounded-lg text-xs flex items-start gap-2 ${isOwnMessage
-                                  ? 'bg-white/20 text-white/90'
-                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                ? 'bg-white/20 text-white/90'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
                                 }`}>
                                 <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
                                 <div>
@@ -873,15 +957,13 @@ export function TripChat({ tripId }: TripChatProps) {
                             <div className="flex items-end gap-1 flex-wrap">
                               <p className="text-sm leading-relaxed message-content">{message.content}</p>
                               {/* Inline Message Reactions */}
-                              {message?.likeCount > 0 && (
-                                <MessageReactions
-                                  messageId={message.id}
-                                  likeCount={message.likeCount}
-                                  reactions={message.reactions}
-                                  onReactionUpdate={handleReactionUpdate}
-                                  isOwnMessage={isOwnMessage}
-                                />
-                              )}
+                              <MessageReactions
+                                messageId={message.id}
+                                likeCount={message.likeCount || 0}
+                                reactions={message.reactions || []}
+                                onReactionUpdate={handleReactionUpdate}
+                                isOwnMessage={isOwnMessage}
+                              />
                             </div>
 
                             {/* Attachments */}
@@ -1017,32 +1099,61 @@ export function TripChat({ tripId }: TripChatProps) {
                     );
                   })}
 
-                  {/* Typing indicator */}
-                  {typingUsers.size > 0 && (
-                    <div className="flex gap-3 items-center px-2 animate-in slide-in-from-bottom-2 fade-in duration-300">
-                      <div className="flex-shrink-0">
-                        <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center animate-pulse">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 italic">
-                          {typingUsers.size == 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
                   <div ref={messageEndRef} />
                 </div>
               )}
+
+              {/* Scroll to bottom button */}
+              {showScrollToBottom && (
+                <div className="absolute bottom-4 right-4 z-10">
+                  <Button
+                    onClick={scrollToBottom}
+                    className="h-10 w-10 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl scroll-button-enter"
+                    size="icon"
+                    title="Cuộn xuống tin nhắn mới"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </Button>
+                </div>
+              )}
+
+              {/* Typing indicator */}
+              {typingUsers.size > 0 && (
+                <div className="absolute bottom-4 left-4 z-10">
+                  <div className="flex gap-3 items-center px-2 animate-in slide-in-from-bottom-2 fade-in duration-300">
+                    <div className="flex-shrink-0">
+                      <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center animate-pulse">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 italic">
+                        {typingUsers.size == 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </ScrollArea>
 
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">{/* Input area */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 chat-input-area">{/* Input area */}
               {/* Image preview area */}
               {imagePreviewUrls.length > 0 && (
                 <div className="mb-3 animate-in slide-in-from-bottom-2 fade-in duration-300">

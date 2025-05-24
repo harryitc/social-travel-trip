@@ -59,7 +59,25 @@ export class ToggleMessageLikeCommandHandler
       const likeCountResult = await this.repository.getMessageLikeCount(dto.group_message_id);
       const likeCount = likeCountResult.rows[0]?.like_count || 0;
 
-      // Send WebSocket notification to group members
+      // Get updated reactions data with full details
+      let reactions = [];
+      try {
+        const reactionsResult = await this.repository.getMessageReactions(dto.group_message_id);
+        const usersResult = await this.repository.getMessageReactionUsers(dto.group_message_id);
+
+        // Map reactions with users data
+        reactions = reactionsResult.rows.map(reaction => ({
+          reaction_id: reaction.reaction_id,
+          count: reaction.count,
+          icon: reaction.icon,
+          label: reaction.label,
+          users: usersResult.rows.filter(user => user.reaction_id === reaction.reaction_id)
+        }));
+      } catch (reactionsError) {
+        this.logger.warn(`Failed to fetch reactions data: ${reactionsError.message}`);
+      }
+
+      // Send WebSocket notification to group members with reactions data
       this.websocketService.notifyGroupMessageLike(
         groupId,
         memberIds,
@@ -67,10 +85,11 @@ export class ToggleMessageLikeCommandHandler
         userId,
         isLiked,
         likeCount,
+        reactions,
       );
 
       this.logger.debug(
-        `Sent WebSocket notification for message ${isLiked ? 'like' : 'unlike'} in group ${groupId}`,
+        `Sent WebSocket notification for message ${isLiked ? 'like' : 'unlike'} in group ${groupId} with ${reactions.length} reactions`,
       );
     } catch (error) {
       this.logger.error(

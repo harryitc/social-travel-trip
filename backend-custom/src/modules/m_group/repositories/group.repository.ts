@@ -352,7 +352,64 @@ export class GroupRepository {
           SELECT 1
           FROM message_pins mp
           WHERE mp.group_message_id = gm.group_message_id AND mp.group_id = gm.group_id
-        ) as is_pinned
+        ) as is_pinned,
+        -- Reactions data as JSON
+        (
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'reaction_id', reaction_summary.reaction_id,
+                'icon', r.icon,
+                'label', r.label,
+                'count', reaction_summary.count,
+                'users', reaction_summary.users
+              )
+            ),
+            '[]'::json
+          )
+          FROM (
+            SELECT
+              ml.reaction_id,
+              COUNT(*) as count,
+              json_agg(
+                json_build_object(
+                  'user_id', ml.user_id,
+                  'username', u_react.username,
+                  'full_name', u_react.full_name,
+                  'avatar_url', u_react.avatar_url,
+                  'created_at', ml.created_at
+                )
+              ) as users
+            FROM message_likes ml
+            LEFT JOIN users u_react ON ml.user_id = u_react.user_id
+            WHERE ml.group_message_id = gm.group_message_id AND ml.reaction_id > 1
+            GROUP BY ml.reaction_id
+          ) reaction_summary
+          LEFT JOIN (
+            SELECT
+              reaction_id,
+              name,
+              CASE
+                WHEN name = 'default' THEN '🚫'
+                WHEN name = 'like' THEN '👍'
+                WHEN name = 'love' THEN '❤️'
+                WHEN name = 'haha' THEN '😄'
+                WHEN name = 'wow' THEN '😮'
+                WHEN name = 'sad' THEN '😢'
+                ELSE '👍'
+              END as icon,
+              CASE
+                WHEN name = 'default' THEN 'Không like'
+                WHEN name = 'like' THEN 'Thích'
+                WHEN name = 'love' THEN 'Yêu thích'
+                WHEN name = 'haha' THEN 'Haha'
+                WHEN name = 'wow' THEN 'Wow'
+                WHEN name = 'sad' THEN 'Buồn'
+                ELSE 'Thích'
+              END as label
+            FROM reactions
+          ) r ON reaction_summary.reaction_id = r.reaction_id
+        ) as reactions
       FROM group_messages gm
       LEFT JOIN users u ON gm.user_id = u.user_id
       LEFT JOIN group_members gm_info ON gm.user_id = gm_info.user_id AND gm_info.group_id = gm.group_id
@@ -397,7 +454,64 @@ export class GroupRepository {
           SELECT 1
           FROM message_pins mp
           WHERE mp.group_message_id = gm.group_message_id AND mp.group_id = gm.group_id
-        ) as is_pinned
+        ) as is_pinned,
+        -- Reactions data as JSON
+        (
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'reaction_id', reaction_summary.reaction_id,
+                'icon', r.icon,
+                'label', r.label,
+                'count', reaction_summary.count,
+                'users', reaction_summary.users
+              )
+            ),
+            '[]'::json
+          )
+          FROM (
+            SELECT
+              ml.reaction_id,
+              COUNT(*) as count,
+              json_agg(
+                json_build_object(
+                  'user_id', ml.user_id,
+                  'username', u_react.username,
+                  'full_name', u_react.full_name,
+                  'avatar_url', u_react.avatar_url,
+                  'created_at', ml.created_at
+                )
+              ) as users
+            FROM message_likes ml
+            LEFT JOIN users u_react ON ml.user_id = u_react.user_id
+            WHERE ml.group_message_id = gm.group_message_id AND ml.reaction_id > 1
+            GROUP BY ml.reaction_id
+          ) reaction_summary
+          LEFT JOIN (
+            SELECT
+              reaction_id,
+              name,
+              CASE
+                WHEN name = 'default' THEN '🚫'
+                WHEN name = 'like' THEN '👍'
+                WHEN name = 'love' THEN '❤️'
+                WHEN name = 'haha' THEN '😄'
+                WHEN name = 'wow' THEN '😮'
+                WHEN name = 'sad' THEN '😢'
+                ELSE '👍'
+              END as icon,
+              CASE
+                WHEN name = 'default' THEN 'Không like'
+                WHEN name = 'like' THEN 'Thích'
+                WHEN name = 'love' THEN 'Yêu thích'
+                WHEN name = 'haha' THEN 'Haha'
+                WHEN name = 'wow' THEN 'Wow'
+                WHEN name = 'sad' THEN 'Buồn'
+                ELSE 'Thích'
+              END as label
+            FROM reactions
+          ) r ON reaction_summary.reaction_id = r.reaction_id
+        ) as reactions
       FROM group_messages gm
       LEFT JOIN users u ON gm.user_id = u.user_id
       LEFT JOIN group_members gm_info ON gm.user_id = gm_info.user_id AND gm_info.group_id = gm.group_id
@@ -450,11 +564,33 @@ export class GroupRepository {
 
   async getMessageReactions(messageId: number) {
     const query = `
-      SELECT reaction_id, COUNT(*) AS count
-      FROM message_likes
-      WHERE group_message_id = $1 AND reaction_id > 1
-      GROUP BY reaction_id
-      ORDER BY reaction_id
+      SELECT
+        ml.reaction_id,
+        COUNT(*) AS count,
+        r.name,
+        CASE
+          WHEN r.name = 'default' THEN '🚫'
+          WHEN r.name = 'like' THEN '👍'
+          WHEN r.name = 'love' THEN '❤️'
+          WHEN r.name = 'haha' THEN '😄'
+          WHEN r.name = 'wow' THEN '😮'
+          WHEN r.name = 'sad' THEN '😢'
+          ELSE '👍'
+        END as icon,
+        CASE
+          WHEN r.name = 'default' THEN 'Không like'
+          WHEN r.name = 'like' THEN 'Thích'
+          WHEN r.name = 'love' THEN 'Yêu thích'
+          WHEN r.name = 'haha' THEN 'Haha'
+          WHEN r.name = 'wow' THEN 'Wow'
+          WHEN r.name = 'sad' THEN 'Buồn'
+          ELSE 'Thích'
+        END as label
+      FROM message_likes ml
+      LEFT JOIN reactions r ON ml.reaction_id = r.reaction_id
+      WHERE ml.group_message_id = $1 AND ml.reaction_id > 1
+      GROUP BY ml.reaction_id, r.name
+      ORDER BY ml.reaction_id
     `;
 
     return this.client.execute(query, [messageId]);

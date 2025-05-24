@@ -405,6 +405,7 @@ export class WebsocketService {
    * @param likerId User ID who liked/unliked
    * @param isLiked Whether message was liked or unliked
    * @param likeCount Updated like count
+   * @param reactions Optional reactions data with full details
    */
   notifyGroupMessageLike(
     groupId: number,
@@ -413,6 +414,19 @@ export class WebsocketService {
     likerId: number,
     isLiked: boolean,
     likeCount: number,
+    reactions?: Array<{
+      reaction_id: number;
+      count: number;
+      icon?: string;
+      label?: string;
+      users?: Array<{
+        user_id: number;
+        username: string;
+        full_name: string;
+        avatar_url: string;
+        created_at: string;
+      }>;
+    }>,
   ) {
     const event = isLiked
       ? WebsocketEvent.GROUP_MESSAGE_LIKED
@@ -424,6 +438,7 @@ export class WebsocketService {
       likerId,
       likeCount,
       isLiked,
+      reactions,
     });
   }
 
