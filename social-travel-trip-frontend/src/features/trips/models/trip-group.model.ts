@@ -6,6 +6,10 @@ export interface TripGroupMemberDTO {
   nickname?: string;
   role: 'admin' | 'member';
   join_at: string;
+  // User information from join query (direct fields)
+  username?: string;
+  avatar_url?: string;
+  // Legacy nested user object (for backward compatibility)
   user?: {
     user_id: number;
     username: string;
@@ -55,10 +59,10 @@ export class TripGroupMember {
     this.role = dto.role;
     this.joinAt = new Date(dto.join_at);
 
-    // Computed UI fields
+    // Computed UI fields - prioritize direct fields over nested user object
     this.id = dto.group_member_id.toString();
-    this.name = dto.nickname || dto.user?.username || 'Unknown User';
-    this.avatar = dto.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
+    this.name = dto.nickname || dto.username || dto.user?.username || 'Unknown User';
+    this.avatar = dto.avatar_url || dto.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
   }
 
   // Helper methods

@@ -47,6 +47,9 @@ export class GroupMember {
   nickname?: string;
   role: string;
   join_at: Date;
+  // User information from join query
+  username?: string;
+  avatar_url?: string;
 
   constructor(data: any) {
     this.group_member_id = data.group_member_id;
@@ -55,6 +58,9 @@ export class GroupMember {
     this.nickname = data.nickname;
     this.role = data.role;
     this.join_at = data.join_at;
+    // Map user information from join query
+    this.username = data.username;
+    this.avatar_url = data.avatar_url;
   }
 }
 

@@ -137,9 +137,12 @@ class TripGroupService {
           nickname: member.nickname,
           role: member.role,
           join_at: member.join_at,
-          // Map user info
-          name: member.username || member.nickname || 'Unknown User',
-          avatar: member.avatar_url || '',
+          // Map user info - now properly available from backend
+          username: member.username,
+          avatar_url: member.avatar_url,
+          // Computed fields for UI compatibility
+          name: member.nickname || member.username || 'Unknown User',
+          avatar: member.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1',
           isAdmin: () => member.role === 'admin'
         }));
 
