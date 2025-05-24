@@ -37,6 +37,7 @@ import { websocketService } from '@/lib/services/websocket.service';
 import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
 import { formatMessageTimestamp, getRelativeTime, formatDetailedTimestamp } from '@/lib/utils';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -116,7 +117,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
 };
 
 export function TripChat({ tripId }: TripChatProps) {
-  const user: any = null; // TODO: Get from auth context
+  const { user } = useAuth(); // Get current user from auth context
   const { emit } = useEventStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,12 +198,12 @@ export function TripChat({ tripId }: TripChatProps) {
         user_id: data.message?.user_id,
         hasUserInfo: !!(data.message?.username || data.message?.nickname)
       });
-      if (data.groupId.toString() === tripId) {
+      if (data.groupId.toString() == tripId) {
         const transformedMessage = transformMessage(data.message);
         console.log('✅ [TripChat] Adding message to chat:', transformedMessage);
         setMessages(prev => {
           // Check if message already exists to prevent duplicates
-          const exists = prev.some(msg => msg.id === transformedMessage.id);
+          const exists = prev.some(msg => msg.id == transformedMessage.id);
           if (exists) {
             console.log('⚠️ [TripChat] Message already exists, skipping:', transformedMessage.id);
             return prev;
@@ -210,8 +211,8 @@ export function TripChat({ tripId }: TripChatProps) {
 
           // Also check for potential duplicates by content and timestamp (for edge cases)
           const contentDuplicate = prev.some(msg =>
-            msg.content === transformedMessage.content &&
-            msg.sender.id === transformedMessage.sender.id &&
+            msg.content == transformedMessage.content &&
+            msg.sender.id == transformedMessage.sender.id &&
             Math.abs(new Date(msg.timestamp).getTime() - new Date(transformedMessage.timestamp).getTime()) < 5000 // Within 5 seconds
           );
 
@@ -232,9 +233,9 @@ export function TripChat({ tripId }: TripChatProps) {
     };
 
     const handleMessageLike = (data: { groupId: number; messageId: number; likerId: number; likeCount: number; isLiked: boolean }) => {
-      if (data.groupId.toString() === tripId) {
+      if (data.groupId.toString() == tripId) {
         setMessages(prev => prev.map(msg =>
-          msg.id === data.messageId.toString()
+          msg.id == data.messageId.toString()
             ? { ...msg, likeCount: data.likeCount }
             : msg
         ));
@@ -242,9 +243,9 @@ export function TripChat({ tripId }: TripChatProps) {
     };
 
     const handleMessagePin = (data: { groupId: number; messageId: number; pinnerId: number; isPinned: boolean }) => {
-      if (data.groupId.toString() === tripId) {
+      if (data.groupId.toString() == tripId) {
         setMessages(prev => prev.map(msg =>
-          msg.id === data.messageId.toString()
+          msg.id == data.messageId.toString()
             ? { ...msg, pinned: data.isPinned }
             : msg
         ));
@@ -252,7 +253,7 @@ export function TripChat({ tripId }: TripChatProps) {
     };
 
     const handleTyping = (data: { groupId: number; typingUserId: number; isTyping: boolean }) => {
-      if (data.groupId.toString() === tripId) {
+      if (data.groupId.toString() == tripId) {
         setTypingUsers(prev => {
           const newSet = new Set(prev);
           if (data.isTyping) {
@@ -362,7 +363,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
   const handlePinMessage = async (messageId: string) => {
     try {
-      const message = messages.find(m => m.id === messageId);
+      const message = messages.find(m => m.id == messageId);
       if (!message) return;
 
       if (message.pinned) {
@@ -373,7 +374,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
       // Update local state optimistically
       setMessages(messages.map(msg =>
-        msg.id === messageId
+        msg.id == messageId
           ? { ...msg, pinned: !msg.pinned }
           : msg
       ));
@@ -419,7 +420,7 @@ export function TripChat({ tripId }: TripChatProps) {
   const handleSendMessage = async () => {
     // Validate input
     const messageText = newMessage.trim();
-    if (!messageText && selectedImages.length === 0 && selectedFiles.length === 0) {
+    if (!messageText && selectedImages.length == 0 && selectedFiles.length == 0) {
       notification.warning({
         message: 'Thông báo',
         description: 'Vui lòng nhập tin nhắn hoặc chọn tệp để gửi.',
@@ -649,7 +650,7 @@ export function TripChat({ tripId }: TripChatProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key == 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -705,7 +706,9 @@ export function TripChat({ tripId }: TripChatProps) {
               ) : (
                 <div className="space-y-4 px-2">
                   {messages.map((message, index) => {
-                    const isOwnMessage = message.sender.id === (user?.id || '1');
+                    // Compare with user ID from auth context - convert both to string for comparison
+                    const isOwnMessage = user?.user_id ? message.sender.id == user.user_id.toString() : false;
+
                     // Use combination of id and index to ensure unique keys
                     const uniqueKey = `${message.id}-${index}`;
                     return (
@@ -730,8 +733,12 @@ export function TripChat({ tripId }: TripChatProps) {
                         <div className={`flex flex-col max-w-[75%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                           {/* Header */}
                           <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
-                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                              {message.sender.name}
+                            <span className={`text-sm font-semibold ${
+                              isOwnMessage
+                                ? 'text-purple-600 dark:text-purple-400'
+                                : 'text-gray-700 dark:text-gray-300'
+                            }`}>
+                              {isOwnMessage ? 'Bạn' : message.sender.name}
                             </span>
                             <span
                               className="text-xs text-gray-500 dark:text-gray-400 cursor-help"
@@ -745,10 +752,10 @@ export function TripChat({ tripId }: TripChatProps) {
                           </div>
 
                           {/* Message Bubble */}
-                          <div className={`relative rounded-2xl px-4 py-2.5 group shadow-sm ${
+                          <div className={`relative px-4 py-2.5 group shadow-sm ${
                             isOwnMessage
-                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md'
+                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md'
                           }`}>
                             {/* Reply indicator */}
                             {message.replyTo && (
@@ -772,7 +779,7 @@ export function TripChat({ tripId }: TripChatProps) {
                             {message.attachments && message.attachments.length > 0 && (
                               <div className="mt-3 space-y-2">
                                 {message.attachments.map((attachment, index) => (
-                                  attachment.type === 'image' ? (
+                                  attachment.type == 'image' ? (
                                     <div key={index} className="rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:opacity-90 transition-opacity">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img
@@ -867,7 +874,7 @@ export function TripChat({ tripId }: TripChatProps) {
                       </div>
                       <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700">
                         <span className="text-sm text-gray-600 dark:text-gray-400 italic">
-                          {typingUsers.size === 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
+                          {typingUsers.size == 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
                         </span>
                       </div>
                     </div>
@@ -1002,7 +1009,7 @@ export function TripChat({ tripId }: TripChatProps) {
                   <EmojiPicker onEmojiSelect={handleEmojiSelect} />
 
                   {/* Debug WebSocket button (development only) */}
-                  {process.env.NODE_ENV === 'development' && (
+                  {process.env.NODE_ENV == 'development' && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -1027,7 +1034,7 @@ export function TripChat({ tripId }: TripChatProps) {
                 {/* Send button */}
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
+                  disabled={!newMessage.trim() && selectedImages.length == 0 && selectedFiles.length == 0}
                   className="h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   title={newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0 ? "Gửi tin nhắn" : "Nhập tin nhắn để gửi"}
                 >
