@@ -104,7 +104,7 @@ export class CommentRepository {
 
     const query = `
     INSERT INTO post_comments (content, json_data, post_id, user_id, parent_id, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     RETURNING *
   `;
 
@@ -119,7 +119,7 @@ export class CommentRepository {
     const { content, jsonData, postId, parentId } = data;
     const query = `
     INSERT INTO post_comments (content, json_data, post_id, parent_id, user_id, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     RETURNING *
   `;
     return this.client.execute(query, [

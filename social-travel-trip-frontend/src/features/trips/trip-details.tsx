@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/radix-ui/badge';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Calendar, MapPin, Users, Clock, Globe, Lock } from 'lucide-react';
 import { InviteMembersDialog } from './invite-members-dialog';
+import { API_ENDPOINT } from '@/config/api.config';
 
 type TripDetailsProps = {
   trip: {
@@ -116,7 +117,7 @@ export function TripDetails({ trip }: TripDetailsProps) {
             {members.map((member) => (
               <div key={member.id} className="flex items-center gap-3">
                 <Avatar>
-                  <AvatarImage src={member.avatar} alt={member.name} />
+                  <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={member.name} />
                   <AvatarFallback>{member.name[0]}</AvatarFallback>
                 </Avatar>
                 <div>

@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { notification } from 'antd';
 import { FollowButton } from './follow-button';
+import { API_ENDPOINT } from '@/config/api.config';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -190,7 +191,7 @@ export function LikesModal({
                         className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.avatar || user.avatar_url} alt={user.full_name} />
+                          <AvatarImage src={API_ENDPOINT.file_image_v2 + (user.avatar || user.avatar_url)} alt={user.full_name} />
                           <AvatarFallback>{user.full_name?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">

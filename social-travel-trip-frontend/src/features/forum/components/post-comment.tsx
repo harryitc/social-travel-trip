@@ -17,6 +17,14 @@ import { useAuth } from '@/features/auth/hooks/use-auth';
 import { notification } from 'antd';
 import { LikesModal } from './likes-modal';
 import { commentLikesAdapter } from '../services/likes-adapters';
+import { API_ENDPOINT } from '@/config/api.config';
+import { formatPostTimestamp, formatPostDetailedTimestamp } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/radix-ui/tooltip';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -236,28 +244,8 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
     }
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-    const diffHour = Math.floor(diffMin / 60);
-    const diffDay = Math.floor(diffHour / 24);
-
-    if (diffSec < 60) {
-      return 'Vừa xong';
-    } else if (diffMin < 60) {
-      return `${diffMin} phút trước`;
-    } else if (diffHour < 24) {
-      return `${diffHour} giờ trước`;
-    } else if (diffDay < 7) {
-      return `${diffDay} ngày trước`;
-    } else {
-      return date.toLocaleDateString('vi-VN');
-    }
-  };
+  // Format date using dayjs utility
+  // Removed old formatDate function - now using formatPostTimestamp from utils
 
   // Render a comment and its replies
   const renderComment = (item: Comment, isReply = false) => {
@@ -267,7 +255,7 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
     return (
       <div key={item.comment_id} className={`flex space-x-3 ${isReply ? 'ml-8 mt-3' : ''}`}>
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={item.author.avatar} alt={item.author.full_name} />
+          <AvatarImage src={API_ENDPOINT.file_image_v2 + item.author.avatar} alt={item.author.full_name} />
           <AvatarFallback>{item.author.full_name?.[0]}</AvatarFallback>
         </Avatar>
         <div className="flex-1 space-y-1">
@@ -289,7 +277,16 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
             <p className="text-sm">{item.content}</p>
           </div>
           <div className="flex space-x-4 text-xs text-muted-foreground">
-            <span>{formatDate(item.created_at)}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help">{formatPostTimestamp(item.created_at)}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{formatPostDetailedTimestamp(item.created_at)}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <div className="relative flex items-center" ref={showReactionPicker === item.comment_id ? reactionsMenuRef : null}>
               <button
                 className={`hover:text-foreground flex items-center ${isLiked ? 'text-purple-600 dark:text-purple-400' : ''}`}
@@ -395,7 +392,7 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
 
       <div className="flex items-center space-x-2">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={currentUser?.avatar} alt={currentUser?.full_name || 'Avatar'} />
+          <AvatarImage src={API_ENDPOINT.file_image_v2 + currentUser?.avatar} alt={currentUser?.full_name || 'Avatar'} />
           <AvatarFallback>{currentUser?.full_name?.[0] || 'U'}</AvatarFallback>
         </Avatar>
         <div className="flex-1 relative">

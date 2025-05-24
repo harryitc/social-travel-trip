@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/radix-ui/button';
 import { Skeleton } from '@/components/ui/radix-ui/skeleton';
 import Link from 'next/link';
 import { tripService, Trip } from './services/trip.service';
+import { API_ENDPOINT } from '@/config/api.config';
 
 export function UpcomingTrips() {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -106,7 +107,7 @@ export function UpcomingTrips() {
                     <div className="flex -space-x-2 mt-1">
                       {trip.members.slice(0, 3).map((member, i) => (
                         <Avatar key={i} className="h-6 w-6 border-2 border-background">
-                          <AvatarImage src={member.avatar} alt={member.full_name} />
+                          <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={member.full_name} />
                           <AvatarFallback>{member.full_name[0]}</AvatarFallback>
                         </Avatar>
                       ))}

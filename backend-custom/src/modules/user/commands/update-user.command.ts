@@ -1,4 +1,4 @@
-import { Logger, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { UserRepository } from '../repositories/user.repository';
 import { UpdateUserDTO } from '../dto/user.dto';
@@ -15,8 +15,6 @@ export class UpdateUserCommand implements ICommand {
 export class UpdateUserCommandHandler
   implements ICommandHandler<UpdateUserCommand>
 {
-  private readonly logger = new Logger(UpdateUserCommand.name);
-
   constructor(private readonly repository: UserRepository) {}
 
   async execute(command: UpdateUserCommand): Promise<any> {

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/radix-ui/badge';
 import { Calendar, MapPin, Users, Lock, Globe, Search, AlertCircle, UserPlus } from 'lucide-react';
 import { TRIP_GROUPS, TripGroup } from './trip-groups-data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/radix-ui/alert';
+import { API_ENDPOINT } from '@/config/api.config';
 
 
 type SelectTripGroupProps = {
@@ -148,7 +149,7 @@ export function SelectTripGroup({ open, onOpenChange, onSelectGroup, onCreateNew
                           <div className="flex -space-x-1 mr-1">
                             {group.members.list.slice(0, 3).map((member) => (
                               <Avatar key={member.id} className="h-5 w-5 border border-background">
-                                <AvatarImage src={member.avatar} alt={member.name} />
+                                <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={member.name} />
                                 <AvatarFallback className="text-[10px]">{member.name.charAt(0)}</AvatarFallback>
                               </Avatar>
                             ))}

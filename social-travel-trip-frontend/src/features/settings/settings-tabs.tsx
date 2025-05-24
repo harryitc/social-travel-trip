@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/av
 import { useState } from 'react';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import { X } from 'lucide-react';
+import { API_ENDPOINT } from '@/config/api.config';
 
 export function SettingsTabs() {
   const user: any = null;
@@ -55,7 +56,7 @@ export function SettingsTabs() {
             <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 items-start">
               <div className="flex flex-col items-center space-y-2">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={user?.imageUrl} alt={user?.fullName || 'Avatar'} />
+                  <AvatarImage src={API_ENDPOINT.file_image_v2 + user?.imageUrl} alt={user?.fullName || 'Avatar'} />
                   <AvatarFallback>{user?.fullName?.[0] || 'U'}</AvatarFallback>
                 </Avatar>
                 <Button variant="outline" size="sm">Đổi ảnh</Button>

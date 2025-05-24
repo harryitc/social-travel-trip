@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/radix-ui/button';
 import { ChevronDown, ChevronUp, Pin } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
 import { Message } from './mock-chat-data';
+import { API_ENDPOINT } from '@/config/api.config';
 
 type PinnedMessagesProps = {
   messages: Message[];
@@ -50,7 +51,7 @@ export function PinnedMessages({ messages, onUnpin, onScrollToMessage }: PinnedM
                   onClick={() => onScrollToMessage(message.id)}
                 >
                   <Avatar className={`h-7 w-7 border border-purple-100 dark:border-purple-800`}>
-                    <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
+                    <AvatarImage src={API_ENDPOINT.file_image_v2 + message.sender.avatar} alt={message.sender.name} />
                     <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
                   </Avatar>
 

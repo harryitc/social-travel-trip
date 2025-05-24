@@ -91,7 +91,7 @@ const setCookieToken = (token: string) => {
  * Set user information in cookies
  * @param user User information
  */
-const setUserInfo = (user: any) => {
+export const setUserInfo = (user: any) => {
   CoreAppStorageService.setItem(CookieConfigKeys.features.auth.user, JSON.stringify(user), {
     location: StorageLocation.COOKIES,
   });

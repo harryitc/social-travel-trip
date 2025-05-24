@@ -38,6 +38,7 @@ export class UpdateGroupCommandHandler
       description: dto.description,
       cover_url: dto.cover_url,
       plan_id: dto.plan_id,
+      json_data: dto.json_data,
     });
 
     return new Group(result.rows[0]);

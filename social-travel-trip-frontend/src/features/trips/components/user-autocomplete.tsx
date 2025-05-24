@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/av
 import { User, Mail, Search, X } from 'lucide-react';
 import { userSearchService, UserSearchResult } from '../services/user-search.service';
 import { cn } from '@/lib/utils';
+import { API_ENDPOINT } from '@/config/api.config';
 
 interface UserAutocompleteProps {
   value: string;
@@ -184,7 +185,7 @@ export function UserAutocomplete({
               )}
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar_url} alt={user.username} />
+                <AvatarImage src={API_ENDPOINT.file_image_v2 + user.avatar_url} alt={user.username} />
                 <AvatarFallback className="text-xs">
                   {user.full_name?.[0] || user.username[0]}
                 </AvatarFallback>

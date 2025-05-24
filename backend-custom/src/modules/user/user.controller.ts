@@ -32,7 +32,16 @@ export class UserController {
   @Get('details')
   @ApiBearerAuth('jwt')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get user details' })
+  @ApiOperation({ summary: 'Get current user details' })
+  async getCurrentUserDetails(@Request() req: any) {
+    const userId = req['user']?.user_id;
+    return this.service.getUserDetails({ user_id: +userId }, +userId);
+  }
+
+  @Post('details')
+  @ApiBearerAuth('jwt')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get user details by criteria' })
   async getUserDetails(@Body() dto: GetUserDTO, @Request() req: any) {
     const userId = req['user']?.user_id;
     return this.service.getUserDetails(dto, +userId);

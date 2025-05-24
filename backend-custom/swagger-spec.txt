@@ -46,12 +46,14 @@ group/add-member
 group/get-members
 group/kick-member
 group/update-member-role
+group/update-member-nickname
 group/send-message
 group/get-messages
 group/messages/like
 group/messages/add-pin
 group/messages/remove-pin
 group/messages/get-reactions
+group/messages/reaction-users
 group/messages/get-pinned
 group/generate-join-qrcode
 group/join-by-code

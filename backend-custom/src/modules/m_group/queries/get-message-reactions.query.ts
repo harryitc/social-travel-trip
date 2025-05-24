@@ -56,11 +56,32 @@ export class GetMessageReactionsQueryHandler
       dto.group_message_id,
     );
 
+    if (result.rowCount == 0) {
+      return {
+        total: 0,
+        reactions: [],
+        users: [],
+      };
+    }
+
+    // Tổng tất cả reaction
+    const total = result.rows.reduce((sum, row) => sum + Number(row.count), 0);
+
+    // Format users data
+    const users = usersResult.rows.map((row) => ({
+      user_id: row.user_id,
+      username: row.username,
+      full_name: row.full_name,
+      avatar_url: row.avatar_url,
+      reaction_id: row.reaction_id,
+      created_at: row.created_at || new Date().toISOString(),
+    }));
+
     return {
-      message_id: dto.group_message_id,
+      total,
       reactions: result.rows,
-      users: usersResult.rows,
-      total: result.rowCount,
+      users: users,
+      message_id: dto.group_message_id,
     };
   }
 }

@@ -170,7 +170,7 @@ export class PostRepository {
     const query = `UPDATE posts
        SET content = COALESCE($1, content),
            json_data = COALESCE($2, json_data),
-           updated_at = NOW()
+           updated_at = CURRENT_TIMESTAMP
        WHERE post_id = $3
        RETURNING *`;
 
@@ -192,7 +192,7 @@ export class PostRepository {
     const params = [content, postJsonData, userId];
     const query = `
     INSERT INTO posts (content, json_data, user_id, created_at, updated_at)
-    VALUES ($1, $2, $3, NOW(), NOW())
+    VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     RETURNING *
   `;
     return this.client.execute(query, params);

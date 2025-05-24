@@ -57,7 +57,7 @@ export class UserRepository {
       email || null,
       phone_number || null,
       date_of_birth || null,
-      gender || null,
+      gender !== undefined && gender !== null ? (gender ? '1' : '0') : null,
       address || null,
       avatar_url || null,
       JSON.stringify(jsonData),
@@ -80,7 +80,7 @@ export class UserRepository {
       created_at,
       updated_at
     )
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    VALUES ($1, $2, $3, $4, $5, $6, $7::bit, $8, $9, $10, $11, $12)
     RETURNING *
     `;
 
@@ -116,13 +116,13 @@ export class UserRepository {
     }
 
     const params = [
-      full_name,
-      email,
-      phone_number,
-      date_of_birth,
-      gender,
-      address,
-      avatar_url,
+      full_name || null,
+      email || null,
+      phone_number || null,
+      date_of_birth || null,
+      gender !== undefined && gender !== null ? (gender ? '1' : '0') : null,
+      address || null,
+      avatar_url || null,
       JSON.stringify(jsonData),
       new Date(),
       user_id,
@@ -135,7 +135,7 @@ export class UserRepository {
       email = COALESCE($2, email),
       phone_number = COALESCE($3, phone_number),
       date_of_birth = COALESCE($4, date_of_birth),
-      gender = COALESCE($5, gender),
+      gender = COALESCE($5::bit, gender),
       address = COALESCE($6, address),
       avatar_url = COALESCE($7, avatar_url),
       json_data = $8,
@@ -153,7 +153,7 @@ export class UserRepository {
     UPDATE users
     SET
       password = $1,
-      updated_at = NOW()
+      updated_at = CURRENT_TIMESTAMP
     WHERE user_id = $2
     RETURNING *
     `;
@@ -162,7 +162,12 @@ export class UserRepository {
   }
 
   async searchUsers(searchDTO: SearchUserDTO) {
-    const { search_term, page = 1, limit = 10, autocomplete = false } = searchDTO;
+    const {
+      search_term,
+      page = 1,
+      limit = 10,
+      autocomplete = false,
+    } = searchDTO;
     const offset = (page - 1) * limit;
 
     const params = [];

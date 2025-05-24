@@ -52,7 +52,7 @@ export class MiniBlogRepository {
 
     const query = `
     INSERT INTO mini_blog_comments (message, json_data, mini_blog_id, user_id, parent_id, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     RETURNING *
   `;
 
@@ -67,7 +67,7 @@ export class MiniBlogRepository {
     const { miniBlogId, parentId, message, jsonData } = data;
     const query = `
     INSERT INTO mini_blog_comments (message, json_data, mini_blog_id, parent_id, user_id, created_at, updated_at)
-    VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+    VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     RETURNING *
   `;
     return this.client.execute(query, [
@@ -87,9 +87,9 @@ export class MiniBlogRepository {
 
     const query = `
     INSERT INTO mini_blog_likes (mini_blog_id, user_id, reaction_id, created_at)
-    VALUES ($1, $2, $3, NOW())
+    VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
     ON CONFLICT (mini_blog_id, user_id)
-    DO UPDATE SET reaction_id = EXCLUDED.reaction_id, created_at = NOW()
+    DO UPDATE SET reaction_id = EXCLUDED.reaction_id, created_at = CURRENT_TIMESTAMP
     RETURNING *
   `;
 
@@ -104,9 +104,9 @@ export class MiniBlogRepository {
 
     const query = `
     INSERT INTO mini_blog_comment_likes (mini_blog_comment_id, user_id, reaction_id, created_at)
-    VALUES ($1, $2, $3, NOW())
+    VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
     ON CONFLICT (mini_blog_comment_id, user_id)
-    DO UPDATE SET reaction_id = EXCLUDED.reaction_id, created_at = NOW()
+    DO UPDATE SET reaction_id = EXCLUDED.reaction_id, created_at = CURRENT_TIMESTAMP
     RETURNING *
   `;
 
@@ -201,7 +201,7 @@ export class MiniBlogRepository {
     ];
     const query = `
       INSERT INTO mini_blogs (title, slug, description, day_travel, location, thumbnail_url, json_data, created_at, updated_at, user_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), $8)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $8)
       RETURNING *
     `;
     return this.client.execute(query, params);
@@ -237,7 +237,7 @@ export class MiniBlogRepository {
           location = COALESCE($5, location),
           thumbnail_url = COALESCE($6, thumbnail_url),
           json_data = COALESCE($7, json_data),
-          updated_at = NOW()
+          updated_at = CURRENT_TIMESTAMP
       WHERE mini_blog_id = $8
       RETURNING *
     `;
@@ -262,7 +262,7 @@ export class MiniBlogRepository {
     const params = [miniBlogId, platform, shareData, userId];
     const query = `
       INSERT INTO mini_blog_shares (mini_blog_id, platform, share_data, created_at, user_id)
-      VALUES ($1, $2, $3, NOW(), $4)
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)
       RETURNING *
     `;
     return this.client.execute(query, params);
@@ -279,7 +279,7 @@ export class MiniBlogRepository {
     ];
     const query = `
       INSERT INTO mini_blog_shareable (title, description, is_show_map, is_show_timeline, created_at, updated_at, mini_blog_id)
-      VALUES ($1, $2, $3, $4, NOW(), NOW(), $5)
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $5)
       RETURNING *
     `;
     return this.client.execute(query, params);
@@ -317,7 +317,7 @@ export class MiniBlogRepository {
         description = COALESCE($2, description),
         is_show_map = COALESCE($3, is_show_map),
         is_show_timeline = COALESCE($4, is_show_timeline),
-        updated_at = NOW()
+        updated_at = CURRENT_TIMESTAMP
     WHERE mini_blog_shareable_id = $5
     RETURNING *
   `;

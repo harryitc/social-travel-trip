@@ -33,7 +33,7 @@ export class GroupRepository {
       INSERT INTO groups (
         name, description, cover_url, status, plan_id, json_data, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING *
     `;
 
@@ -46,7 +46,7 @@ export class GroupRepository {
       name,
       description || null,
       cover_url || null,
-      status || 'private', // Default to private for groups with join codes
+      status || 'private', // Use provided status or default to private
       plan_id || null,
       JSON.stringify(json_data || {}), // json_data
       joinCode,
@@ -56,7 +56,7 @@ export class GroupRepository {
       INSERT INTO groups (
         name, description, cover_url, status, plan_id, json_data, join_code, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING *
     `;
 
@@ -64,8 +64,15 @@ export class GroupRepository {
   }
 
   async updateGroup(groupId: number, data: Partial<CreateGroupDto>) {
-    const { name, description, cover_url, plan_id } = data;
-    const params = [name, description, cover_url, plan_id, groupId];
+    const { name, description, cover_url, plan_id, json_data } = data;
+    const params = [
+      name,
+      description,
+      cover_url,
+      plan_id,
+      json_data ? JSON.stringify(json_data) : null,
+      groupId,
+    ];
 
     const query = `
       UPDATE groups
@@ -74,8 +81,9 @@ export class GroupRepository {
         description = COALESCE($2, description),
         cover_url = COALESCE($3, cover_url),
         plan_id = COALESCE($4, plan_id),
-        updated_at = NOW()
-      WHERE group_id = $5
+        json_data = COALESCE($5, json_data),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE group_id = $6
       RETURNING *
     `;
 
@@ -194,7 +202,7 @@ export class GroupRepository {
       INSERT INTO group_members (
         group_id, user_id, role, nickname, join_at
       )
-      VALUES ($1, $2, $3, $4, NOW())
+      VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
       ON CONFLICT (group_id, user_id) DO UPDATE
       SET
         role = EXCLUDED.role,
@@ -267,29 +275,54 @@ export class GroupRepository {
     return this.client.execute(query, [groupId, userId, role]);
   }
 
+  async updateGroupMemberNickname(
+    groupId: number,
+    userId: number,
+    nickname?: string,
+  ) {
+    const query = `
+      UPDATE group_members
+      SET nickname = $3
+      WHERE group_id = $1 AND user_id = $2
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [groupId, userId, nickname]);
+  }
+
   // Message operations
   async sendMessage(data: SendMessageDto, userId: number) {
-    const { group_id, message, reply_to_message_id } = data;
+    const { group_id, message, reply_to_message_id, attachments } = data;
+
+    // Prepare json_data with attachments
+    const json_data =
+      attachments && attachments.length > 0 ? { attachments } : null;
 
     let query: string;
     let params: any[];
 
     if (reply_to_message_id) {
-      params = [group_id, userId, message, reply_to_message_id];
+      params = [
+        group_id,
+        userId,
+        message || '',
+        reply_to_message_id,
+        JSON.stringify(json_data),
+      ];
       query = `
         INSERT INTO group_messages (
-          group_id, user_id, message, reply_to_message_id, created_at, updated_at
+          group_id, user_id, message, reply_to_message_id, json_data, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
       `;
     } else {
-      params = [group_id, userId, message];
+      params = [group_id, userId, message || '', JSON.stringify(json_data)];
       query = `
         INSERT INTO group_messages (
-          group_id, user_id, message, created_at, updated_at
+          group_id, user_id, message, json_data, created_at, updated_at
         )
-        VALUES ($1, $2, $3, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
       `;
     }
@@ -319,7 +352,64 @@ export class GroupRepository {
           SELECT 1
           FROM message_pins mp
           WHERE mp.group_message_id = gm.group_message_id AND mp.group_id = gm.group_id
-        ) as is_pinned
+        ) as is_pinned,
+        -- Reactions data as JSON
+        (
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'reaction_id', reaction_summary.reaction_id,
+                'icon', r.icon,
+                'label', r.label,
+                'count', reaction_summary.count,
+                'users', reaction_summary.users
+              )
+            ),
+            '[]'::json
+          )
+          FROM (
+            SELECT
+              ml.reaction_id,
+              COUNT(*) as count,
+              json_agg(
+                json_build_object(
+                  'user_id', ml.user_id,
+                  'username', u_react.username,
+                  'full_name', u_react.full_name,
+                  'avatar_url', u_react.avatar_url,
+                  'created_at', ml.created_at
+                )
+              ) as users
+            FROM message_likes ml
+            LEFT JOIN users u_react ON ml.user_id = u_react.user_id
+            WHERE ml.group_message_id = gm.group_message_id AND ml.reaction_id > 1
+            GROUP BY ml.reaction_id
+          ) reaction_summary
+          LEFT JOIN (
+            SELECT
+              reaction_id,
+              name,
+              CASE
+                WHEN name = 'default' THEN '🚫'
+                WHEN name = 'like' THEN '👍'
+                WHEN name = 'love' THEN '❤️'
+                WHEN name = 'haha' THEN '😄'
+                WHEN name = 'wow' THEN '😮'
+                WHEN name = 'sad' THEN '😢'
+                ELSE '👍'
+              END as icon,
+              CASE
+                WHEN name = 'default' THEN 'Không like'
+                WHEN name = 'like' THEN 'Thích'
+                WHEN name = 'love' THEN 'Yêu thích'
+                WHEN name = 'haha' THEN 'Haha'
+                WHEN name = 'wow' THEN 'Wow'
+                WHEN name = 'sad' THEN 'Buồn'
+                ELSE 'Thích'
+              END as label
+            FROM reactions
+          ) r ON reaction_summary.reaction_id = r.reaction_id
+        ) as reactions
       FROM group_messages gm
       LEFT JOIN users u ON gm.user_id = u.user_id
       LEFT JOIN group_members gm_info ON gm.user_id = gm_info.user_id AND gm_info.group_id = gm.group_id
@@ -364,7 +454,64 @@ export class GroupRepository {
           SELECT 1
           FROM message_pins mp
           WHERE mp.group_message_id = gm.group_message_id AND mp.group_id = gm.group_id
-        ) as is_pinned
+        ) as is_pinned,
+        -- Reactions data as JSON
+        (
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'reaction_id', reaction_summary.reaction_id,
+                'icon', r.icon,
+                'label', r.label,
+                'count', reaction_summary.count,
+                'users', reaction_summary.users
+              )
+            ),
+            '[]'::json
+          )
+          FROM (
+            SELECT
+              ml.reaction_id,
+              COUNT(*) as count,
+              json_agg(
+                json_build_object(
+                  'user_id', ml.user_id,
+                  'username', u_react.username,
+                  'full_name', u_react.full_name,
+                  'avatar_url', u_react.avatar_url,
+                  'created_at', ml.created_at
+                )
+              ) as users
+            FROM message_likes ml
+            LEFT JOIN users u_react ON ml.user_id = u_react.user_id
+            WHERE ml.group_message_id = gm.group_message_id AND ml.reaction_id > 1
+            GROUP BY ml.reaction_id
+          ) reaction_summary
+          LEFT JOIN (
+            SELECT
+              reaction_id,
+              name,
+              CASE
+                WHEN name = 'default' THEN '🚫'
+                WHEN name = 'like' THEN '👍'
+                WHEN name = 'love' THEN '❤️'
+                WHEN name = 'haha' THEN '😄'
+                WHEN name = 'wow' THEN '😮'
+                WHEN name = 'sad' THEN '😢'
+                ELSE '👍'
+              END as icon,
+              CASE
+                WHEN name = 'default' THEN 'Không like'
+                WHEN name = 'like' THEN 'Thích'
+                WHEN name = 'love' THEN 'Yêu thích'
+                WHEN name = 'haha' THEN 'Haha'
+                WHEN name = 'wow' THEN 'Wow'
+                WHEN name = 'sad' THEN 'Buồn'
+                ELSE 'Thích'
+              END as label
+            FROM reactions
+          ) r ON reaction_summary.reaction_id = r.reaction_id
+        ) as reactions
       FROM group_messages gm
       LEFT JOIN users u ON gm.user_id = u.user_id
       LEFT JOIN group_members gm_info ON gm.user_id = gm_info.user_id AND gm_info.group_id = gm.group_id
@@ -417,11 +564,33 @@ export class GroupRepository {
 
   async getMessageReactions(messageId: number) {
     const query = `
-      SELECT reaction_id, COUNT(*) AS count
-      FROM message_likes
-      WHERE group_message_id = $1 AND reaction_id > 1
-      GROUP BY reaction_id
-      ORDER BY reaction_id
+      SELECT
+        ml.reaction_id,
+        COUNT(*) AS count,
+        r.name,
+        CASE
+          WHEN r.name = 'default' THEN '🚫'
+          WHEN r.name = 'like' THEN '👍'
+          WHEN r.name = 'love' THEN '❤️'
+          WHEN r.name = 'haha' THEN '😄'
+          WHEN r.name = 'wow' THEN '😮'
+          WHEN r.name = 'sad' THEN '😢'
+          ELSE '👍'
+        END as icon,
+        CASE
+          WHEN r.name = 'default' THEN 'Không like'
+          WHEN r.name = 'like' THEN 'Thích'
+          WHEN r.name = 'love' THEN 'Yêu thích'
+          WHEN r.name = 'haha' THEN 'Haha'
+          WHEN r.name = 'wow' THEN 'Wow'
+          WHEN r.name = 'sad' THEN 'Buồn'
+          ELSE 'Thích'
+        END as label
+      FROM message_likes ml
+      LEFT JOIN reactions r ON ml.reaction_id = r.reaction_id
+      WHERE ml.group_message_id = $1 AND ml.reaction_id > 1
+      GROUP BY ml.reaction_id, r.name
+      ORDER BY ml.reaction_id
     `;
 
     return this.client.execute(query, [messageId]);
@@ -429,7 +598,7 @@ export class GroupRepository {
 
   async getMessageReactionUsers(messageId: number) {
     const query = `
-      SELECT ml.user_id, ml.reaction_id, u.username, u.avatar_url
+      SELECT ml.user_id, ml.reaction_id, ml.created_at, u.username, u.full_name, u.avatar_url
       FROM message_likes ml
       JOIN users u ON ml.user_id = u.user_id
       WHERE ml.group_message_id = $1 AND reaction_id > 1
@@ -437,6 +606,26 @@ export class GroupRepository {
     `;
 
     return this.client.execute(query, [messageId]);
+  }
+
+  async getMessageReactionUsersByType(messageId: number, reactionId?: number) {
+    let query = `
+      SELECT ml.user_id, ml.reaction_id, ml.created_at, u.username, u.full_name, u.avatar_url
+      FROM message_likes ml
+      JOIN users u ON ml.user_id = u.user_id
+      WHERE ml.group_message_id = $1 AND ml.reaction_id > 1
+    `;
+
+    const params = [messageId];
+
+    if (reactionId) {
+      query += ` AND ml.reaction_id = $2`;
+      params.push(reactionId);
+    }
+
+    query += ` ORDER BY ml.created_at DESC`;
+
+    return this.client.execute(query, params);
   }
 
   // Message pin operations
@@ -484,7 +673,7 @@ export class GroupRepository {
       INSERT INTO message_pins (
         group_message_id, group_id, user_id, created_at
       )
-      VALUES ($1, $2, $3, NOW())
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
       ON CONFLICT (group_id, group_message_id) DO UPDATE
       SET
         user_id = EXCLUDED.user_id,

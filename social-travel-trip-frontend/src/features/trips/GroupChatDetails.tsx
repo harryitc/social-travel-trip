@@ -5,7 +5,7 @@ import { TripGroup, TripGroupMember } from './models/trip-group.model';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Badge } from '@/components/ui/radix-ui/badge';
-import { Calendar, MapPin, Users, Clock, Globe, Lock, UserPlus, Pencil, Trash2, Plus, ChevronRight, Copy, QrCode } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Globe, Lock, UserPlus, Pencil, Trash2, Plus, ChevronRight, Copy, QrCode, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/radix-ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
 import { Input } from '@/components/ui/radix-ui/input';
@@ -16,7 +16,11 @@ import { TripPlan } from './types';
 import { getTripPlanByGroupId, updateTripPlan } from './mock-trip-plans';
 import { MemberListDialog } from './member-list-dialog';
 import { InviteMemberDialog, InviteMemberData } from './components/invite-member-dialog';
+import { GroupManagementDialog } from './components/group-management-dialog';
+import { MemberManagementDialog } from './components/member-management-dialog';
 import { tripGroupService } from './services/trip-group.service';
+import { getUserInfo } from '@/features/auth/auth.service';
+import { API_ENDPOINT } from '@/config/api.config';
 
 type GroupChatDetailsProps = {
   groupId: string;
@@ -32,6 +36,8 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
   const [showMemberList, setShowMemberList] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showTripPlanEditor, setShowTripPlanEditor] = useState(false);
+  const [showGroupManagement, setShowGroupManagement] = useState(false);
+  const [showMemberManagement, setShowMemberManagement] = useState(false);
 
   // Get trip plan from mock data (will be replaced with real API later)
   const [tripPlan, setTripPlan] = useState<TripPlan | undefined>(undefined);
@@ -146,6 +152,34 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
     }
   };
 
+  // Handle group update
+  const handleGroupUpdated = (updatedGroup: any) => {
+    setGroup(updatedGroup);
+    setShowGroupManagement(false);
+  };
+
+  // Handle members updated
+  const handleMembersUpdated = async () => {
+    try {
+      // Refresh members list
+      const membersData = await tripGroupService.getGroupMembers(groupId);
+      if (membersData && membersData.members) {
+        setMembers(membersData.members);
+        setMemberCount(membersData.members.length);
+      }
+    } catch (error) {
+      console.error('Error refreshing members:', error);
+    }
+  };
+
+  // Get current user info from auth
+  const currentUser = getUserInfo();
+  const currentUserId = currentUser?.user_id || currentUser?.id;
+  const currentUserMember = members.find(m => m.user_id === currentUserId);
+  const isCurrentUserAdmin = currentUserMember?.role === 'admin';
+
+
+
   // Loading state
   if (loading) {
     return (
@@ -200,7 +234,7 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
             <div className="p-2 border-b border-purple-100 dark:border-purple-900 bg-teal-50/50 dark:bg-teal-900/10">
               <div className="flex items-center gap-3 mb-3">
                 <Avatar className="h-12 w-12 border border-teal-100 dark:border-teal-800 shadow-xs">
-                  <AvatarImage src={group.image} alt={group.title} />
+                  <AvatarImage src={API_ENDPOINT.file_image_v2 + group.image} alt={group.title} />
                   <AvatarFallback>{group.title[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -312,6 +346,18 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
                       <span>Mời</span>
                     </Button>
                   )}
+
+                  {isCurrentUserAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs gap-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/20"
+                      onClick={() => setShowGroupManagement(true)}
+                    >
+                      <Settings className="h-3.5 w-3.5 text-blue-500" />
+                      <span>Quản lý</span>
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -319,13 +365,13 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
               <div className="space-y-1">
                 {members.slice(0, 5).map((member, index) => {
                   const displayName = member.nickname || member.name || 'Unknown User';
-                  const username = member.username || member.name;
+                  const username = (member as any).username || member.name;
                   const fullName = (member as any).full_name;
 
                   return (
                     <div key={member.group_member_id || member.user_id || index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={member.avatar} alt={displayName} />
+                        <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={displayName} />
                         <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex items-center justify-between w-full">
@@ -364,6 +410,10 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
               isOpen={showMemberList}
               onClose={() => setShowMemberList(false)}
               onInvite={handleOpenInviteDialog}
+              onManageMembers={() => {
+                setShowMemberList(false);
+                setShowMemberManagement(true);
+              }}
             />
 
             {/* Dialog mời thành viên */}
@@ -373,6 +423,22 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
               groupId={group.id}
               groupName={group.title}
               onInviteMember={handleInviteMember}
+            />
+
+            {/* Dialog quản lý nhóm */}
+            <GroupManagementDialog
+              open={showGroupManagement}
+              onOpenChange={setShowGroupManagement}
+              group={group}
+              onGroupUpdated={handleGroupUpdated}
+            />
+
+            {/* Dialog quản lý thành viên */}
+            <MemberManagementDialog
+              open={showMemberManagement}
+              onOpenChange={setShowMemberManagement}
+              groupId={group.id}
+              onMembersUpdated={handleMembersUpdated}
             />
 
             {/* Plan section */}

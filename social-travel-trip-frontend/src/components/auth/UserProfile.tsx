@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import LogoutButton from './LogoutButton';
 import { isLoggedIn, getUserInfo } from '@/features/auth/auth.service';
+import { API_ENDPOINT } from '@/config/api.config';
 
 /**
  * User profile component
@@ -60,7 +61,7 @@ export default function UserProfile() {
         <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
           {user.avatar_url ? (
             <Image
-              src={user.avatar_url}
+              src={ API_ENDPOINT.file_image_v2 + user.avatar_url}
               alt={user.username || 'User avatar'}
               width={32}
               height={32}

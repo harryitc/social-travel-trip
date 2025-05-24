@@ -17,6 +17,7 @@ import { GroupActionsMenu } from './group-actions-menu';
 import { GroupCreatedSuccessDialog } from './group-created-success-dialog';
 import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
+import { API_ENDPOINT } from '@/config/api.config';
 
 type GroupChatListProps = {
   groups: TripGroup[];
@@ -188,7 +189,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                   onClick={() => onSelectGroup(group)}
                 >
                   <Avatar className="h-11 w-11 shrink-0 ring-2 ring-white shadow-sm dark:ring-gray-800">
-                    <AvatarImage src={group.image} alt={group.title} />
+                    <AvatarImage src={API_ENDPOINT.file_image_v2 + group.image} alt={group.title} />
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-medium">
                       {(group.title || group.name || 'G')[0]?.toUpperCase()}
                     </AvatarFallback>

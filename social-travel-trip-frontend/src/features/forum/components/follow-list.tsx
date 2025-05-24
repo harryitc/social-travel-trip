@@ -10,6 +10,7 @@ import { userService } from '../services/user.service';
 import { UserRelaWithDetails } from '../models/user.model';
 import { FollowButton } from './follow-button';
 import { notification } from 'antd';
+import { API_ENDPOINT } from '@/config/api.config';
 
 interface FollowListProps {
   className?: string;
@@ -98,7 +99,7 @@ export function FollowList({ className = '' }: FollowListProps) {
           <div key={user.user_id} className="flex items-center justify-between p-3 rounded-lg border border-purple-100 dark:border-purple-900 bg-white/50 dark:bg-gray-950/50">
             <div className="flex items-center space-x-3">
               <Avatar>
-                <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                <AvatarImage src={API_ENDPOINT.file_image_v2 + user.avatar_url} alt={user.full_name} />
                 <AvatarFallback>{user.full_name?.charAt(0) || user.username?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div>

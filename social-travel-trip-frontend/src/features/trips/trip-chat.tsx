@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import './chat-animations.css';
 import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Input } from '@/components/ui/radix-ui/input';
@@ -16,7 +17,6 @@ import {
   MessageSquareQuote,
   Download,
   File as FileIcon,
-  Heart,
   Search,
   Plus,
   Users
@@ -29,12 +29,17 @@ import {
 } from '@/components/ui/radix-ui/dropdown-menu';
 import { PinnedMessages } from './pinned-messages';
 import { EmojiPicker } from './emoji-picker';
+import { MessageReactions } from './components/message-reactions';
+
 import { tripGroupService, TripGroupMessage } from './services/trip-group.service';
 import { ChatSkeleton } from './components/chat-skeleton';
 import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
 import { websocketService } from '@/lib/services/websocket.service';
 import { fileService } from '@/features/file/file.service';
+import { API_ENDPOINT } from '@/config/api.config';
+import { formatMessageTimestamp, formatDetailedTimestamp } from '@/lib/utils';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -45,9 +50,23 @@ interface Message {
     name: string;
     avatar: string;
   };
-  timestamp: string;
+  timestamp: string; // Formatted timestamp for display
+  rawTimestamp: string; // Raw timestamp from backend for tooltip
   pinned?: boolean;
   likeCount?: number;
+  reactions?: Array<{
+    reaction_id: number;
+    count: number;
+    icon?: string;
+    label?: string;
+    users?: Array<{
+      user_id: number;
+      username: string;
+      full_name: string;
+      avatar_url: string;
+      created_at: string;
+    }>;
+  }>; // Reaction details with full information
   attachments?: Array<{
     type: 'image' | 'file';
     url: string;
@@ -68,62 +87,35 @@ type TripChatProps = {
   tripId: string;
 };
 
-// Helper function to format message timestamp
-const formatMessageTimestamp = (dateString: string): string => {
-  const messageDate = new Date(dateString);
-  const now = new Date();
-  const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
-
-  // If message is from today, show only time
-  if (diffInHours < 24 && messageDate.toDateString() === now.toDateString()) {
-    return messageDate.toLocaleTimeString('vi-VN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  }
-
-  // If message is from yesterday
-  if (diffInHours < 48) {
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    if (messageDate.toDateString() === yesterday.toDateString()) {
-      return `Hôm qua ${messageDate.toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      })}`;
-    }
-  }
-
-  // If message is from this week, show day name
-  if (diffInHours < 168) { // 7 days
-    return messageDate.toLocaleDateString('vi-VN', {
-      weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  }
-
-  // For older messages, show full date
-  return messageDate.toLocaleDateString('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-};
-
 // Helper function to transform backend message to UI message
 const transformMessage = (backendMessage: TripGroupMessage): Message => {
   // Extract user info from multiple possible sources - prioritize nickname
   const displayName = backendMessage.nickname || backendMessage.username || backendMessage.user?.username || `User ${backendMessage.user_id}`;
   const avatarUrl = backendMessage.avatar_url || backendMessage.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
 
-  // Debug log for user info extraction
+  // Extract attachments from json_data
+  let attachments: Array<{
+    type: 'image' | 'file';
+    url: string;
+    name: string;
+    size?: number;
+  }> = [];
+
+  if (backendMessage.json_data) {
+    try {
+      const jsonData = typeof backendMessage.json_data === 'string'
+        ? JSON.parse(backendMessage.json_data)
+        : backendMessage.json_data;
+
+      if (jsonData.attachments && Array.isArray(jsonData.attachments)) {
+        attachments = jsonData.attachments;
+      }
+    } catch (error) {
+      console.warn('Failed to parse json_data for attachments:', error);
+    }
+  }
+
+  // Debug log for user info extraction and timestamp
   console.log('🔄 [TripChat] Transforming message:', {
     messageId: backendMessage.group_message_id,
     userId: backendMessage.user_id,
@@ -131,7 +123,11 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
     username: backendMessage.username,
     avatar_url: backendMessage.avatar_url,
     finalDisplayName: displayName,
-    finalAvatarUrl: avatarUrl
+    finalAvatarUrl: avatarUrl,
+    rawTimestamp: backendMessage.created_at,
+    timestampType: typeof backendMessage.created_at,
+    formattedTimestamp: formatMessageTimestamp(backendMessage.created_at),
+    attachments: attachments
   });
 
   return {
@@ -143,9 +139,11 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
       avatar: avatarUrl,
     },
     timestamp: formatMessageTimestamp(backendMessage.created_at),
+    rawTimestamp: backendMessage.created_at, // Store raw timestamp for tooltip
     pinned: backendMessage.is_pinned || false,
     likeCount: backendMessage.like_count || 0,
-    attachments: backendMessage.attachments || [],
+    reactions: backendMessage.reactions || [], // Populate from backend
+    attachments: attachments,
     replyTo: backendMessage.reply_to_message_id ? {
       id: backendMessage.reply_to_message_id.toString(),
       content: backendMessage.reply_to_message || '',
@@ -158,7 +156,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
 };
 
 export function TripChat({ tripId }: TripChatProps) {
-  const user: any = null; // TODO: Get from auth context
+  const { user } = useAuth(); // Get current user from auth context
   const { emit } = useEventStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,9 +167,14 @@ export function TripChat({ tripId }: TripChatProps) {
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
+  const [newMessageIds, setNewMessageIds] = useState<Set<string>>(new Set());
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [isUserNearBottom, setIsUserNearBottom] = useState(true);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load messages from API
@@ -239,12 +242,31 @@ export function TripChat({ tripId }: TripChatProps) {
         user_id: data.message?.user_id,
         hasUserInfo: !!(data.message?.username || data.message?.nickname)
       });
-      if (data.groupId.toString() === tripId) {
+      if (data.groupId.toString() == tripId) {
         const transformedMessage = transformMessage(data.message);
         console.log('✅ [TripChat] Adding message to chat:', transformedMessage);
+
+        // Mark as new message for animation
+        setNewMessageIds(prev => new Set([...prev, transformedMessage.id]));
+
+        // Remove animation class after animation completes
+        setTimeout(() => {
+          setNewMessageIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(transformedMessage.id);
+            return newSet;
+          });
+
+          // Clean up animation optimization
+          const messageElement = document.getElementById(`message-${transformedMessage.id}`);
+          if (messageElement) {
+            messageElement.classList.add('animation-complete');
+          }
+        }, 1000);
+
         setMessages(prev => {
           // Check if message already exists to prevent duplicates
-          const exists = prev.some(msg => msg.id === transformedMessage.id);
+          const exists = prev.some(msg => msg.id == transformedMessage.id);
           if (exists) {
             console.log('⚠️ [TripChat] Message already exists, skipping:', transformedMessage.id);
             return prev;
@@ -252,8 +274,8 @@ export function TripChat({ tripId }: TripChatProps) {
 
           // Also check for potential duplicates by content and timestamp (for edge cases)
           const contentDuplicate = prev.some(msg =>
-            msg.content === transformedMessage.content &&
-            msg.sender.id === transformedMessage.sender.id &&
+            msg.content == transformedMessage.content &&
+            msg.sender.id == transformedMessage.sender.id &&
             Math.abs(new Date(msg.timestamp).getTime() - new Date(transformedMessage.timestamp).getTime()) < 5000 // Within 5 seconds
           );
 
@@ -273,20 +295,43 @@ export function TripChat({ tripId }: TripChatProps) {
       }
     };
 
-    const handleMessageLike = (data: { groupId: number; messageId: number; likerId: number; likeCount: number; isLiked: boolean }) => {
-      if (data.groupId.toString() === tripId) {
+    const handleMessageLike = (data: {
+      groupId: number;
+      messageId: number;
+      likerId: number;
+      likeCount: number;
+      isLiked: boolean;
+      reactions?: Array<{
+        reaction_id: number;
+        count: number;
+        icon?: string;
+        label?: string;
+        users?: Array<{
+          user_id: number;
+          username: string;
+          full_name: string;
+          avatar_url: string;
+          created_at: string;
+        }>;
+      }>;
+    }) => {
+      if (data.groupId.toString() == tripId) {
         setMessages(prev => prev.map(msg =>
-          msg.id === data.messageId.toString()
-            ? { ...msg, likeCount: data.likeCount }
+          msg.id == data.messageId.toString()
+            ? {
+              ...msg,
+              likeCount: data.likeCount,
+              reactions: data.reactions || msg.reactions || []
+            }
             : msg
         ));
       }
     };
 
     const handleMessagePin = (data: { groupId: number; messageId: number; pinnerId: number; isPinned: boolean }) => {
-      if (data.groupId.toString() === tripId) {
+      if (data.groupId.toString() == tripId) {
         setMessages(prev => prev.map(msg =>
-          msg.id === data.messageId.toString()
+          msg.id == data.messageId.toString()
             ? { ...msg, pinned: data.isPinned }
             : msg
         ));
@@ -294,7 +339,7 @@ export function TripChat({ tripId }: TripChatProps) {
     };
 
     const handleTyping = (data: { groupId: number; typingUserId: number; isTyping: boolean }) => {
-      if (data.groupId.toString() === tripId) {
+      if (data.groupId.toString() == tripId) {
         setTypingUsers(prev => {
           const newSet = new Set(prev);
           if (data.isTyping) {
@@ -354,12 +399,49 @@ export function TripChat({ tripId }: TripChatProps) {
     };
   }, [tripId, emit]);
 
-  // Scroll to bottom when messages change
+  // Smart scroll behavior - only auto-scroll if user is near bottom
   useEffect(() => {
-    if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messageEndRef.current && isUserNearBottom) {
+      // Add a small delay to ensure the message is rendered
+      setTimeout(() => {
+        messageEndRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end',
+          inline: 'nearest'
+        });
+      }, 100);
+    } else if (!isUserNearBottom) {
+      // Show scroll to bottom button when user is not at bottom and new messages arrive
+      setShowScrollToBottom(true);
     }
-  }, [messages]);
+  }, [messages, isUserNearBottom]);
+
+  // Monitor scroll position to determine if user is near bottom
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    const handleScroll = () => {
+      const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+      if (!viewport) return;
+
+      const { scrollTop, scrollHeight, clientHeight } = viewport;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100; // 100px threshold
+
+      setIsUserNearBottom(isNearBottom);
+
+      // Hide scroll to bottom button when user scrolls to bottom
+      if (isNearBottom) {
+        setShowScrollToBottom(false);
+      }
+    };
+
+    const viewport = scrollArea.querySelector('[data-radix-scroll-area-viewport]');
+    if (viewport) {
+      viewport.addEventListener('scroll', handleScroll);
+      return () => viewport.removeEventListener('scroll', handleScroll);
+    }
+  }, [tripId]); // Re-setup when tripId changes
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -404,7 +486,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
   const handlePinMessage = async (messageId: string) => {
     try {
-      const message = messages.find(m => m.id === messageId);
+      const message = messages.find(m => m.id == messageId);
       if (!message) return;
 
       if (message.pinned) {
@@ -415,24 +497,55 @@ export function TripChat({ tripId }: TripChatProps) {
 
       // Update local state optimistically
       setMessages(messages.map(msg =>
-        msg.id === messageId
+        msg.id == messageId
           ? { ...msg, pinned: !msg.pinned }
           : msg
       ));
-    } catch (error) {
+    } catch (error: any) {
+      notification.error({
+        message: 'Lỗi',
+        description: error?.response?.data?.reasons?.message || 'Không thể ghim tin nhắn. Vui lòng thử lại sau.',
+        placement: 'topRight',
+      })
       console.error('Error toggling pin message:', error);
     }
   };
 
-  const handleLikeMessage = async (messageId: string) => {
+  const handleReactionUpdate = async (messageId: string, newLikeCount: number) => {
+    // Since reactions data will be updated via WebSocket, we just need to update the count
+    // The full reactions data will come from the server via WebSocket events
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId
+        ? { ...msg, likeCount: newLikeCount }
+        : msg
+    ));
+  };
+
+  const handleReaction = async (messageId: string, reactionId: number) => {
     try {
-      await tripGroupService.toggleMessageLike(parseInt(messageId));
+      await tripGroupService.toggleMessageLike(parseInt(messageId), reactionId);
       // The WebSocket will handle updating the UI
-    } catch (error) {
-      console.error('Error liking message:', error);
+
+      const reactionLabels: { [key: number]: string } = {
+        1: 'hủy reaction',
+        2: 'thích',
+        3: 'yêu thích',
+        4: 'haha',
+        5: 'wow',
+        6: 'buồn'
+      };
+
+      // notification.success({
+      //   message: 'Thành công',
+      //   description: `Đã ${reactionLabels[reactionId] || 'react'} tin nhắn`,
+      //   placement: 'topRight',
+      //   duration: 1,
+      // });
+    } catch (error: any) {
+      console.error('Error reacting to message:', error);
       notification.error({
         message: 'Lỗi',
-        description: 'Không thể thích tin nhắn. Vui lòng thử lại sau.',
+        description: error?.response?.data?.reasons?.message || 'Không thể thực hiện reaction. Vui lòng thử lại sau.',
         placement: 'topRight',
       });
     }
@@ -458,10 +571,22 @@ export function TripChat({ tripId }: TripChatProps) {
     }
   };
 
+  const scrollToBottom = () => {
+    if (messageEndRef.current) {
+      messageEndRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+        inline: 'nearest'
+      });
+      setShowScrollToBottom(false);
+      setIsUserNearBottom(true);
+    }
+  };
+
   const handleSendMessage = async () => {
     // Validate input
     const messageText = newMessage.trim();
-    if (!messageText && selectedImages.length === 0 && selectedFiles.length === 0) {
+    if (!messageText && selectedImages.length == 0 && selectedFiles.length == 0) {
       notification.warning({
         message: 'Thông báo',
         description: 'Vui lòng nhập tin nhắn hoặc chọn tệp để gửi.',
@@ -470,6 +595,9 @@ export function TripChat({ tripId }: TripChatProps) {
       });
       return;
     }
+
+    // Set sending state for loading animation
+    setSendingMessage(true);
 
     // Validate group ID
     if (!tripId || isNaN(parseInt(tripId))) {
@@ -551,11 +679,11 @@ export function TripChat({ tripId }: TripChatProps) {
               });
             }
           }
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error('Error uploading files:', uploadError);
           notification.error({
             message: 'Lỗi tải lên tệp',
-            description: 'Không thể tải lên tệp. Vui lòng thử lại.',
+            description: uploadError?.response?.data?.reasons?.message || 'Không thể tải lên tệp. Vui lòng thử lại.',
             placement: 'topRight',
           });
           return;
@@ -607,6 +735,10 @@ export function TripChat({ tripId }: TripChatProps) {
       setImagePreviewUrls([]);
       setReplyingTo(null);
 
+      // Ensure user is marked as near bottom when they send a message
+      setIsUserNearBottom(true);
+      setShowScrollToBottom(false);
+
       // Stop typing indicator
       if (isTyping) {
         setIsTyping(false);
@@ -641,6 +773,9 @@ export function TripChat({ tripId }: TripChatProps) {
         placement: 'topRight',
         duration: 4,
       });
+    } finally {
+      // Always reset sending state
+      setSendingMessage(false);
     }
   };
 
@@ -691,7 +826,7 @@ export function TripChat({ tripId }: TripChatProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key == 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -735,7 +870,7 @@ export function TripChat({ tripId }: TripChatProps) {
       {
         tripId ? (
           <div className="flex flex-col h-full">
-            <ScrollArea className={`flex-1 p-3`}>
+            <ScrollArea ref={scrollAreaRef} className={`flex-1 p-3 relative chat-scroll-area`}>
               <PinnedMessages
                 messages={messages}
                 onUnpin={handlePinMessage}
@@ -745,23 +880,33 @@ export function TripChat({ tripId }: TripChatProps) {
               {loading ? (
                 <ChatSkeleton />
               ) : (
-                <div className="space-y-4 px-2">
+                <div className={`space-y-4 px-2 message-container ${isTyping ? 'typing-mode' : ''}`}>
                   {messages.map((message, index) => {
-                    const isOwnMessage = message.sender.id === (user?.id || '1');
+                    // Compare with user ID from auth context - convert both to string for comparison
+                    const isOwnMessage = user?.user_id ? message.sender.id == user.user_id.toString() : false;
+
+                    // Check if this is a new message for animation
+                    const isNewMessage = newMessageIds.has(message.id);
+
                     // Use combination of id and index to ensure unique keys
                     const uniqueKey = `${message.id}-${index}`;
                     return (
                       <div
                         id={`message-${message.id}`}
                         key={uniqueKey}
-                        className={`flex gap-3 transition-all duration-200 ${
-                          isOwnMessage ? 'flex-row-reverse' : ''
-                        }`}
+                        className={`flex gap-3 transition-all duration-500 ease-out ${isOwnMessage ? 'flex-row-reverse' : ''
+                          } ${isNewMessage
+                            ? 'new-message-enter new-message-fade animate-optimized'
+                            : ''
+                          }`}
+                        style={isNewMessage ? {
+                          animationFillMode: 'both',
+                        } : undefined}
                       >
                         {/* Avatar */}
                         <div className="flex-shrink-0">
                           <Avatar className="h-9 w-9 border-2 border-white shadow-md">
-                            <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
+                            <AvatarImage src={API_ENDPOINT.file_image_v2 + message.sender.avatar} alt={message.sender.name} />
                             <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white text-sm font-semibold">
                               {message.sender.name[0]?.toUpperCase()}
                             </AvatarFallback>
@@ -772,10 +917,16 @@ export function TripChat({ tripId }: TripChatProps) {
                         <div className={`flex flex-col max-w-[75%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                           {/* Header */}
                           <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
-                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                              {message.sender.name}
+                            <span className={`text-sm font-semibold ${isOwnMessage
+                              ? 'text-purple-600 dark:text-purple-400'
+                              : 'text-gray-700 dark:text-gray-300'
+                              }`}>
+                              {isOwnMessage ? 'Bạn' : message.sender.name}
                             </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span
+                              className="text-xs text-gray-500 dark:text-gray-400 cursor-help"
+                              title={formatDetailedTimestamp(message.rawTimestamp)}
+                            >
                               {message.timestamp}
                             </span>
                             {message.pinned && (
@@ -784,18 +935,16 @@ export function TripChat({ tripId }: TripChatProps) {
                           </div>
 
                           {/* Message Bubble */}
-                          <div className={`relative rounded-2xl px-4 py-2.5 group shadow-sm ${
-                            isOwnMessage
-                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
-                          }`}>
+                          <div className={`relative px-4 py-2.5 group shadow-sm message-bubble ${isOwnMessage
+                            ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md hover:shadow-lg hover:shadow-purple-500/25'
+                            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}>
                             {/* Reply indicator */}
                             {message.replyTo && (
-                              <div className={`mb-2 p-2 rounded-lg text-xs flex items-start gap-2 ${
-                                isOwnMessage
-                                  ? 'bg-white/20 text-white/90'
-                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                              }`}>
+                              <div className={`mb-2 p-2 rounded-lg text-xs flex items-start gap-2 ${isOwnMessage
+                                ? 'bg-white/20 text-white/90'
+                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                                }`}>
                                 <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
                                 <div>
                                   <div className="font-medium">{message.replyTo.sender.name}</div>
@@ -804,28 +953,41 @@ export function TripChat({ tripId }: TripChatProps) {
                               </div>
                             )}
 
-                            {/* Message text */}
-                            <p className="text-sm leading-relaxed message-content">{message.content}</p>
+                            {/* Message text with inline reactions */}
+                            <div className="flex items-end gap-1 flex-wrap">
+                              <p className="text-sm leading-relaxed message-content">{message.content}</p>
+                              {/* Inline Message Reactions */}
+                              {
+                                message.likeCount > 0 && (
+                                  <MessageReactions
+                                    messageId={message.id}
+                                    likeCount={message.likeCount || 0}
+                                    reactions={message.reactions || []}
+                                    onReactionUpdate={handleReactionUpdate}
+                                    isOwnMessage={isOwnMessage}
+                                  />
+                                )
+                              }
+                            </div>
 
                             {/* Attachments */}
                             {message.attachments && message.attachments.length > 0 && (
                               <div className="mt-3 space-y-2">
                                 {message.attachments.map((attachment, index) => (
-                                  attachment.type === 'image' ? (
+                                  attachment.type == 'image' ? (
                                     <div key={index} className="rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:opacity-90 transition-opacity">
                                       {/* eslint-disable-next-line @next/next/no-img-element */}
                                       <img
-                                        src={attachment.url}
+                                        src={API_ENDPOINT.file_image_v2 + attachment.url}
                                         alt={attachment.name}
                                         className="max-w-sm max-h-64 object-cover rounded-lg"
-                                        onClick={() => window.open(attachment.url, '_blank')}
+                                        onClick={() => window.open(API_ENDPOINT.file_image_v2 + attachment.url, '_blank')}
                                         title="Click để xem ảnh full size"
                                       />
                                     </div>
                                   ) : (
-                                    <div key={index} className={`flex items-center justify-between gap-2 text-sm p-2 rounded-lg ${
-                                      isOwnMessage ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-700'
-                                    }`}>
+                                    <div key={index} className={`flex items-center justify-between gap-2 text-sm p-2 rounded-lg ${isOwnMessage ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-700'
+                                      }`}>
                                       <div className="flex items-center gap-2">
                                         <FileIcon className="h-4 w-4" />
                                         <div className="flex flex-col">
@@ -836,7 +998,7 @@ export function TripChat({ tripId }: TripChatProps) {
                                         </div>
                                       </div>
                                       <a
-                                        href={attachment.url}
+                                        href={API_ENDPOINT.file_image_v2 + attachment.url}
                                         download={attachment.name}
                                         target="_blank"
                                         rel="noopener noreferrer"
@@ -852,18 +1014,71 @@ export function TripChat({ tripId }: TripChatProps) {
                               </div>
                             )}
 
-                            {/* Like count */}
-                            {message.likeCount && message.likeCount > 0 && (
-                              <div className="flex items-center gap-1 mt-2">
-                                <Heart className="h-3 w-3 text-red-500 fill-current" />
-                                <span className="text-xs opacity-70">{message.likeCount}</span>
-                              </div>
-                            )}
+
 
                             {/* Message actions */}
-                            <div className={`absolute ${isOwnMessage ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${
-                              isOwnMessage ? '-translate-x-full' : 'translate-x-full'
-                            } opacity-0 group-hover:opacity-100 transition-opacity`}>
+                            <div className={`absolute ${isOwnMessage ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${isOwnMessage ? '-translate-x-full' : 'translate-x-full'
+                              } opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1`}>
+
+                              {/* Quick reaction buttons */}
+                              <div className="flex items-center gap-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg rounded-full px-2 py-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
+                                  onClick={() => handleReaction(message.id, 2)}
+                                  title="Thích"
+                                >
+                                  <span className="text-sm">👍</span>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
+                                  onClick={() => handleReaction(message.id, 3)}
+                                  title="Yêu thích"
+                                >
+                                  <span className="text-sm">❤️</span>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 rounded-full"
+                                  onClick={() => handleReaction(message.id, 4)}
+                                  title="Haha"
+                                >
+                                  <span className="text-sm">😄</span>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-full"
+                                  onClick={() => handleReaction(message.id, 5)}
+                                  title="Wow"
+                                >
+                                  <span className="text-sm">😮</span>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+                                  onClick={() => handleReaction(message.id, 6)}
+                                  title="Buồn"
+                                >
+                                  <span className="text-sm">😢</span>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full border border-gray-300 dark:border-gray-600"
+                                  onClick={() => handleReaction(message.id, 1)}
+                                  title="Hủy reaction"
+                                >
+                                  <span className="text-sm">🚫</span>
+                                </Button>
+                              </div>
+
+                              {/* More actions menu */}
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-700">
@@ -871,10 +1086,6 @@ export function TripChat({ tripId }: TripChatProps) {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align={isOwnMessage ? "end" : "start"}>
-                                  <DropdownMenuItem onClick={() => handleLikeMessage(message.id)}>
-                                    <Heart className="h-4 w-4 mr-2" />
-                                    Thích
-                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
                                     <Reply className="h-4 w-4 mr-2" />
                                     Phản hồi
@@ -892,47 +1103,76 @@ export function TripChat({ tripId }: TripChatProps) {
                     );
                   })}
 
-                  {/* Typing indicator */}
-                  {typingUsers.size > 0 && (
-                    <div className="flex gap-3 items-center px-2">
-                      <div className="flex-shrink-0">
-                        <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 italic">
-                          {typingUsers.size === 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
                   <div ref={messageEndRef} />
                 </div>
               )}
+
+              {/* Scroll to bottom button */}
+              {showScrollToBottom && (
+                <div className="absolute bottom-4 right-4 z-10">
+                  <Button
+                    onClick={scrollToBottom}
+                    className="h-10 w-10 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl scroll-button-enter"
+                    size="icon"
+                    title="Cuộn xuống tin nhắn mới"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </Button>
+                </div>
+              )}
+
+              {/* Typing indicator */}
+              {typingUsers.size > 0 && (
+                <div className="absolute bottom-4 left-4 z-10">
+                  <div className="flex gap-3 items-center px-2 animate-in slide-in-from-bottom-2 fade-in duration-300">
+                    <div className="flex-shrink-0">
+                      <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center animate-pulse">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm">
+                      <span className="text-sm text-gray-600 dark:text-gray-400 italic">
+                        {typingUsers.size == 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </ScrollArea>
 
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">{/* Input area */}
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 chat-input-area">{/* Input area */}
               {/* Image preview area */}
               {imagePreviewUrls.length > 0 && (
-                <div className="mb-3">
+                <div className="mb-3 animate-in slide-in-from-bottom-2 fade-in duration-300">
                   <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Hình ảnh ({imagePreviewUrls.length})
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {imagePreviewUrls.map((url, index) => (
-                      <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+                      <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm transform transition-all duration-200 hover:scale-105">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt="preview" className="w-full h-full object-cover" />
+                        <img src={url} alt="preview" className="w-full h-full object-cover transition-transform duration-200 hover:scale-110" />
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 rounded-full shadow-md"
+                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 rounded-full shadow-md transition-all duration-200 hover:scale-110"
                           onClick={() => handleRemoveImage(index)}
                         >
                           <X className="h-3 w-3 text-white" />
@@ -945,15 +1185,15 @@ export function TripChat({ tripId }: TripChatProps) {
 
               {/* File preview area */}
               {selectedFiles.length > 0 && (
-                <div className="mb-3">
+                <div className="mb-3 animate-in slide-in-from-bottom-2 fade-in duration-300">
                   <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Tệp đính kèm ({selectedFiles.length})
                   </div>
                   <div className="space-y-2">
                     {selectedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
                         <div className="flex items-center gap-2">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md transition-colors duration-200">
                             <FileIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div className="flex flex-col">
@@ -964,7 +1204,7 @@ export function TripChat({ tripId }: TripChatProps) {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30"
+                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 hover:scale-110"
                           onClick={() => handleRemoveFile(index)}
                         >
                           <X className="h-3 w-3 text-red-500" />
@@ -977,7 +1217,7 @@ export function TripChat({ tripId }: TripChatProps) {
 
               {/* Reply preview */}
               {replyingTo && (
-                <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between animate-in slide-in-from-bottom-2 fade-in duration-300 transform hover:scale-[1.02] transition-transform">
                   <div className="flex items-center gap-2">
                     <MessageSquareQuote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     <div>
@@ -992,7 +1232,7 @@ export function TripChat({ tripId }: TripChatProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800"
+                    className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-110"
                     onClick={cancelReply}
                   >
                     <X className="h-3 w-3 text-blue-600 dark:text-blue-400" />
@@ -1001,7 +1241,7 @@ export function TripChat({ tripId }: TripChatProps) {
               )}
 
               {/* Input controls */}
-              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 transition-all duration-200 focus-within:border-purple-300 focus-within:shadow-lg focus-within:shadow-purple-500/10">
                 <input
                   type="file"
                   accept="image/*"
@@ -1025,7 +1265,7 @@ export function TripChat({ tripId }: TripChatProps) {
                     size="icon"
                     onClick={() => imageInputRef.current?.click()}
                     title="Tải lên hình ảnh"
-                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full transition-all duration-200 hover:scale-110"
                   >
                     <ImageIcon className="h-4 w-4" />
                   </Button>
@@ -1034,24 +1274,12 @@ export function TripChat({ tripId }: TripChatProps) {
                     size="icon"
                     onClick={() => fileInputRef.current?.click()}
                     title="Đính kèm tệp"
-                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full transition-all duration-200 hover:scale-110"
                   >
                     <Paperclip className="h-4 w-4" />
                   </Button>
                   <EmojiPicker onEmojiSelect={handleEmojiSelect} />
 
-                  {/* Debug WebSocket button (development only) */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleTestWebSocket}
-                      title="Test WebSocket (Dev only)"
-                      className="h-8 w-8 text-gray-500 hover:text-green-600 hover:bg-green-100 dark:text-gray-400 dark:hover:text-green-400 dark:hover:bg-green-900/20 rounded-full"
-                    >
-                      <span className="text-xs font-bold">WS</span>
-                    </Button>
-                  )}
                 </div>
 
                 {/* Text input */}
@@ -1060,17 +1288,28 @@ export function TripChat({ tripId }: TripChatProps) {
                   value={newMessage}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
-                  className="flex-1 h-9 bg-white dark:bg-gray-900 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
+                  className="flex-1 h-9 bg-white dark:bg-gray-900 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl transition-all duration-200 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                 />
 
                 {/* Send button */}
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
-                  className="h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                  title={newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0 ? "Gửi tin nhắn" : "Nhập tin nhắn để gửi"}
+                  disabled={(!newMessage.trim() && selectedImages.length == 0 && selectedFiles.length == 0) || sendingMessage}
+                  className={`h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${sendingMessage ? 'animate-spin' : 'hover:scale-110'
+                    }`}
+                  title={
+                    sendingMessage
+                      ? "Đang gửi..."
+                      : newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0
+                        ? "Gửi tin nhắn"
+                        : "Nhập tin nhắn để gửi"
+                  }
                 >
-                  <SendHorizontal className="h-4 w-4" />
+                  {sendingMessage ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <SendHorizontal className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             </div>

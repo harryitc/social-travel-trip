@@ -16,10 +16,12 @@ import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
 import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
+import { UpdateMemberNicknameDto } from '../dto/update-member-nickname.dto';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
 import { AddMessagePinDto } from '../dto/add-message-pin.dto';
 import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
 import { GetMessageReactionsDto } from '../dto/get-message-reactions.dto';
+import { GetMessageReactionUsersDto } from '../dto/get-message-reaction-users.dto';
 import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
 import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
@@ -93,6 +95,16 @@ export class GroupController {
     return this.service.updateMemberRole(dto, +userId);
   }
 
+  @Post('update-member-nickname')
+  @ApiOperation({ summary: 'Update a member nickname in group' })
+  async updateMemberNickname(
+    @Body() dto: UpdateMemberNicknameDto,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.updateMemberNickname(dto, +userId);
+  }
+
   @Post('send-message')
   @ApiOperation({ summary: 'Send a message to group' })
   async sendMessage(@Body() dto: SendMessageDto, @Request() req: any) {
@@ -139,6 +151,16 @@ export class GroupController {
   ) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.getMessageReactions(dto, +userId);
+  }
+
+  @Post('messages/reaction-users')
+  @ApiOperation({ summary: 'Get users who reacted to a message' })
+  async getMessageReactionUsers(
+    @Body() dto: GetMessageReactionUsersDto,
+    @Request() req: any,
+  ) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.getMessageReactionUsers(dto, +userId);
   }
 
   @Post('messages/get-pinned')

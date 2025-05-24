@@ -42,6 +42,7 @@ import {
   Save,
   FileDown
 } from 'lucide-react';
+import { API_ENDPOINT } from '@/config/api.config';
 
 /**
  * Form validation schema for activity form
@@ -283,7 +284,7 @@ const PlanDetails: React.FC<PlanDetailsProps> = ({ group, template }) => {
                   {group.members.list.map((member) => (
                     <div key={member.id} className="flex items-center gap-4 p-3 border-b">
                       <Avatar>
-                        <AvatarImage src={member.avatar} alt={member.name} />
+                        <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={member.name} />
                         <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">

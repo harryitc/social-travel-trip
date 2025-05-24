@@ -75,6 +75,7 @@ export class GroupMessage {
   updated_at: Date;
   like_count?: number;
   is_pinned?: boolean;
+  json_data?: any; // For storing attachments, images, and other metadata
   // Reply information
   reply_to_message_id?: number;
   reply_to_message?: string;
@@ -85,16 +86,34 @@ export class GroupMessage {
   full_name?: string;
   nickname?: string;
   avatar_url?: string;
+  // Reactions information
+  reactions?: Array<{
+    reaction_id: number;
+    count: number;
+    icon?: string;
+    label?: string;
+    users?: Array<{
+      user_id: number;
+      username: string;
+      full_name: string;
+      avatar_url: string;
+      created_at: string;
+    }>;
+  }>;
 
   constructor(data: any) {
     this.group_message_id = data.group_message_id;
     this.group_id = data.group_id;
     this.user_id = data.user_id;
     this.message = data.message;
-    this.created_at = data.created_at;
-    this.updated_at = data.updated_at;
+
+    // Ensure timestamps are properly formatted with timezone
+    this.created_at = data.created_at ? new Date(data.created_at) : new Date();
+    this.updated_at = data.updated_at ? new Date(data.updated_at) : new Date();
+
     this.like_count = data.like_count;
     this.is_pinned = data.is_pinned;
+    this.json_data = data.json_data;
     // Map reply information
     this.reply_to_message_id = data.reply_to_message_id;
     this.reply_to_message = data.reply_to_message;
@@ -105,6 +124,8 @@ export class GroupMessage {
     this.full_name = data.full_name;
     this.nickname = data.nickname;
     this.avatar_url = data.avatar_url;
+    // Map reactions information
+    this.reactions = data.reactions || [];
   }
 }
 

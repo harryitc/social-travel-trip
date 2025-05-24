@@ -199,7 +199,7 @@ export class PlanRepository {
       INSERT INTO plans (
         name, description, thumbnail_url, json_data, location, status, user_created, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING *
     `;
 
@@ -239,7 +239,7 @@ export class PlanRepository {
         INSERT INTO plans (
           name, description, thumbnail_url, json_data, location, status, user_created, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING *
       `;
 
@@ -314,7 +314,7 @@ export class PlanRepository {
       paramIndex++;
     }
 
-    updateFields.push(`updated_at = NOW()`);
+    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
 
     // If no fields to update, return early
     if (updateFields.length == 1) {
@@ -388,7 +388,7 @@ export class PlanRepository {
           paramIndex++;
         }
 
-        updateFields.push(`updated_at = NOW()`);
+        updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
         params.push(plan_id);
 
         const planQuery = `
@@ -462,7 +462,7 @@ export class PlanRepository {
             const scheduleQuery = `
               UPDATE plan_schedules
               SET name = $1, description = $2, start_time = $3, end_time = $4,
-                  location = $5, json_data = $6, activity_id = $7, updated_at = NOW()
+                  location = $5, json_data = $6, activity_id = $7, updated_at = CURRENT_TIMESTAMP
               WHERE plan_schedule_id = $8
               RETURNING *
             `;
@@ -486,7 +486,7 @@ export class PlanRepository {
                 name, description, start_time, end_time, location, json_data,
                 activity_id, plan_day_place_id, created_at, updated_at
               )
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
               RETURNING *
             `;
 
@@ -554,7 +554,7 @@ export class PlanRepository {
       INSERT INTO plan_with_group (
         plan_id, group_id, user_created, created_at, updated_at
       )
-      VALUES ($1, $2, $3, NOW(), NOW())
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT (plan_id, group_id) DO NOTHING
       RETURNING *
     `;
@@ -612,7 +612,7 @@ export class PlanRepository {
         name, description, start_time, end_time, location, json_data,
         activity_id, plan_day_place_id, created_at, updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       RETURNING *
     `;
 
@@ -690,7 +690,7 @@ export class PlanRepository {
       paramIndex++;
     }
 
-    updateFields.push(`updated_at = NOW()`);
+    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
 
     // If no fields to update, return early
     if (updateFields.length == 1) {
@@ -810,7 +810,7 @@ export class PlanRepository {
             const scheduleQuery = `
               UPDATE plan_schedules
               SET name = $1, description = $2, start_time = $3, end_time = $4,
-                  location = $5, json_data = $6, activity_id = $7, updated_at = NOW()
+                  location = $5, json_data = $6, activity_id = $7, updated_at = CURRENT_TIMESTAMP
               WHERE plan_schedule_id = $8
               RETURNING *
             `;
@@ -834,7 +834,7 @@ export class PlanRepository {
                 name, description, start_time, end_time, location, json_data,
                 activity_id, plan_day_place_id, created_at, updated_at
               )
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
               RETURNING *
             `;
 
