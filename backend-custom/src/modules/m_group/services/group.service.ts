@@ -8,6 +8,7 @@ import { GetGroupMembersDto } from '../dto/get-group-members.dto';
 import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
 import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
+import { UpdateMemberNicknameDto } from '../dto/update-member-nickname.dto';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
 import { AddMessagePinDto } from '../dto/add-message-pin.dto';
 import { RemoveMessagePinDto } from '../dto/remove-message-pin.dto';
@@ -25,6 +26,7 @@ import { RemoveMessagePinCommand } from '../commands/remove-message-pin.command'
 import { UpdateGroupCommand } from '../commands/update-group.command';
 import { KickGroupMemberCommand } from '../commands/kick-group-member.command';
 import { UpdateMemberRoleCommand } from '../commands/update-member-role.command';
+import { UpdateMemberNicknameCommand } from '../commands/update-member-nickname.command';
 import { GenerateJoinQRCodeCommand } from '../commands/generate-join-qrcode.command';
 import { JoinGroupByCodeCommand } from '../commands/join-group-by-code.command';
 import { InviteMemberCommand } from '../commands/invite-member.command';
@@ -74,6 +76,10 @@ export class GroupService {
 
   async updateMemberRole(dto: UpdateMemberRoleDto, userId: number) {
     return this.commandBus.execute(new UpdateMemberRoleCommand(dto, userId));
+  }
+
+  async updateMemberNickname(dto: UpdateMemberNicknameDto, userId: number) {
+    return this.commandBus.execute(new UpdateMemberNicknameCommand(dto, userId));
   }
 
   async generateJoinQRCode(dto: GenerateJoinQRCodeDto, userId: number) {

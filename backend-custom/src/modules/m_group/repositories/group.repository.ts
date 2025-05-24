@@ -64,8 +64,15 @@ export class GroupRepository {
   }
 
   async updateGroup(groupId: number, data: Partial<CreateGroupDto>) {
-    const { name, description, cover_url, plan_id } = data;
-    const params = [name, description, cover_url, plan_id, groupId];
+    const { name, description, cover_url, plan_id, json_data } = data;
+    const params = [
+      name,
+      description,
+      cover_url,
+      plan_id,
+      json_data ? JSON.stringify(json_data) : null,
+      groupId
+    ];
 
     const query = `
       UPDATE groups
@@ -74,8 +81,9 @@ export class GroupRepository {
         description = COALESCE($2, description),
         cover_url = COALESCE($3, cover_url),
         plan_id = COALESCE($4, plan_id),
+        json_data = COALESCE($5, json_data),
         updated_at = NOW()
-      WHERE group_id = $5
+      WHERE group_id = $6
       RETURNING *
     `;
 
@@ -265,6 +273,17 @@ export class GroupRepository {
     `;
 
     return this.client.execute(query, [groupId, userId, role]);
+  }
+
+  async updateGroupMemberNickname(groupId: number, userId: number, nickname?: string) {
+    const query = `
+      UPDATE group_members
+      SET nickname = $3
+      WHERE group_id = $1 AND user_id = $2
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [groupId, userId, nickname]);
   }
 
   // Message operations

@@ -5,6 +5,7 @@ import { ToggleMessageLikeCommandHandler } from './toggle-message-like.command';
 import { UpdateGroupCommandHandler } from './update-group.command';
 import { KickGroupMemberCommandHandler } from './kick-group-member.command';
 import { UpdateMemberRoleCommandHandler } from './update-member-role.command';
+import { UpdateMemberNicknameCommandHandler } from './update-member-nickname.command';
 import { AddMessagePinCommandHandler } from './add-message-pin.command';
 import { RemoveMessagePinCommandHandler } from './remove-message-pin.command';
 import { GenerateJoinQRCodeCommandHandler } from './generate-join-qrcode.command';
@@ -19,6 +20,7 @@ export const CommandHandlers = [
   UpdateGroupCommandHandler,
   KickGroupMemberCommandHandler,
   UpdateMemberRoleCommandHandler,
+  UpdateMemberNicknameCommandHandler,
   AddMessagePinCommandHandler,
   RemoveMessagePinCommandHandler,
   GenerateJoinQRCodeCommandHandler,
