@@ -13,7 +13,7 @@ export class CommentRepository {
   /**
    * Lấy danh sách bình luận theo bài viết
    */
-  async getComments(postId: number) {
+  async getComments(postId: number, userId?: number) {
     const query = `
     SELECT
       c.post_comment_id AS id,
@@ -27,12 +27,20 @@ export class CommentRepository {
       (
         SELECT json_agg(json_build_object(
           'reaction_id', cl.reaction_id,
-          'count', COUNT(*)
+          'count', cl.count
         ))
-        FROM post_comment_likes cl
-        WHERE cl.comment_id = c.post_comment_id AND cl.reaction_id > 1
-        GROUP BY cl.comment_id
+        FROM (
+          SELECT cl.reaction_id, COUNT(*) as count
+          FROM post_comment_likes cl
+          WHERE cl.comment_id = c.post_comment_id AND cl.reaction_id > 1
+          GROUP BY cl.reaction_id
+        ) cl
       ) AS reactions,
+      (
+        SELECT reaction_id
+        FROM post_comment_likes ucl
+        WHERE ucl.comment_id = c.post_comment_id AND ucl.user_id = $2
+      ) AS user_reaction,
       COALESCE(
         (
           SELECT json_agg(
@@ -45,14 +53,22 @@ export class CommentRepository {
               'full_name', ru.full_name,
               'avatar_url', ru.avatar_url,
               'created_at', r.created_at,
+              'user_reaction', (
+                SELECT reaction_id
+                FROM post_comment_likes rucl
+                WHERE rucl.comment_id = r.post_comment_id AND rucl.user_id = $2
+              ),
               'reactions', (
                 SELECT json_agg(json_build_object(
                   'reaction_id', rcl.reaction_id,
-                  'count', COUNT(*)
+                  'count', rcl.count
                 ))
-                FROM post_comment_likes rcl
-                WHERE rcl.comment_id = r.post_comment_id AND rcl.reaction_id > 1
-                GROUP BY rcl.comment_id
+                FROM (
+                  SELECT rcl.reaction_id, COUNT(*) as count
+                  FROM post_comment_likes rcl
+                  WHERE rcl.comment_id = r.post_comment_id AND rcl.reaction_id > 1
+                  GROUP BY rcl.reaction_id
+                ) rcl
               )
             ) ORDER BY r.created_at
           )
@@ -66,7 +82,7 @@ export class CommentRepository {
     WHERE c.post_id = $1 AND c.parent_id IS NULL
     ORDER BY c.created_at DESC
   `;
-    const params = [postId];
+    const params = [postId, userId || null];
     return this.client.execute(query, params);
   }
 
@@ -176,6 +192,21 @@ export class CommentRepository {
     WHERE post_comment_id = $1
   `;
     return this.client.execute(query, [commentId]);
+  }
+
+  /**
+   * Get users who have participated in a comment thread (commented on the same post)
+   * @param postId Post ID
+   * @returns Array of user IDs who have commented on the post
+   */
+  async getCommentThreadParticipants(postId: number) {
+    const query = `
+    SELECT DISTINCT user_id
+    FROM post_comments
+    WHERE post_id = $1
+    `;
+
+    return this.client.execute(query, [postId]);
   }
   /**
     Trường họp transaction update nhiều dòng tên 1 bảng,

@@ -2,101 +2,44 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
 import { PostItem } from './post-item';
 import { PostCreator } from './post-creator';
 import { postService } from '../services/post.service';
 import { Skeleton } from '@/components/ui/radix-ui/skeleton';
-import { HashtagTrending } from './hashtag-trending';
 import { Post, PostQueryParams } from '../models/post.model';
-import { useWebSocket } from '@/lib/providers/websocket.provider';
-import { WebsocketEvent } from '@/lib/services/websocket.service';
-import { App, notification } from 'antd';
+import { useEventStore } from '../../stores/event.store';
 
 export function PostList() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'newest' | 'trending' | 'following'>('newest');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [hiddenPosts, setHiddenPosts] = useState<string[]>([]);
-  const { on, off, isConnected } = useWebSocket();
 
+  const { on } = useEventStore();
 
   // WebSocket event listeners
   useEffect(() => {
-    if (!isConnected) {
-      console.log('WebSocket not connected, skipping event registration');
-      return;
-    }
-    // Register event handlers - only listening to server-emitted events
-    console.log('Registering WebSocket event handlers for server-emitted events');
-    on(WebsocketEvent.POST_CREATED, handleNewPost);
-    on(WebsocketEvent.POST_LIKED, handlePostLiked);
-    on(WebsocketEvent.COMMENT_CREATED, handleNewComment);
-
-    // Cleanup function
-    return () => {
-      console.log('Cleaning up WebSocket event handlers');
-      off(WebsocketEvent.POST_CREATED, handleNewPost);
-      off(WebsocketEvent.POST_LIKED, handlePostLiked);
-      off(WebsocketEvent.COMMENT_CREATED, handleNewComment);
+    const handleNewPost = async () => {
+      fetchPostsComplex(false);
     };
-  }, [on, off])
+
+    const unsub = on('post:created', handleNewPost);
+    return () => {
+      unsub();
+    };
+  }, [on])
 
   // Init data
   useEffect(() => {
     fetchPostsComplex(false);
-  }, [activeTab]);
-
-  // Handler for new posts
-  const handleNewPost = async (data: any) => {
-    console.log('Received WebSocket event:', WebsocketEvent.POST_CREATED, data);
-    fetchPosts();
-  };
-
-  // Handler for post likes
-  const handlePostLiked = (data: any) => {
-    // Update post likes count
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.post_id === data.postId
-          ? {
-            ...post,
-            stats: {
-              ...post.stats,
-              total_likes: post.stats.total_likes + 1
-            }
-          }
-          : post
-      )
-    );
-  };
-
-  // Handler for new comments
-  const handleNewComment = (data: any) => {
-    // Update post comments count
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.post_id === data.postId
-          ? {
-            ...post,
-            stats: {
-              ...post.stats,
-              total_comments: post.stats.total_comments + 1
-            }
-          }
-          : post
-      )
-    );
-  };
+  }, []);
 
   const fetchPostsComplex = async (loadMore?: boolean) => {
     try {
       setLoading(true);
       setError(null);
-      await fetchPosts();
+      await fetchPosts(loadMore);
     } catch (error) {
       console.error('Error fetching posts:', error);
       setError('Có lỗi xảy ra khi tải bài viết. Vui lòng thử lại sau.');
@@ -115,8 +58,12 @@ export function PostList() {
       // sort_by: activeTab
     };
 
+    console.log('Fetching posts with params:', params);
+
     // Fetch posts
     const response = await postService.getPosts(params);
+
+    console.log('Posts response:', response);
 
     // Update state
     if (loadMore) {
@@ -128,56 +75,26 @@ export function PostList() {
     }
 
     // Check if there are more posts to load
-    setHasMore(response.data.length === 10);
+    setHasMore(response.data.length === params.limit);
   }
 
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
     if (!loading && hasMore) {
-      fetchPosts(true);
+      try {
+        setLoading(true);
+        await fetchPosts(true);
+      } catch (error) {
+        console.error('Error loading more posts:', error);
+        setError('Có lỗi xảy ra khi tải thêm bài viết. Vui lòng thử lại sau.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as 'newest' | 'trending' | 'following');
-  };
-
-  // const handleAddPost = (newPost: Post) => {
-  //   setPosts([newPost, ...posts]);
-  // };
-
-  // const handleHidePost = (postId: string) => {
-  //   // Add post to hidden posts list
-  //   setHiddenPosts([...hiddenPosts, postId]);
-
-  //   // Save hidden posts to localStorage
-  //   try {
-  //     const storedHiddenPosts = JSON.parse(localStorage.getItem('hiddenPosts') || '[]');
-  //     localStorage.setItem('hiddenPosts', JSON.stringify([...storedHiddenPosts, postId]));
-  //   } catch (error) {
-  //     console.error('Error saving hidden posts to localStorage:', error);
-  //   }
-  // };
-
-  // const handleShowAllPosts = () => {
-  //   setHiddenPosts([]);
-  //   localStorage.removeItem('hiddenPosts');
-  // };
 
   return (
     <div className="space-y-6">
       <PostCreator />
-
-      <div className="flex items-center justify-between">
-        <Tabs defaultValue="newest" className="w-auto" onValueChange={handleTabChange}>
-          <TabsList>
-            <TabsTrigger value="newest">Mới nhất</TabsTrigger>
-            <TabsTrigger value="trending">Xu hướng</TabsTrigger>
-            <TabsTrigger value="following">Đang theo dõi</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        <HashtagTrending />
-      </div>
 
       {loading && page === 1 ? (
         // Show skeleton loader for initial load
@@ -207,7 +124,7 @@ export function PostList() {
           <Button
             variant="outline"
             className="mt-2"
-            onClick={() => fetchPosts()}
+            onClick={() => fetchPostsComplex(false)}
           >
             Thử lại
           </Button>
@@ -216,7 +133,6 @@ export function PostList() {
         // Show posts
         <div className="space-y-4">
           {posts
-            .filter(post => !hiddenPosts.includes(post.post_id))
             .map((post) => (
               <PostItem
                 key={post.post_id}
@@ -240,20 +156,6 @@ export function PostList() {
               <p className="text-muted-foreground">Không có bài viết nào</p>
             </div>
           )}
-
-          {/* Show hidden posts count */}
-          {/* {hiddenPosts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.post_id)).length > 0 && (
-            <div className="text-center py-3 px-4 bg-gray-50 dark:bg-gray-800/30 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-muted-foreground">
-              Bạn đã ẩn {hiddenPosts.length} bài viết.
-              <Button
-                variant="link"
-                className="text-purple-600 dark:text-purple-400 p-0 h-auto text-sm ml-2"
-                onClick={handleShowAllPosts}
-              >
-                Hiển thị lại tất cả
-              </Button>
-            </div>
-          )} */}
 
           {/* Load more button */}
           {hasMore && posts.length > 0 && (

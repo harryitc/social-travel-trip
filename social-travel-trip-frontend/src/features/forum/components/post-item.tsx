@@ -1,35 +1,38 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import Image from 'next/image';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/radix-ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
-import { Heart, MessageCircle, Share, MoreHorizontal, Bookmark, MapPin } from 'lucide-react';
+import { Heart, MessageCircle, MapPin } from 'lucide-react';
+
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/radix-ui/dropdown-menu';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/radix-ui/tooltip';
 import ReactMarkdown from 'react-markdown';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import { postService } from '../services/post.service';
-import { Post } from '../models/post.model';
+import { Post, PostAuthor } from '../models/post.model';
 import { API_ENDPOINT } from '@/config/api.config';
 import CustomImage from '@/components/ui/custom-image';
-import { useWebSocket } from '@/lib/providers/websocket.provider';
-import { WebsocketEvent } from '@/lib/services/websocket.service';
-import { getUserInfo } from '@/features/auth/auth.service';
+import { FollowButton } from './follow-button';
+import { useAuth } from '@/features/auth/hooks/use-auth';
+import { notification } from 'antd';
+import { PostComment } from './post-comment';
+import { LikesModal } from './likes-modal';
+import { postLikesAdapter } from '../services/likes-adapters';
 
 // Reaction types
 const REACTION_TYPES = [
-  { id: 'like', icon: '👍', label: 'Thích' },
-  { id: 'love', icon: '❤️', label: 'Yêu thích' },
-  { id: 'haha', icon: '😄', label: 'Haha' },
-  { id: 'wow', icon: '😮', label: 'Wow' },
-  { id: 'sad', icon: '😢', label: 'Buồn' },
+  { id: 1, icon: '🚫', label: 'Không like' }, // reaction_id = 1
+  { id: 2, icon: '👍', label: 'Thích' },
+  { id: 3, icon: '❤️', label: 'Yêu thích' },
+  { id: 4, icon: '😄', label: 'Haha' },
+  { id: 5, icon: '😮', label: 'Wow' },
+  { id: 6, icon: '😢', label: 'Buồn' },
 ];
 
 interface PostItemProps {
@@ -37,21 +40,48 @@ interface PostItemProps {
 }
 
 export function PostItem({ post }: PostItemProps) {
-  // Determine if post is liked based on stats
-  const isPostLiked = post.stats?.reactions?.some(r => r.reaction_id === 1) || false;
+  const { user: currentUser } = useAuth();
 
-  const [isLiked, setIsLiked] = useState(isPostLiked);
+  // Determine if post is liked based on user_reaction from backend
+  // user_reaction = null or 1 means "not liked", user_reaction > 1 means "liked"
+  const isPostLiked = post.stats?.user_reaction && post.stats.user_reaction > 1;
+  const userReactionId = post.stats?.user_reaction || null;
+
+  const [isLiked, setIsLiked] = useState(isPostLiked || false);
+  const [currentUserReaction, setCurrentUserReaction] = useState<number | null>(userReactionId);
   const [likesCount, setLikesCount] = useState(post.stats?.total_likes || 0);
-  const [commentsCount, setCommentsCount] = useState(post.stats?.total_comments || 0);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isHidden, setIsHidden] = useState(false);
+  const [commentsCount] = useState(post.stats?.total_comments || 0);
+  const [isHidden] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [currentReaction, setCurrentReaction] = useState<string | null>(null);
-  const reactionsMenuRef = useRef<HTMLDivElement>(null);
 
-  // Get WebSocket context
-  const { emit, isConnected } = useWebSocket();
+  const [isLiking, setIsLiking] = useState(false);
+  const [showLikesModal, setShowLikesModal] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const reactionsMenuRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [showComments]);
+
+  // Close reaction picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (reactionsMenuRef.current && !reactionsMenuRef.current.contains(event.target as Node)) {
+        setShowReactionPicker(false);
+      }
+    };
+
+    if (showReactionPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showReactionPicker]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -76,30 +106,67 @@ export function PostItem({ post }: PostItemProps) {
     }
   };
 
-  const handleLike = async () => {
+  const handleReaction = async (reactionId: number) => {
+    if (isLiking) return; // Prevent double clicks
+
     try {
-      // Toggle like status
-      const newLikedStatus = !isLiked;
-      setIsLiked(newLikedStatus);
-      setLikesCount(prevCount => newLikedStatus ? prevCount + 1 : prevCount - 1);
+      setIsLiking(true);
 
-      // Call API to like/unlike post
-      await postService.likePost(post.post_id);
+      // Determine if this is a new reaction or removing current reaction
+      const isRemovingReaction = currentUserReaction === reactionId;
+      const newReactionId = isRemovingReaction ? 1 : reactionId; // 1 = no reaction
 
-      // WebSocket event will be emitted by server after like operation
-      console.log('Post liked/unliked, server will emit WebSocket event');
-    } catch (error) {
-      console.error('Error liking post:', error);
+      // Update UI optimistically
+      const wasLiked = currentUserReaction && currentUserReaction > 1;
+      const willBeLiked = newReactionId > 1;
+
+      setCurrentUserReaction(willBeLiked ? newReactionId : null);
+      setIsLiked(willBeLiked);
+
+      // Update like count
+      if (wasLiked && !willBeLiked) {
+        setLikesCount(prev => prev - 1);
+      } else if (!wasLiked && willBeLiked) {
+        setLikesCount(prev => prev + 1);
+      }
+
+      // Call API
+      await postService.likePost(post.post_id, newReactionId);
+
+      // Close reaction picker
+      setShowReactionPicker(false);
+
+      console.log('Post reaction updated, server will emit WebSocket event');
+    } catch (error: any) {
+      console.error('Error reacting to post:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: error?.response?.data?.reasons?.message || 'Không thể react bài viết. Vui lòng thử lại sau.',
+        placement: 'topRight',
+      });
+
       // Revert UI changes if API call fails
-      setIsLiked(!isLiked);
-      setLikesCount(prevCount => !isLiked ? prevCount - 1 : prevCount + 1);
+      setCurrentUserReaction(userReactionId);
+      setIsLiked(isPostLiked || false);
+      setLikesCount(post.stats?.total_likes || 0);
+    } finally {
+      setIsLiking(false);
     }
   };
 
-  const handleSave = () => {
-    setIsSaved(!isSaved);
-    // TODO: Implement save functionality
+  const handleLike = () => handleReaction(2); // Default like reaction
+
+  const handleShowLikes = () => {
+    if (likesCount === 0) return;
+    setShowLikesModal(true);
   };
+
+
+
+  // const handleSave = () => {
+  //   setIsSaved(!isSaved);
+  //   // TODO: Implement save functionality
+  // };
 
   // const handleShare = () => {
   //   setShowShareOptions(!showShareOptions);
@@ -137,52 +204,38 @@ export function PostItem({ post }: PostItemProps) {
             </div>
           </div>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {/* <DropdownMenuItem
-              onClick={handleSave}
-              className="flex items-center cursor-pointer"
-            >
-              <Bookmark className="h-4 w-4 mr-2" />
-              {isSaved ? 'Bỏ lưu bài viết' : 'Lưu bài viết'}
-            </DropdownMenuItem> */}
-            {/* <DropdownMenuItem
-              onClick={handleHidePost}
-              className="flex items-center cursor-pointer"
-            >
-              <span className="mr-2">🙈</span>
-              Ẩn bài viết
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={handleReport}
-              className="flex items-center cursor-pointer text-red-500"
-              disabled={isReported}
-            >
-              <span className="mr-2">⚠️</span>
-              {isReported ? 'Đã báo cáo' : 'Báo cáo bài viết'}
-            </DropdownMenuItem> */}
-            <DropdownMenuItem
-              onClick={() => {
-                setIsFollowing(!isFollowing);
-                // Show notification
-                if (isFollowing) {
-                  alert(`Bạn đã bỏ theo dõi ${post.author.full_name}.`);
-                } else {
-                  alert(`Bạn đã bắt đầu theo dõi ${post.author.full_name}. Bạn sẽ nhận được thông báo khi họ đăng bài viết mới.`);
-                }
-              }}
-              className="flex items-center cursor-pointer"
-            >
-              <span className="mr-2">{isFollowing ? '👎' : '👍'}</span>
-              {isFollowing ? 'Bỏ theo dõi ' : 'Theo dõi '} {post.author.full_name}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center space-x-2">
+          {post.author.user_id?.toString() !== currentUser?.user_id?.toString() && (
+            <FollowButton
+              userId={post.author.user_id.toString()}
+              username={post.author.username}
+              fullName={post.author.full_name}
+              variant="outline"
+              size="sm"
+            />
+          )}
+          {/* <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem className="flex items-center cursor-pointer">
+                <Bookmark className="h-4 w-4 mr-2" />
+                Lưu bài viết
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center cursor-pointer">
+                <span className="mr-2">🙈</span>
+                Ẩn bài viết
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center cursor-pointer text-red-500">
+                <span className="mr-2">⚠️</span>
+                Báo cáo bài viết
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu> */}
+        </div>
       </CardHeader>
       <CardContent className="px-4 py-2 space-y-3">
         <div className="prose prose-sm dark:prose-invert max-w-none">
@@ -195,7 +248,7 @@ export function PostItem({ post }: PostItemProps) {
               <div
                 key={index}
                 className={`relative rounded-md overflow-hidden ${post.images.length === 1 ? 'col-span-1' :
-                    index === 0 && post.images.length === 3 ? 'col-span-2' : 'col-span-1'
+                  index === 0 && post.images.length === 3 ? 'col-span-2' : 'col-span-1'
                   }`}
               >
                 <CustomImage src={API_ENDPOINT.file_image_v2 + image} alt={`Image ${index + 1}`}
@@ -223,21 +276,78 @@ export function PostItem({ post }: PostItemProps) {
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-2">
             <div className="relative" ref={reactionsMenuRef}>
-              <Button
-                variant="ghost"
-                size="sm"
-                className={`flex items-center ${isLiked ? 'text-purple-600 dark:text-purple-400' : ''}`}
-                onClick={handleLike}
-              >
-                {currentReaction ? (
-                  <span className="mr-1 text-lg">
-                    {REACTION_TYPES.find(r => r.id === currentReaction)?.icon || '👍'}
-                  </span>
-                ) : (
-                  <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''}`} />
-                )}
-                <span>{likesCount}</span>
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center transition-all duration-200 ${isLiked
+                          ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
+                          : 'hover:text-purple-600 dark:hover:text-purple-400'
+                          } ${isLiking ? 'scale-110' : ''}`}
+                        onClick={handleLike}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          setShowReactionPicker(!showReactionPicker);
+                        }}
+                        disabled={isLiking}
+                      >
+                        {currentUserReaction && currentUserReaction > 1 ? (
+                          <span className="mr-1 text-lg">
+                            {REACTION_TYPES.find(r => r.id === currentUserReaction)?.icon || '👍'}
+                          </span>
+                        ) : (
+                          <Heart
+                            className={`h-4 w-4 mr-1 transition-all duration-200 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''
+                              } ${isLiking ? 'animate-pulse' : ''}`}
+                          />
+                        )}
+                        <span
+                          className={`cursor-pointer ${likesCount > 0 ? 'hover:underline' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowLikes();
+                          }}
+                        >
+                          {likesCount}
+                        </span>
+                      </Button>
+
+                      {/* Reaction Picker Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-1 px-2"
+                        onClick={() => setShowReactionPicker(!showReactionPicker)}
+                      >
+                        <span className="text-xs">▼</span>
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{isLiked ? 'Bỏ thích' : 'Thích bài viết'} • Right-click để chọn reaction</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              {/* Reaction Picker */}
+              {showReactionPicker && (
+                <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 flex gap-1 z-10">
+                  {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
+                    <button
+                      key={reaction.id}
+                      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentUserReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''
+                        }`}
+                      onClick={() => handleReaction(reaction.id)}
+                      title={reaction.label}
+                    >
+                      <span className="text-lg">{reaction.icon}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -284,37 +394,38 @@ export function PostItem({ post }: PostItemProps) {
               </PopoverContent>
             </Popover> */}
           </div>
-          <Button
+          {/* <Button
             variant="ghost"
             size="sm"
             className={`flex items-center ${isSaved ? 'text-purple-600 dark:text-purple-400' : ''}`}
             onClick={handleSave}
           >
             <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-purple-600 dark:fill-purple-400' : ''}`} />
-          </Button>
+          </Button> */}
         </div>
 
         {showComments && (
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center space-x-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={post.author.avatar} alt={post.author.full_name} />
-                <AvatarFallback>{post.author.full_name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Viết bình luận..."
-                  className="w-full rounded-full bg-muted px-3 py-2 text-sm"
-                />
-              </div>
-              <Button size="sm">Gửi</Button>
-            </div>
-            <div className="text-center text-sm text-muted-foreground">
-              <Button variant="link" className="p-0 h-auto">Xem tất cả {commentsCount} bình luận</Button>
-            </div>
+          <div className="pt-2 w-full">
+            <PostComment
+              postId={post.post_id.toString()}
+              onCommentAdded={() => {
+                // Update comments count when a new comment is added
+                // This could be improved by using WebSocket events
+                console.log('Comment added to post:', post.post_id);
+              }}
+            />
           </div>
         )}
+
+        {/* Likes Modal */}
+        <LikesModal
+          isOpen={showLikesModal}
+          onClose={() => setShowLikesModal(false)}
+          itemId={post.post_id.toString()}
+          itemType="post"
+          service={postLikesAdapter}
+          title="Reactions"
+        />
       </CardFooter>
     </Card>
   );

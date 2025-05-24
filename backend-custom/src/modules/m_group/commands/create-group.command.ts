@@ -3,6 +3,7 @@ import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { CreateGroupDto } from '../dto/create-group.dto';
 import { Group } from '../models/group.model';
+import * as crypto from 'crypto';
 
 export class CreateGroupCommand implements ICommand {
   constructor(
@@ -22,8 +23,11 @@ export class CreateGroupCommandHandler
   async execute(command: CreateGroupCommand): Promise<any> {
     const { dto, userId } = command;
 
-    // Create the group
-    const insertResult = await this.repository.createGroup(dto);
+    // Generate a permanent join code for the group
+    const joinCode = crypto.randomBytes(8).toString('hex').toUpperCase();
+
+    // Create the group with join code
+    const insertResult = await this.repository.createGroupWithJoinCode(dto, joinCode);
     const groupData = insertResult.rows[0];
     const groupCreated = new Group(groupData);
 
@@ -33,7 +37,7 @@ export class CreateGroupCommandHandler
         group_id: groupCreated.group_id,
         user_id: userId,
         role: 'admin',
-        nickname: null, // Default nickname
+        nickname: undefined, // Let the repository set default nickname to username
       });
     }
 

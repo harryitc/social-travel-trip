@@ -1,8 +1,9 @@
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { GetMessagesDto } from '../dto/get-messages.dto';
 import { GroupMessage } from '../models/group.model';
+import { NotFoundException, UnauthorizedException } from '@common/exceptions';
 
 export class GetMessagesQuery implements IQuery {
   constructor(
@@ -23,12 +24,15 @@ export class GetMessagesQueryHandler
     const { dto, userId } = query;
 
     // Verify member is in group
-    // const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    // const member = membersResult.rows.find((m) => m.user_id == userId);
+    const membersResult = await this.repository.getGroupMembers(dto.group_id);
+    const member = membersResult.rows.find((m) => m.user_id == userId);
 
-    // if (!member) {
-    //   throw new UnauthorizedException('User is not a member of this group');
-    // }
+    if (!member) {
+      this.logger.error(
+        `❌ [GetMessages] User ${userId} attempted to access messages from group ${dto.group_id} without membership`,
+      );
+      throw new UnauthorizedException('User is not a member of this group');
+    }
 
     // Check if the group exists
     const groupResult = await this.repository.getGroupById(dto.group_id);

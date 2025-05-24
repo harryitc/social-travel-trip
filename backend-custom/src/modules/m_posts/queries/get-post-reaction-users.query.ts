@@ -29,7 +29,7 @@ export class GetPostReactionUsersQueryHandler
         reactionId,
       );
 
-      if (result.rowCount === 0) {
+      if (result.rowCount == 0) {
         return {
           data: [],
           meta: {
@@ -40,7 +40,7 @@ export class GetPostReactionUsersQueryHandler
 
       // Format the response
       const users = result.rows.map((row) => ({
-        id: row.user_id,
+        user_id: row.user_id,
         username: row.username,
         full_name: row.full_name,
         avatar_url: row.avatar_url,

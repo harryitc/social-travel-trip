@@ -7,6 +7,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { CommandHandlers } from './commands';
 import { QueryHandlers } from './queries';
 import { Repositories } from './repositories';
+import { GroupRepository } from '@modules/m_group/repositories/group.repository';
 
 @Module({
   imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
@@ -18,6 +19,7 @@ import { Repositories } from './repositories';
     ...CommandHandlers,
 
     ...Repositories,
+    GroupRepository, // Add GroupRepository for membership verification
   ],
 })
 export class PlanModule {}

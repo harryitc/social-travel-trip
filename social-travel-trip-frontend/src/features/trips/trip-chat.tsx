@@ -15,7 +15,11 @@ import {
   X,
   MessageSquareQuote,
   Download,
-  File as FileIcon
+  File as FileIcon,
+  Heart,
+  Search,
+  Plus,
+  Users
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -25,36 +29,330 @@ import {
 } from '@/components/ui/radix-ui/dropdown-menu';
 import { PinnedMessages } from './pinned-messages';
 import { EmojiPicker } from './emoji-picker';
-import { Message, Member, MOCK_CHAT_MESSAGES } from './mock-chat-data';
+import { tripGroupService, TripGroupMessage } from './services/trip-group.service';
+import { ChatSkeleton } from './components/chat-skeleton';
+import { notification } from 'antd';
+import { useEventStore } from '@/features/stores/event.store';
+import { websocketService } from '@/lib/services/websocket.service';
+import { fileService } from '@/features/file/file.service';
+
+// Transform TripGroupMessage to Message format for UI compatibility
+interface Message {
+  id: string;
+  content: string;
+  sender: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  timestamp: string;
+  pinned?: boolean;
+  likeCount?: number;
+  attachments?: Array<{
+    type: 'image' | 'file';
+    url: string;
+    name: string;
+    size?: number;
+  }>;
+  replyTo?: {
+    id: string;
+    content: string;
+    sender: {
+      id: string;
+      name: string;
+    };
+  };
+}
 
 type TripChatProps = {
   tripId: string;
-  members?: Member[];
-  isTablet?: boolean;
-  isVerticalLayout?: boolean;
 };
 
-export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }: TripChatProps) {
-  const user: any = null;
-  // Get messages for the specific trip group
-  const [messages, setMessages] = useState<Message[]>(() => {
-    // If messages exist for this trip, use them, otherwise return an empty array
-    return MOCK_CHAT_MESSAGES[tripId] || [];
+// Helper function to format message timestamp
+const formatMessageTimestamp = (dateString: string): string => {
+  const messageDate = new Date(dateString);
+  const now = new Date();
+  const diffInHours = (now.getTime() - messageDate.getTime()) / (1000 * 60 * 60);
+
+  // If message is from today, show only time
+  if (diffInHours < 24 && messageDate.toDateString() === now.toDateString()) {
+    return messageDate.toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
+  // If message is from yesterday
+  if (diffInHours < 48) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (messageDate.toDateString() === yesterday.toDateString()) {
+      return `Hôm qua ${messageDate.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })}`;
+    }
+  }
+
+  // If message is from this week, show day name
+  if (diffInHours < 168) { // 7 days
+    return messageDate.toLocaleDateString('vi-VN', {
+      weekday: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+
+  // For older messages, show full date
+  return messageDate.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
+// Helper function to transform backend message to UI message
+const transformMessage = (backendMessage: TripGroupMessage): Message => {
+  // Extract user info from multiple possible sources - prioritize nickname
+  const displayName = backendMessage.nickname || backendMessage.username || backendMessage.user?.username || `User ${backendMessage.user_id}`;
+  const avatarUrl = backendMessage.avatar_url || backendMessage.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
+
+  // Debug log for user info extraction
+  console.log('🔄 [TripChat] Transforming message:', {
+    messageId: backendMessage.group_message_id,
+    userId: backendMessage.user_id,
+    nickname: backendMessage.nickname,
+    username: backendMessage.username,
+    avatar_url: backendMessage.avatar_url,
+    finalDisplayName: displayName,
+    finalAvatarUrl: avatarUrl
   });
 
+  return {
+    id: backendMessage.group_message_id.toString(),
+    content: backendMessage.message,
+    sender: {
+      id: backendMessage.user_id.toString(),
+      name: displayName,
+      avatar: avatarUrl,
+    },
+    timestamp: formatMessageTimestamp(backendMessage.created_at),
+    pinned: backendMessage.is_pinned || false,
+    likeCount: backendMessage.like_count || 0,
+    attachments: backendMessage.attachments || [],
+    replyTo: backendMessage.reply_to_message_id ? {
+      id: backendMessage.reply_to_message_id.toString(),
+      content: backendMessage.reply_to_message || '',
+      sender: {
+        id: backendMessage.reply_to_message_id.toString(),
+        name: backendMessage.reply_to_nickname || backendMessage.reply_to_username || 'Unknown User',
+      }
+    } : undefined,
+  };
+};
+
+export function TripChat({ tripId }: TripChatProps) {
+  const user: any = null; // TODO: Get from auth context
+  const { emit } = useEventStore();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set());
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Update messages when tripId changes
+  // Load messages from API
   useEffect(() => {
-    setMessages(MOCK_CHAT_MESSAGES[tripId] || []);
+    const loadMessages = async () => {
+      if (!tripId) return;
+
+      try {
+        setLoading(true);
+        const result = await tripGroupService.getMessages(tripId);
+
+        if (result && result.messages) {
+          const transformedMessages = result.messages.map(transformMessage);
+          setMessages(transformedMessages);
+
+          // Emit event that messages have been loaded
+          emit('chat:messages_loaded', {
+            groupId: tripId,
+            messages: transformedMessages
+          });
+        } else {
+          setMessages([]);
+
+          // Emit event with empty messages
+          emit('chat:messages_loaded', {
+            groupId: tripId,
+            messages: []
+          });
+        }
+      } catch (error: any) {
+        console.error('❌ [TripChat] Error loading messages:', error);
+        notification.error({
+          message: 'Lỗi',
+          description: error?.response?.data?.reasons?.message || 'Không thể tải tin nhắn. Vui lòng thử lại sau.',
+          placement: 'topRight',
+        });
+        setMessages([]);
+
+        // Emit event with empty messages on error
+        emit('chat:messages_loaded', {
+          groupId: tripId,
+          messages: []
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMessages();
   }, [tripId]);
+
+  // WebSocket integration for real-time messaging
+  useEffect(() => {
+    if (!tripId) return;
+
+    console.log('🔌 [TripChat] Setting up WebSocket for group:', tripId);
+
+    // Set up event listeners first
+    const handleNewMessage = (data: { groupId: number; senderId: number; message: any }) => {
+      console.log('📨 [TripChat] Received new message:', data);
+      console.log('🔍 [TripChat] Message user info:', {
+        username: data.message?.username,
+        nickname: data.message?.nickname,
+        avatar_url: data.message?.avatar_url,
+        user_id: data.message?.user_id,
+        hasUserInfo: !!(data.message?.username || data.message?.nickname)
+      });
+      if (data.groupId.toString() === tripId) {
+        const transformedMessage = transformMessage(data.message);
+        console.log('✅ [TripChat] Adding message to chat:', transformedMessage);
+        setMessages(prev => {
+          // Check if message already exists to prevent duplicates
+          const exists = prev.some(msg => msg.id === transformedMessage.id);
+          if (exists) {
+            console.log('⚠️ [TripChat] Message already exists, skipping:', transformedMessage.id);
+            return prev;
+          }
+
+          // Also check for potential duplicates by content and timestamp (for edge cases)
+          const contentDuplicate = prev.some(msg =>
+            msg.content === transformedMessage.content &&
+            msg.sender.id === transformedMessage.sender.id &&
+            Math.abs(new Date(msg.timestamp).getTime() - new Date(transformedMessage.timestamp).getTime()) < 5000 // Within 5 seconds
+          );
+
+          if (contentDuplicate) {
+            console.log('⚠️ [TripChat] Potential content duplicate detected, skipping:', transformedMessage);
+            return prev;
+          }
+
+          return [...prev, transformedMessage];
+        });
+
+        // Emit event for other components
+        emit('chat:message_received', {
+          groupId: tripId,
+          message: transformedMessage
+        });
+      }
+    };
+
+    const handleMessageLike = (data: { groupId: number; messageId: number; likerId: number; likeCount: number; isLiked: boolean }) => {
+      if (data.groupId.toString() === tripId) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === data.messageId.toString()
+            ? { ...msg, likeCount: data.likeCount }
+            : msg
+        ));
+      }
+    };
+
+    const handleMessagePin = (data: { groupId: number; messageId: number; pinnerId: number; isPinned: boolean }) => {
+      if (data.groupId.toString() === tripId) {
+        setMessages(prev => prev.map(msg =>
+          msg.id === data.messageId.toString()
+            ? { ...msg, pinned: data.isPinned }
+            : msg
+        ));
+      }
+    };
+
+    const handleTyping = (data: { groupId: number; typingUserId: number; isTyping: boolean }) => {
+      if (data.groupId.toString() === tripId) {
+        setTypingUsers(prev => {
+          const newSet = new Set(prev);
+          if (data.isTyping) {
+            newSet.add(data.typingUserId);
+          } else {
+            newSet.delete(data.typingUserId);
+          }
+          return newSet;
+        });
+      }
+    };
+
+    // Subscribe to events with detailed logging
+    console.log('🎧 [TripChat] Subscribing to WebSocket events');
+
+    // Test event listener to verify WebSocket is working
+    const handleTestEvent = (data: any) => {
+      console.log('🧪 [TripChat] Test event received:', data);
+    };
+
+    // Register WebSocket events
+    websocketService.on('group:message:sent', handleNewMessage);
+    websocketService.on('group:message:liked', handleMessageLike);
+    websocketService.on('group:message:unliked', handleMessageLike);
+    websocketService.on('group:message:pinned', handleMessagePin);
+    websocketService.on('group:message:unpinned', handleMessagePin);
+    websocketService.on('group:member:typing', handleTyping);
+    websocketService.on('group:member:stop_typing', handleTyping);
+    websocketService.on('user:typing', handleTyping);
+    websocketService.on('connection_established', handleTestEvent);
+    websocketService.on('user:online', handleTestEvent);
+
+    // Connect and join group
+    websocketService.connect().then(() => {
+      console.log('✅ [TripChat] WebSocket connected, joining group:', tripId);
+      websocketService.joinGroup(tripId);
+    }).catch(error => {
+      console.error('❌ [TripChat] WebSocket connection failed:', error);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      console.log('🧹 [TripChat] Cleaning up WebSocket events for group:', tripId);
+
+      websocketService.off('group:message:sent', handleNewMessage);
+      websocketService.off('group:message:liked', handleMessageLike);
+      websocketService.off('group:message:unliked', handleMessageLike);
+      websocketService.off('group:message:pinned', handleMessagePin);
+      websocketService.off('group:message:unpinned', handleMessagePin);
+      websocketService.off('group:member:typing', handleTyping);
+      websocketService.off('group:member:stop_typing', handleTyping);
+      websocketService.off('user:typing', handleTyping);
+      websocketService.off('connection_established', handleTestEvent);
+      websocketService.off('user:online', handleTestEvent);
+
+      websocketService.leaveGroup(tripId);
+    };
+  }, [tripId, emit]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -104,12 +402,40 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     setImagePreviewUrls(newImagePreviewUrls);
   };
 
-  const handlePinMessage = (messageId: string) => {
-    setMessages(messages.map(message =>
-      message.id === messageId
-        ? { ...message, pinned: !message.pinned }
-        : message
-    ));
+  const handlePinMessage = async (messageId: string) => {
+    try {
+      const message = messages.find(m => m.id === messageId);
+      if (!message) return;
+
+      if (message.pinned) {
+        await tripGroupService.unpinMessage(parseInt(messageId), tripId);
+      } else {
+        await tripGroupService.pinMessage(parseInt(messageId), tripId);
+      }
+
+      // Update local state optimistically
+      setMessages(messages.map(msg =>
+        msg.id === messageId
+          ? { ...msg, pinned: !msg.pinned }
+          : msg
+      ));
+    } catch (error) {
+      console.error('Error toggling pin message:', error);
+    }
+  };
+
+  const handleLikeMessage = async (messageId: string) => {
+    try {
+      await tripGroupService.toggleMessageLike(parseInt(messageId));
+      // The WebSocket will handle updating the UI
+    } catch (error) {
+      console.error('Error liking message:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không thể thích tin nhắn. Vui lòng thử lại sau.',
+        placement: 'topRight',
+      });
+    }
   };
 
   const handleReplyMessage = (message: Message) => {
@@ -133,70 +459,235 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
   };
 
   const handleSendMessage = async () => {
-    if ((!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0)) return;
-
-    // Create attachments from selected images and files
-    let attachments = [];
-
-    // Add images to attachments
-    if (selectedImages.length > 0) {
-      const imageAttachments = await Promise.all(selectedImages.map(async (file, index) => {
-        // In a real app, you would upload the file to a server and get a URL
-        // For now, we'll just use the object URL
-        return {
-          type: 'image' as const,
-          url: imagePreviewUrls[index],
-          name: file.name,
-          size: file.size,
-        };
-      }));
-      attachments.push(...imageAttachments);
+    // Validate input
+    const messageText = newMessage.trim();
+    if (!messageText && selectedImages.length === 0 && selectedFiles.length === 0) {
+      notification.warning({
+        message: 'Thông báo',
+        description: 'Vui lòng nhập tin nhắn hoặc chọn tệp để gửi.',
+        placement: 'topRight',
+        duration: 2,
+      });
+      return;
     }
 
-    // Add files to attachments
-    if (selectedFiles.length > 0) {
-      const fileAttachments = selectedFiles.map(file => ({
-        type: 'file' as const,
-        url: URL.createObjectURL(file), // In a real app, this would be a server URL
-        name: file.name,
-        size: file.size,
-      }));
-      attachments.push(...fileAttachments);
+    // Validate group ID
+    if (!tripId || isNaN(parseInt(tripId))) {
+      notification.error({
+        message: 'Lỗi',
+        description: 'Không tìm thấy thông tin nhóm. Vui lòng thử lại.',
+        placement: 'topRight',
+      });
+      return;
     }
 
-    // Sử dụng ID mặc định '1' nếu user chưa đăng nhập
-    const userId = user?.id || '1';
-    const userName = user?.fullName || 'Đức Anh'; // Tên mặc định nếu không có user
-    const userAvatar = user?.imageUrl || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1'; // Avatar mặc định
+    try {
+      // Upload files first if any
+      let attachments: Array<{
+        type: 'image' | 'file';
+        url: string;
+        name: string;
+        size?: number;
+      }> = [];
 
-    const message: Message = {
-      id: Date.now().toString(),
-      content: newMessage,
-      sender: {
-        id: userId,
-        name: userName,
-        avatar: userAvatar,
-      },
-      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-      attachments,
-      ...(replyingTo && {
-        replyTo: {
-          id: replyingTo.id,
-          content: replyingTo.content,
-          sender: {
-            id: replyingTo.sender.id,
-            name: replyingTo.sender.name,
-          },
-        },
-      }),
-    };
+      // Upload images
+      if (selectedImages.length > 0) {
+        notification.info({
+          message: 'Đang tải lên hình ảnh...',
+          description: `Đang tải lên ${selectedImages.length} hình ảnh`,
+          placement: 'topRight',
+          duration: 2,
+        });
 
-    setMessages([...messages, message]);
-    setNewMessage('');
-    setSelectedImages([]);
-    setSelectedFiles([]);
-    setImagePreviewUrls([]);
-    setReplyingTo(null);
+        try {
+          const imageUploadResults = await fileService.uploadMultipleFiles(selectedImages);
+
+          for (let i = 0; i < imageUploadResults.length; i++) {
+            const result = imageUploadResults[i];
+            const originalFile = selectedImages[i];
+
+            if (result.files && result.files.length > 0) {
+              attachments.push({
+                type: 'image',
+                url: result.files[0].file_url,
+                name: result.files[0].file_name || originalFile.name,
+                size: originalFile.size,
+              });
+            }
+          }
+        } catch (uploadError) {
+          console.error('Error uploading images:', uploadError);
+          notification.error({
+            message: 'Lỗi tải lên hình ảnh',
+            description: 'Không thể tải lên hình ảnh. Vui lòng thử lại.',
+            placement: 'topRight',
+          });
+          return;
+        }
+      }
+
+      // Upload files
+      if (selectedFiles.length > 0) {
+        notification.info({
+          message: 'Đang tải lên tệp...',
+          description: `Đang tải lên ${selectedFiles.length} tệp`,
+          placement: 'topRight',
+          duration: 2,
+        });
+
+        try {
+          const fileUploadResults = await fileService.uploadMultipleFiles(selectedFiles);
+
+          for (let i = 0; i < fileUploadResults.length; i++) {
+            const result = fileUploadResults[i];
+            const originalFile = selectedFiles[i];
+
+            if (result.files && result.files.length > 0) {
+              attachments.push({
+                type: 'file',
+                url: result.files[0].file_url,
+                name: result.files[0].file_name || originalFile.name,
+                size: originalFile.size,
+              });
+            }
+          }
+        } catch (uploadError) {
+          console.error('Error uploading files:', uploadError);
+          notification.error({
+            message: 'Lỗi tải lên tệp',
+            description: 'Không thể tải lên tệp. Vui lòng thử lại.',
+            placement: 'topRight',
+          });
+          return;
+        }
+      }
+
+      // Prepare message data
+      const messageData: any = {
+        group_id: parseInt(tripId),
+        message: messageText || '', // Ensure message is not undefined
+      };
+
+      // Add attachments if any
+      if (attachments.length > 0) {
+        messageData.attachments = attachments;
+      }
+
+      // Add reply information if replying to a message
+      if (replyingTo) {
+        const replyId = parseInt(replyingTo.id);
+        if (!isNaN(replyId)) {
+          messageData.reply_to_message_id = replyId;
+        }
+      }
+
+      // Send message via API
+      const sentMessage = await tripGroupService.sendMessage(messageData);
+
+      // Validate response
+      if (!sentMessage || !sentMessage.group_message_id) {
+        throw new Error('Phản hồi từ server không hợp lệ');
+      }
+
+      // Don't add to local state here - let WebSocket handle it
+      // This prevents duplicate messages when WebSocket emits the same message
+      console.log('✅ [TripChat] Message sent successfully, waiting for WebSocket confirmation');
+
+      // Emit event that message was sent
+      const transformedMessage = transformMessage(sentMessage);
+      emit('chat:message_sent', {
+        groupId: tripId,
+        message: transformedMessage
+      });
+
+      // Clear input and reset state
+      setNewMessage('');
+      setSelectedImages([]);
+      setSelectedFiles([]);
+      setImagePreviewUrls([]);
+      setReplyingTo(null);
+
+      // Stop typing indicator
+      if (isTyping) {
+        setIsTyping(false);
+        websocketService.sendTyping(tripId, false);
+      }
+
+      // Clear typing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
+      // Show success notification if files were uploaded
+      if (attachments.length > 0) {
+        notification.success({
+          message: 'Thành công',
+          description: `Đã gửi tin nhắn với ${attachments.length} tệp đính kèm`,
+          placement: 'topRight',
+          duration: 2,
+        });
+      }
+
+    } catch (error: any) {
+      console.error('❌ [TripChat] Error sending message:', error);
+
+      // Show appropriate error message
+      let errorMessage = error?.response?.data?.reasons?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.';
+
+      notification.error({
+        message: 'Lỗi gửi tin nhắn',
+        description: errorMessage,
+        placement: 'topRight',
+        duration: 4,
+      });
+    }
+  };
+
+  // Handle input change with typing indicator
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewMessage(value);
+
+    // Only send typing indicator if there's actual content and we have a valid tripId
+    if (value.trim() && tripId) {
+      // Send typing indicator only if not already typing
+      if (!isTyping) {
+        setIsTyping(true);
+        try {
+          websocketService.sendTyping(tripId, true);
+        } catch (error) {
+          console.warn('Failed to send typing indicator:', error);
+        }
+      }
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Set new timeout to stop typing indicator
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        try {
+          websocketService.sendTyping(tripId, false);
+        } catch (error) {
+          console.warn('Failed to stop typing indicator:', error);
+        }
+      }, 2000); // Stop typing after 2 seconds of inactivity
+    } else if (isTyping) {
+      // Stop typing immediately if input is empty
+      setIsTyping(false);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      try {
+        websocketService.sendTyping(tripId, false);
+      } catch (error) {
+        console.warn('Failed to stop typing indicator:', error);
+      }
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -206,259 +697,421 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     }
   };
 
+  // Handle create group from empty state
+  const handleCreateGroupFromEmpty = () => {
+    // Trigger create group dialog from GroupChatList component
+    const createButton = document.querySelector('[data-create-group-trigger]') as HTMLButtonElement;
+    if (createButton) {
+      createButton.click();
+    }
+  };
+
+  // Debug function to test WebSocket
+  const handleTestWebSocket = () => {
+    console.log('🧪 [TripChat] Testing WebSocket connection...');
+    console.log('🔍 [TripChat] Current WebSocket state:', websocketService.getDebugInfo());
+
+    // Try to emit a test event
+    websocketService.emit('test:ping', { groupId: tripId, timestamp: Date.now() })
+      .then(() => {
+        console.log('✅ [TripChat] Test ping sent successfully');
+      })
+      .catch(error => {
+        console.error('❌ [TripChat] Test ping failed:', error);
+      });
+  };
+
+  // Handle search from empty state
+  const handleSearchFromEmpty = () => {
+    // Focus on search input
+    const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className={`flex-1 ${isTablet ? 'p-2' : 'p-3'} ${isVerticalLayout ? 'pt-1' : ''}`}>
-        <PinnedMessages
-          messages={messages}
-          onUnpin={handlePinMessage}
-          onScrollToMessage={scrollToMessage}
-          isTablet={isTablet}
-        />
+    <>
+      {
+        tripId ? (
+          <div className="flex flex-col h-full">
+            <ScrollArea className={`flex-1 p-3`}>
+              <PinnedMessages
+                messages={messages}
+                onUnpin={handlePinMessage}
+                onScrollToMessage={scrollToMessage}
+              />
 
-        <div className={`${isTablet ? 'space-y-2' : 'space-y-3'}`}>
-          {messages.map((message) => (
-            <div
-              id={`message-${message.id}`}
-              key={message.id}
-              className={`flex ${isTablet ? 'gap-1.5' : 'gap-2'} transition-colors duration-300 ${
-                message.sender.id === (user?.id || '1') ? 'flex-row-reverse' : ''
-              }`}
-            >
-              <Avatar className={`${isTablet ? 'h-6 w-6' : 'h-8 w-8'} shrink-0 border border-white shadow-xs`}>
-                <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
-                <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
-              </Avatar>
+              {loading ? (
+                <ChatSkeleton />
+              ) : (
+                <div className="space-y-4 px-2">
+                  {messages.map((message, index) => {
+                    const isOwnMessage = message.sender.id === (user?.id || '1');
+                    // Use combination of id and index to ensure unique keys
+                    const uniqueKey = `${message.id}-${index}`;
+                    return (
+                      <div
+                        id={`message-${message.id}`}
+                        key={uniqueKey}
+                        className={`flex gap-3 transition-all duration-200 ${
+                          isOwnMessage ? 'flex-row-reverse' : ''
+                        }`}
+                      >
+                        {/* Avatar */}
+                        <div className="flex-shrink-0">
+                          <Avatar className="h-9 w-9 border-2 border-white shadow-md">
+                            <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
+                            <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white text-sm font-semibold">
+                              {message.sender.name[0]?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
 
-              <div className={`flex flex-col ${isTablet ? 'gap-0.5' : 'gap-1'} max-w-[80%] ${
-                message.sender.id === (user?.id || '1') ? 'items-end' : ''
-              }`}>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium">{message.sender.name}</span>
-                  <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+                        {/* Message Content */}
+                        <div className={`flex flex-col max-w-[75%] ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+                          {/* Header */}
+                          <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                              {message.sender.name}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {message.timestamp}
+                            </span>
+                            {message.pinned && (
+                              <Pin className="h-3.5 w-3.5 text-amber-500" />
+                            )}
+                          </div>
 
-                  {message.pinned && (
-                    <Pin className="h-3 w-3 text-purple-600" />
-                  )}
-                </div>
+                          {/* Message Bubble */}
+                          <div className={`relative rounded-2xl px-4 py-2.5 group shadow-sm ${
+                            isOwnMessage
+                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+                          }`}>
+                            {/* Reply indicator */}
+                            {message.replyTo && (
+                              <div className={`mb-2 p-2 rounded-lg text-xs flex items-start gap-2 ${
+                                isOwnMessage
+                                  ? 'bg-white/20 text-white/90'
+                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                              }`}>
+                                <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
+                                <div>
+                                  <div className="font-medium">{message.replyTo.sender.name}</div>
+                                  <div className="truncate message-content">{message.replyTo.content}</div>
+                                </div>
+                              </div>
+                            )}
 
-                <div className={`relative rounded-lg ${isTablet ? 'p-2' : 'p-2.5'} group ${
-                  message.sender.id === (user?.id || '1')
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'bg-secondary shadow-xs'
-                }`}>
-                  {message.replyTo && (
-                    <div className={`${isTablet ? 'mb-1.5 p-1.5' : 'mb-2 p-2'} rounded text-xs flex items-start gap-1 ${
-                      message.sender.id === (user?.id || '1')
-                        ? 'bg-purple-700/50'
-                        : 'bg-secondary-foreground/10'
-                    }`}>
-                      <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium">{message.replyTo.sender.name}</div>
-                        <div className="truncate message-content">{message.replyTo.content}</div>
+                            {/* Message text */}
+                            <p className="text-sm leading-relaxed message-content">{message.content}</p>
+
+                            {/* Attachments */}
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="mt-3 space-y-2">
+                                {message.attachments.map((attachment, index) => (
+                                  attachment.type === 'image' ? (
+                                    <div key={index} className="rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:opacity-90 transition-opacity">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={attachment.url}
+                                        alt={attachment.name}
+                                        className="max-w-sm max-h-64 object-cover rounded-lg"
+                                        onClick={() => window.open(attachment.url, '_blank')}
+                                        title="Click để xem ảnh full size"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div key={index} className={`flex items-center justify-between gap-2 text-sm p-2 rounded-lg ${
+                                      isOwnMessage ? 'bg-white/20' : 'bg-gray-100 dark:bg-gray-700'
+                                    }`}>
+                                      <div className="flex items-center gap-2">
+                                        <FileIcon className="h-4 w-4" />
+                                        <div className="flex flex-col">
+                                          <span className="truncate max-w-[150px]">{attachment.name}</span>
+                                          <span className="text-xs opacity-70">
+                                            {attachment.size ? `${Math.round(attachment.size / 1024)} KB` : ''}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <a
+                                        href={attachment.url}
+                                        download={attachment.name}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1 hover:bg-white/20 rounded"
+                                        onClick={(e) => e.stopPropagation()}
+                                        title="Tải xuống tệp"
+                                      >
+                                        <Download className="h-3 w-3" />
+                                      </a>
+                                    </div>
+                                  )
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Like count */}
+                            {message.likeCount && message.likeCount > 0 && (
+                              <div className="flex items-center gap-1 mt-2">
+                                <Heart className="h-3 w-3 text-red-500 fill-current" />
+                                <span className="text-xs opacity-70">{message.likeCount}</span>
+                              </div>
+                            )}
+
+                            {/* Message actions */}
+                            <div className={`absolute ${isOwnMessage ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${
+                              isOwnMessage ? '-translate-x-full' : 'translate-x-full'
+                            } opacity-0 group-hover:opacity-100 transition-opacity`}>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-700">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align={isOwnMessage ? "end" : "start"}>
+                                  <DropdownMenuItem onClick={() => handleLikeMessage(message.id)}>
+                                    <Heart className="h-4 w-4 mr-2" />
+                                    Thích
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
+                                    <Reply className="h-4 w-4 mr-2" />
+                                    Phản hồi
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handlePinMessage(message.id)}>
+                                    <Pin className="h-4 w-4 mr-2" />
+                                    {message.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Typing indicator */}
+                  {typingUsers.size > 0 && (
+                    <div className="flex gap-3 items-center px-2">
+                      <div className="flex-shrink-0">
+                        <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 italic">
+                          {typingUsers.size === 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
+                        </span>
                       </div>
                     </div>
                   )}
 
-                  <p className="text-sm message-content">{message.content}</p>
+                  <div ref={messageEndRef} />
+                </div>
+              )}
+            </ScrollArea>
 
-                  {message.attachments && message.attachments.length > 0 && (
-                    <div className={`${isTablet ? 'mt-1.5 space-y-1.5' : 'mt-2 space-y-2'}`}>
-                      {message.attachments.map((attachment, index) => (
-                        attachment.type === 'image' ? (
-                          <div key={index} className="rounded-md overflow-hidden border border-white/20">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={attachment.url}
-                              alt={attachment.name}
-                              className={`${isTablet ? 'max-w-[200px]' : 'max-w-sm'} object-cover`}
-                            />
-                          </div>
-                        ) : (
-                          <div key={index} className={`flex items-center justify-between gap-2 text-sm bg-secondary-foreground/10 ${isTablet ? 'p-1.5' : 'p-2'} rounded`}>
-                            <div className="flex items-center gap-2">
-                              <FileIcon className="h-4 w-4" />
-                              <div className="flex flex-col">
-                                <span className={`truncate ${isTablet ? 'max-w-[120px]' : 'max-w-[150px]'}`}>{attachment.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {attachment.size ? `${Math.round(attachment.size / 1024)} KB` : ''}
-                                </span>
-                              </div>
-                            </div>
-                            <a
-                              href={attachment.url}
-                              download={attachment.name}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1 hover:bg-secondary-foreground/20 rounded"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Download className="h-3 w-3" />
-                            </a>
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-
-                  <div className={`absolute ${message.sender.id === (user?.id || '1') ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === (user?.id || '1') ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className={`${isTablet ? 'h-6 w-6' : 'h-8 w-8'} rounded-full bg-background/80 backdrop-blur-xs shadow-xs`}>
-                          <MoreVertical className={`${isTablet ? 'h-3 w-3' : 'h-4 w-4'}`} />
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">{/* Input area */}
+              {/* Image preview area */}
+              {imagePreviewUrls.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Hình ảnh ({imagePreviewUrls.length})
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {imagePreviewUrls.map((url, index) => (
+                      <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="preview" className="w-full h-full object-cover" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 rounded-full shadow-md"
+                          onClick={() => handleRemoveImage(index)}
+                        >
+                          <X className="h-3 w-3 text-white" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align={message.sender.id === (user?.id || '1') ? "end" : "start"}>
-                        <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
-                          <Reply className="h-4 w-4 mr-2" />
-                          Phản hồi
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handlePinMessage(message.id)}>
-                          <Pin className="h-4 w-4 mr-2" />
-                          {message.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
-          <div ref={messageEndRef} />
-        </div>
-      </ScrollArea>
+              )}
 
-      <div className={`${isTablet ? 'p-1.5' : 'p-2'} ${isVerticalLayout ? 'border-t-0' : 'border-t'} border-purple-100 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-900/10`}>
-        {/* Image preview area */}
-        {imagePreviewUrls.length > 0 && (
-          <div className={`${isTablet ? 'mb-1' : 'mb-1.5'}`}>
-            <div className="text-xs text-muted-foreground mb-1">Hình ảnh ({imagePreviewUrls.length})</div>
-            <div className="flex flex-wrap gap-1.5">
-              {imagePreviewUrls.map((url, index) => (
-                <div key={index} className={`relative ${isTablet ? 'w-10 h-10' : 'w-12 h-12'} rounded-md overflow-hidden bg-secondary border border-purple-100 dark:border-purple-800`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="preview" className="w-full h-full object-cover" />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-0 right-0 h-4 w-4 p-0 bg-black/50 rounded-full"
-                    onClick={() => handleRemoveImage(index)}
-                  >
-                    <X className="h-2.5 w-2.5 text-white" />
-                  </Button>
+              {/* File preview area */}
+              {selectedFiles.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tệp đính kèm ({selectedFiles.length})
+                  </div>
+                  <div className="space-y-2">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-2">
+                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                            <FileIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium truncate max-w-[200px]">{file.name}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{Math.round(file.size / 1024)} KB</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30"
+                          onClick={() => handleRemoveFile(index)}
+                        >
+                          <X className="h-3 w-3 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              )}
 
-        {/* File preview area */}
-        {selectedFiles.length > 0 && (
-          <div className={`${isTablet ? 'mb-1' : 'mb-1.5'}`}>
-            <div className="text-xs text-muted-foreground mb-1">Tệp đính kèm ({selectedFiles.length})</div>
-            <div className="space-y-1">
-              {selectedFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-1 rounded bg-secondary/50 border border-purple-100 dark:border-purple-800">
-                  <div className="flex items-center gap-1.5">
-                    <FileIcon className="h-3 w-3 text-purple-500" />
-                    <div className="flex flex-col">
-                      <span className={`text-xs truncate ${isTablet ? 'max-w-[150px]' : 'max-w-[180px]'}`}>{file.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{Math.round(file.size / 1024)} KB</span>
+              {/* Reply preview */}
+              {replyingTo && (
+                <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <MessageSquareQuote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    <div>
+                      <div className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                        Đang trả lời {replyingTo.sender.name}
+                      </div>
+                      <div className="text-sm text-blue-600 dark:text-blue-400 truncate message-content max-w-[250px]">
+                        {replyingTo.content}
+                      </div>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-4 w-4 p-0"
-                    onClick={() => handleRemoveFile(index)}
+                    className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800"
+                    onClick={cancelReply}
                   >
-                    <X className="h-2.5 w-2.5" />
+                    <X className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                   </Button>
                 </div>
-              ))}
+              )}
+
+              {/* Input controls */}
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  ref={imageInputRef}
+                  onChange={handleImageChange}
+                />
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                />
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => imageInputRef.current?.click()}
+                    title="Tải lên hình ảnh"
+                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Đính kèm tệp"
+                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+                  <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+
+                  {/* Debug WebSocket button (development only) */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleTestWebSocket}
+                      title="Test WebSocket (Dev only)"
+                      className="h-8 w-8 text-gray-500 hover:text-green-600 hover:bg-green-100 dark:text-gray-400 dark:hover:text-green-400 dark:hover:bg-green-900/20 rounded-full"
+                    >
+                      <span className="text-xs font-bold">WS</span>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Text input */}
+                <Input
+                  placeholder="Nhập tin nhắn..."
+                  value={newMessage}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 h-9 bg-white dark:bg-gray-900 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
+                />
+
+                {/* Send button */}
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
+                  className="h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  title={newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0 ? "Gửi tin nhắn" : "Nhập tin nhắn để gửi"}
+                >
+                  <SendHorizontal className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Reply preview */}
-        {replyingTo && (
-          <div className={`${isTablet ? 'mb-1 p-1' : 'mb-1.5 p-1'} rounded-md bg-secondary/50 border border-purple-100 dark:border-purple-800 flex items-center justify-between`}>
-            <div className="flex items-center gap-1.5">
-              <MessageSquareQuote className="h-3 w-3 text-purple-500" />
-              <div>
-                <div className="text-xs font-medium">
-                  Đang trả lời {replyingTo.sender.name}
+        ) : (
+          <>
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center space-y-6 max-w-md mx-auto px-6">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <Users className="h-12 w-12 text-white" />
                 </div>
-                <div className={`text-xs text-muted-foreground truncate message-content ${isTablet ? 'max-w-[150px]' : 'max-w-[180px]'}`}>
-                  {replyingTo.content}
+                <div className="space-y-3">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    Chào mừng đến với Nhóm chuyến đi
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Chọn một nhóm từ danh sách bên trái để bắt đầu trò chuyện và lên kế hoạch cho chuyến đi của bạn
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    className="border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                    onClick={handleSearchFromEmpty}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Tìm nhóm
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={handleCreateGroupFromEmpty}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tạo nhóm mới
+                  </Button>
                 </div>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-4 w-4 p-0"
-              onClick={cancelReply}
-            >
-              <X className="h-2.5 w-2.5" />
-            </Button>
-          </div>
-        )}
-
-        <div className={`flex items-center ${isTablet ? 'gap-0.5' : 'gap-1'}`}>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            ref={imageInputRef}
-            onChange={handleImageChange}
-          />
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => imageInputRef.current?.click()}
-            title="Tải lên hình ảnh"
-            className={`${isTablet ? 'h-6 w-6' : 'h-7 w-7'} text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20`}
-          >
-            <ImageIcon className={`${isTablet ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            title="Đính kèm tệp"
-            className={`${isTablet ? 'h-6 w-6' : 'h-7 w-7'} text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20`}
-          >
-            <Paperclip className={`${isTablet ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
-          </Button>
-          <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-
-          <Input
-            placeholder="Nhập tin nhắn..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className={`flex-1 ${isTablet ? 'h-6 text-xs' : 'h-7'} bg-white dark:bg-gray-900 border-purple-100 dark:border-purple-800 focus-visible:ring-purple-500`}
-          />
-
-          <Button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
-            className={`${isTablet ? 'h-6' : 'h-7'} bg-purple-600 hover:bg-purple-700 text-white`}
-          >
-            <SendHorizontal className={`${isTablet ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
-          </Button>
-        </div>
-      </div>
-    </div>
+          </>
+        )
+      }
+    </>
   );
 }

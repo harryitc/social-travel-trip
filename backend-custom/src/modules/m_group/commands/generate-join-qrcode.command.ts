@@ -29,14 +29,14 @@ export class GenerateJoinQRCodeCommandHandler
 
     // Check if group exists
     const groupResult = await this.repository.getGroupById(dto.group_id);
-    if (groupResult.rowCount === 0) {
+    if (groupResult.rowCount == 0) {
       throw new NotFoundException(`Group with ID ${dto.group_id} not found`);
     }
 
     // Verify admin permission
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
     const adminMember = membersResult.rows.find(
-      (member) => member.user_id === userId && member.role === 'admin',
+      (member) => member.user_id == userId && member.role == 'admin',
     );
 
     if (!adminMember) {
@@ -70,11 +70,16 @@ export class GenerateJoinQRCodeCommandHandler
       expires_at: expiresAt.toISOString(),
     };
 
+    // Create a shareable URL for the QR code
+    const shareableUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/trips/join?code=${joinCode}`;
+
     return {
       group: new Group(result.rows[0]),
       join_code: joinCode,
       expires_at: expiresAt,
       qr_code_data: JSON.stringify(qrCodeData),
+      shareable_url: shareableUrl,
+      qr_text: joinCode, // Simple text for QR generation on frontend
     };
   }
 }

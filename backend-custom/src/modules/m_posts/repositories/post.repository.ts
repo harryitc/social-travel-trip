@@ -10,11 +10,11 @@ export class PostRepository {
     private readonly client: PgSQLConnectionPool,
   ) {}
 
-  async getPosts(page = 1, limit = 10) {
+  async getPosts(page = 1, limit = 10, userId?: number) {
     const offset = (page - 1) * limit;
     const params = [limit, offset];
 
-    const query = `
+    let query = `
     SELECT
       p.post_id,
       p.content,
@@ -33,20 +33,33 @@ export class PostRepository {
       (
         SELECT json_agg(row)
         FROM (
-          SELECT 
+          SELECT
             pl.reaction_id,
             COUNT(*) AS count
           FROM post_likes pl
           WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
           GROUP BY pl.reaction_id
         ) AS row
-      ) AS reactions
+      ) AS reactions`;
+
+    // Add user reaction if userId is provided
+    if (userId) {
+      query += `,
+      (
+        SELECT pl.reaction_id
+        FROM post_likes pl
+        WHERE pl.post_id = p.post_id AND pl.user_id = $3
+      ) AS user_reaction`;
+      params.push(userId);
+    }
+
+    query += `
     FROM posts p
     LEFT JOIN users u ON p.user_id = u.user_id
     ORDER BY p.created_at DESC
     LIMIT $1 OFFSET $2
-
   `;
+
     return this.client.execute(query, params);
   }
 
@@ -59,8 +72,10 @@ export class PostRepository {
     return this.client.execute(query, [postId]);
   }
 
-  async getPostDetail(postId: number) {
-    const query = `
+  async getPostDetail(postId: number, userId?: number) {
+    const params = [postId];
+
+    let query = `
     SELECT
       p.post_id,
       p.content,
@@ -79,19 +94,33 @@ export class PostRepository {
       (
         SELECT json_agg(row)
         FROM (
-          SELECT 
+          SELECT
             pl.reaction_id,
             COUNT(*) AS count
           FROM post_likes pl
           WHERE pl.post_id = p.post_id AND pl.reaction_id > 1
           GROUP BY pl.reaction_id
         ) AS row
-      ) AS reactions
+      ) AS reactions`;
+
+    // Add user reaction if userId is provided
+    if (userId) {
+      query += `,
+      (
+        SELECT pl.reaction_id
+        FROM post_likes pl
+        WHERE pl.post_id = p.post_id AND pl.user_id = $2
+      ) AS user_reaction`;
+      params.push(userId);
+    }
+
+    query += `
     FROM posts p
     LEFT JOIN users u ON p.user_id = u.user_id
     WHERE p.post_id = $1
   `;
-    return this.client.execute(query, [postId]);
+
+    return this.client.execute(query, params);
   }
   async getCountPosts() {
     const params = [];
@@ -131,8 +160,6 @@ export class PostRepository {
       query += ` AND pl.reaction_id = $2`;
       params.push(reactionId);
     }
-
-    query += ` ORDER BY u.full_name`;
 
     return this.client.execute(query, params);
   }
@@ -182,6 +209,32 @@ export class PostRepository {
   `;
 
     return this.client.execute(query, [postId, userId, reactionId]);
+  }
+
+  /**
+   * Get users who have interacted with a post (liked or commented)
+   * @param postId Post ID
+   * @returns Array of user IDs who have interacted with the post
+   */
+  async getPostInterestedUsers(postId: number) {
+    const query = `
+    SELECT DISTINCT user_id
+    FROM (
+      -- Users who liked the post
+      SELECT user_id
+      FROM post_likes
+      WHERE post_id = $1 AND reaction_id > 1
+
+      UNION
+
+      -- Users who commented on the post
+      SELECT user_id
+      FROM post_comments
+      WHERE post_id = $1
+    ) AS interested_users
+    `;
+
+    return this.client.execute(query, [postId]);
   }
 
   /**

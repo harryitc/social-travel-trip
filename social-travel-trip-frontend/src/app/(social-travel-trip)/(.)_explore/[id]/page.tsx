@@ -419,7 +419,7 @@ Thời điểm lý tưởng để đến Hạ Long là từ tháng 10 đến th�
   };
 
   // Lấy dữ liệu dựa trên ID, nếu không có thì mặc định là Phú Quốc (ID: 1)
-  const [destination] = useState(destinationsData[id] || destinationsData['1']);
+  const [destination] = useState(destinationsData[id as keyof typeof destinationsData] || destinationsData['1']);
 
   const [reviews] = useState<Review[]>([
     {

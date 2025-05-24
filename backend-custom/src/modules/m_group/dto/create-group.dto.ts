@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator';
 
 export class CreateGroupDto {
   @ApiProperty()
@@ -20,4 +20,14 @@ export class CreateGroupDto {
   @ApiProperty({ required: false })
   @IsOptional()
   plan_id?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsObject()
+  json_data?: any;
 }

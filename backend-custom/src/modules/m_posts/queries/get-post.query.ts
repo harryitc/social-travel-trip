@@ -23,11 +23,11 @@ export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
 
     try {
       const [queryResult, count] = await Promise.all([
-        this.repository.getPosts(page, limit),
+        this.repository.getPosts(page, limit, userId),
         this.repository.getCountPosts(),
       ]);
 
-      if (queryResult.rowCount === 0) {
+      if (queryResult.rowCount == 0) {
         return {
           data: [],
           meta: {
@@ -73,6 +73,7 @@ export class GetPostsQueryHandler implements IQueryHandler<GetPostsQuery> {
             total_likes: totalLikes,
             total_comments: parseInt(row.comment_count) || 0,
             reactions: reactions,
+            user_reaction: row.user_reaction || null, // Add user reaction
           },
         };
       });

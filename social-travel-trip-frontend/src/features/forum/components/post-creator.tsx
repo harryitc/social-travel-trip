@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/radix-ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Image as ImageIcon, MapPin, MessageCircle, XIcon, AtSign, Hash, Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/radix-ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/radix-ui/command';
 import { getUserInfo, isLoggedIn } from '@/features/auth/auth.service';
@@ -16,28 +15,12 @@ import { locationService } from '@/features/explore/services/location.service';
 import { useRouter } from 'next/navigation';
 import { CreatePostPayload } from '../models/post.model';
 import { useWebSocket } from '@/lib/providers/websocket.provider';
-import { WebsocketEvent } from '@/lib/services/websocket.service';
 import { notification } from 'antd';
-
-// Mock data for users and hashtags until API is available
-const USERS = [
-  { id: '1', name: 'Nguyễn Minh', avatar: 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
-  { id: '2', name: 'Trần Thu Hà', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
-  { id: '3', name: 'Lê Hoàng', avatar: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
-  { id: '4', name: 'Ngọc Mai', avatar: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
-  { id: '5', name: 'Đức Anh', avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
-];
-
-const POPULAR_HASHTAGS = [
-  { tag: 'DuLichVietNam', posts: 1205 },
-  { tag: 'PhuQuoc', posts: 954 },
-  { tag: 'DaNang', posts: 862 },
-  { tag: 'SaPa', posts: 743 },
-  { tag: 'HaLong', posts: 628 },
-  { tag: 'DaLat', posts: 587 },
-  { tag: 'HoiAn', posts: 521 },
-];
-
+import { useEventStore } from '../../stores/event.store';
+import { HashtagModel } from '../models/hashtag.model';
+import { hashtagService } from '../services/tag.service';
+import { UserRelaWithDetails } from '../models/user.model';
+import { userService } from '../services/user.service';
 
 export function PostCreator() {
   const router = useRouter();
@@ -45,23 +28,26 @@ export function PostCreator() {
   const [content, setContent] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [hashtags, setHashtags] = useState<string[]>([]);
-  const [location, setLocation] = useState('');
-  const [locationId, setLocationId] = useState('');
-  const [locations, setLocations] = useState<any[]>([]);
-  const [loadingLocations, setLoadingLocations] = useState(false);
-  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
-  const [currentHashtag, setCurrentHashtag] = useState('');
+  const [hashtags, setHashtags] = useState<HashtagModel[]>([]);
+  const [hashtagsSelected, setHashtagsSelected] = useState<string[]>([]);
+  const [searchHashtag, setSearchHashtag] = useState<string>('');
+  const [loadingHashtag, setLoadingHashtag] = useState(false);
+  // const [location, setLocation] = useState('');
+  // const [locationId, setLocationId] = useState('');
+  // const [locations, setLocations] = useState<any[]>([]);
+  // const [loadingLocations, setLoadingLocations] = useState(false);
+  // const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
+  const [currentHashtag, setCurrentHashtag] = useState<string | null>(null);
   const [hashtagPopoverOpen, setHashtagPopoverOpen] = useState(false);
   const [mentionPopoverOpen, setMentionPopoverOpen] = useState(false);
   const [mentionSearch, setMentionSearch] = useState('');
-  const [mentions, setMentions] = useState<{ id: string, name: string }[]>([]);
+  const [mentions, setMentions] = useState<UserRelaWithDetails[]>([]);
+  const [mentionsSelected, setMentionsSelected] = useState<UserRelaWithDetails[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Get WebSocket context
-  const { emit, isConnected } = useWebSocket();
+  const { emit } = useEventStore();
 
   // Load user info
   useEffect(() => {
@@ -76,33 +62,67 @@ export function PostCreator() {
   }, [router]);
 
   // Load locations
+  // useEffect(() => {
+  //   const fetchLocations = async () => {
+  //     try {
+  //       setLoadingLocations(true);
+  //       const response = await locationService.getLocations({ limit: 10 });
+  //       setLocations(response.data);
+  //     } catch (error) {
+  //       console.error('Error fetching locations:', error);
+  //     } finally {
+  //       setLoadingLocations(false);
+  //     }
+  //   };
+
+  //   if (locationPopoverOpen) {
+  //     fetchLocations();
+  //   }
+  // }, [locationPopoverOpen]);
+
+  // Load Hashtags
   useEffect(() => {
-    const fetchLocations = async () => {
+    const fetchHashtags = async () => {
       try {
-        setLoadingLocations(true);
-        const response = await locationService.getLocations({ limit: 10 });
-        setLocations(response.data);
+        setLoadingHashtag(true);
+        const response = await hashtagService.getList(searchHashtag);
+        setHashtags(response);
       } catch (error) {
-        console.error('Error fetching locations:', error);
+        console.error('Error fetching Hashtags:', error);
       } finally {
-        setLoadingLocations(false);
+        setLoadingHashtag(false);
       }
     };
 
-    if (locationPopoverOpen) {
-      fetchLocations();
+    if (hashtagPopoverOpen) {
+      fetchHashtags();
     }
-  }, [locationPopoverOpen]);
+  }, [hashtagPopoverOpen]);
+
+  // load user following
+  useEffect(() => {
+    const fetchFollowing = async () => {
+      try {
+        const following = await userService.getFollowing();
+        setMentions(following);
+      } catch (error) {
+        console.error('Error fetching following:', error);
+      }
+    };
+
+    fetchFollowing();
+  }, []);
+
 
   const handleAddHashtag = () => {
-    if (currentHashtag && !hashtags.includes(currentHashtag)) {
-      setHashtags([...hashtags, currentHashtag]);
-      setCurrentHashtag('');
+    if (currentHashtag && !hashtags.map(item => item.slug).includes(currentHashtag)) {
+      setHashtagsSelected([...hashtagsSelected, currentHashtag]);
+      setCurrentHashtag(null);
     }
   };
 
   const handleRemoveHashtag = (tag: string) => {
-    setHashtags(hashtags.filter(t => t !== tag));
+    setHashtagsSelected(hashtagsSelected.filter(t => t !== tag));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,7 +199,7 @@ export function PostCreator() {
   };
 
   // Handle selecting a user to mention
-  const handleSelectMention = (userName: string) => {
+  const handleSelectMention = (userSelected: UserRelaWithDetails) => {
     if (textareaRef.current) {
       const cursorPosition = textareaRef.current.selectionStart;
       const textBeforeCursor = content.substring(0, cursorPosition);
@@ -188,17 +208,17 @@ export function PostCreator() {
       if (atIndex !== -1) {
         const newContent =
           content.substring(0, atIndex) +
-          '@' + userName + ' ' +
+          '@' + userSelected.username + ' ' +
           content.substring(cursorPosition);
 
         setContent(newContent);
-        setMentions([...mentions, { id: Date.now().toString(), name: userName }]);
+        setMentionsSelected([...mentions, userSelected]);
         setMentionPopoverOpen(false);
 
         // Set cursor position after the inserted mention
         setTimeout(() => {
           if (textareaRef.current) {
-            const newPosition = atIndex + userName.length + 2; // +2 for @ and space
+            const newPosition = atIndex + userSelected.username.length + 2; // +2 for @ and space
             textareaRef.current.focus();
             textareaRef.current.setSelectionRange(newPosition, newPosition);
           }
@@ -216,15 +236,15 @@ export function PostCreator() {
       // Create post payload
       const payload: CreatePostPayload = {
         content,
-        hashtags,
-        mentions: mentions.map(m => m.id),
+        hashtags: hashtagsSelected,
+        mentions: mentionsSelected.map(m => m.user_id.toString()),
       };
 
       // Add location if selected
-      if (location) {
-        payload.location_id = locationId || undefined;
-        payload.location_name = location;
-      }
+      // if (location) {
+      //   payload.location_id = locationId || undefined;
+      //   payload.location_name = location;
+      // }
 
       // If files are provided, upload them first
       if (imageFiles && imageFiles.length > 0) {
@@ -239,13 +259,17 @@ export function PostCreator() {
       // Create post
       const createdPost = await postService.createPost(payload);
 
+      emit('post:created', {
+        data: createdPost
+      });
+
       // Reset form
       setContent('');
       setImages([]);
       setImageFiles([]);
       setHashtags([]);
-      setLocation('');
-      setLocationId('');
+      // setLocation('');
+      // setLocationId('');
       setMentions([]);
 
       // WebSocket event will be emitted by server after post creation
@@ -265,7 +289,7 @@ export function PostCreator() {
   };
 
   return (
-    <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
+    <Card className="relative z-1 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
       <CardContent className="p-4 space-y-4">
         <div className="flex gap-3">
           <Avatar>
@@ -287,19 +311,19 @@ export function PostCreator() {
                   <CommandList>
                     <CommandEmpty>Không tìm thấy người dùng</CommandEmpty>
                     <CommandGroup heading="Gợi ý">
-                      {USERS.filter(user =>
-                        user.name.toLowerCase().includes(mentionSearch.toLowerCase())
+                      {mentions.filter(user =>
+                        user.username.toLowerCase().includes(mentionSearch.toLowerCase())
                       ).map((user) => (
                         <CommandItem
-                          key={user.id}
-                          onSelect={() => handleSelectMention(user.name)}
+                          key={user.user_id}
+                          onSelect={() => handleSelectMention(user)}
                           className="flex items-center"
                         >
                           <Avatar className="h-6 w-6 mr-2">
-                            <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback>{user.name[0]}</AvatarFallback>
+                            <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                            <AvatarFallback>{user.username[0]}</AvatarFallback>
                           </Avatar>
-                          {user.name}
+                          {user.full_name}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -363,9 +387,9 @@ export function PostCreator() {
           </div>
         )}
 
-        {hashtags.length > 0 && (
+        {hashtagsSelected.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {hashtags.map((tag) => (
+            {hashtagsSelected.map((tag) => (
               <div key={tag} className="bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-md text-sm flex items-center">
                 #{tag}
                 <Button
@@ -402,7 +426,7 @@ export function PostCreator() {
                 <ImageIcon className="h-4 w-4 mr-2" />
                 Ảnh {images.length > 0 ? `(${images.length})` : ''}
               </Button>
-              <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
+              {/* <Popover open={locationPopoverOpen} onOpenChange={setLocationPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -445,7 +469,7 @@ export function PostCreator() {
                     </CommandList>
                   </Command>
                 </PopoverContent>
-              </Popover>
+              </Popover> */}
               <Button
                 type="button"
                 variant="ghost"
@@ -486,21 +510,27 @@ export function PostCreator() {
                   <Command>
                     <CommandInput
                       placeholder="Tìm hoặc tạo hashtag..."
-                      value={currentHashtag}
+                      value={currentHashtag!}
                       onValueChange={setCurrentHashtag}
                     />
                     <CommandList>
                       <CommandEmpty>
+                        {loadingHashtag ? (
+                          <div className="flex justify-center py-4">
+                            <Loader2 className="h-5 w-5 animate-spin text-purple-600" />
+                          </div>
+                        ) : (
+                          'Không tìm thấy hashtags'
+                        )}
                         <div className="py-2 px-4">
-                          <p className="text-sm">Không tìm thấy hashtag</p>
                           {currentHashtag && (
                             <Button
                               variant="outline"
                               size="sm"
                               className="mt-2 w-full"
                               onClick={() => {
-                                if (currentHashtag && !hashtags.includes(currentHashtag)) {
-                                  setHashtags([...hashtags, currentHashtag]);
+                                if (currentHashtag && !hashtags.map(item => item.slug).includes(currentHashtag)) {
+                                  setHashtagsSelected([...hashtagsSelected, currentHashtag]);
                                   setCurrentHashtag('');
                                   setHashtagPopoverOpen(false);
                                 }
@@ -512,19 +542,21 @@ export function PostCreator() {
                         </div>
                       </CommandEmpty>
                       <CommandGroup heading="Hashtag phổ biến">
-                        {POPULAR_HASHTAGS.map((item) => (
+                        {hashtags.map((item) => (
                           <CommandItem
-                            key={item.tag}
+                            key={item.tag_id}
                             onSelect={() => {
-                              if (!hashtags.includes(item.tag)) {
-                                setHashtags([...hashtags, item.tag]);
+                              console.log(item);
+                              if (!hashtagsSelected.includes(item.slug)) {
+                                console.log(item);
+                                setHashtagsSelected([...hashtagsSelected, item.slug]);
                               }
                               setHashtagPopoverOpen(false);
                             }}
                           >
                             <Hash className="mr-2 h-4 w-4" />
-                            {item.tag}
-                            <span className="ml-auto text-xs text-muted-foreground">{item.posts} bài viết</span>
+                            {item.slug}
+                            <span className="ml-auto text-xs text-muted-foreground">{item.name}</span>
                           </CommandItem>
                         ))}
                       </CommandGroup>

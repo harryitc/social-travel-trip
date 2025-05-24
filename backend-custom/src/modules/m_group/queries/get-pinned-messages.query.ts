@@ -1,7 +1,8 @@
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { QueryHandler, IQuery, IQueryHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { GroupMessage } from '../models/group.model';
+import { NotFoundException, UnauthorizedException } from '@common/exceptions';
 
 export class GetPinnedMessagesQuery implements IQuery {
   constructor(
@@ -19,15 +20,18 @@ export class GetPinnedMessagesQueryHandler
   constructor(private readonly repository: GroupRepository) {}
 
   async execute(query: GetPinnedMessagesQuery): Promise<any> {
-    const { groupId } = query;
+    const { groupId, userId } = query;
 
-    // // Verify member is in group
-    // const membersResult = await this.repository.getGroupMembers(groupId);
-    // const member = membersResult.rows.find((m) => m.user_id == userId);
+    // Verify member is in group
+    const membersResult = await this.repository.getGroupMembers(groupId);
+    const member = membersResult.rows.find((m) => m.user_id == userId);
 
-    // if (!member) {
-    //   throw new UnauthorizedException('User is not a member of this group');
-    // }
+    if (!member) {
+      this.logger.warn(
+        `User ${userId} attempted to access pinned messages from group ${groupId} without membership`,
+      );
+      throw new UnauthorizedException('User is not a member of this group');
+    }
 
     // Get pinned messages
     const result = await this.repository.getPinnedMessages(groupId);

@@ -57,12 +57,14 @@ export class PostStats {
   total_likes: number;
   total_comments: number;
   reactions: ReactionCountModel[];
+  user_reaction: number | null; // Add user reaction
   constructor(data: any) {
     this.total_likes = get(data, 'total_likes', 0);
     this.total_comments = get(data, 'total_comments', 0);
     this.reactions = get(data, 'reactions', [])?.map(
       (reaction: any) => new ReactionCountModel(reaction),
     );
+    this.user_reaction = get(data, 'user_reaction', null);
   }
 }
 
@@ -94,23 +96,6 @@ export class Post {
     this.stats = new PostStats(data?.stats);
   }
 
-  /**
-   * Create a Post instance from API response
-   * @param data API response data
-   * @returns Post instance
-   */
-  static fromResponse(data: any): Post {
-    return new Post(data);
-  }
-
-  /**
-   * Create an array of Post instances from API response
-   * @param data API response data
-   * @returns Array of Post instances
-   */
-  static fromResponseArray(data: any[]): Post[] {
-    return data.map((item) => Post.fromResponse(item));
-  }
 }
 
 /**
@@ -123,13 +108,11 @@ export class PostQueryResponse {
   limit: number;
 
   constructor(data: any) {
-    console.log(data);
-    this.data = Array.isArray(data.data)
-      ? data.data.map((post: any) => Post.fromResponse(post))
-      : [];
-    this.total = data.total || 0;
-    this.page = data.page || 1;
-    this.limit = data.limit || 10;
+
+    this.data = get(data, 'data', []).map((item: any) => new Post(item));
+    this.total = get(data, 'total', 0);
+    this.page = get(data, 'page', 1);
+    this.limit = get(data, 'limit', 10);
   }
 
   /**

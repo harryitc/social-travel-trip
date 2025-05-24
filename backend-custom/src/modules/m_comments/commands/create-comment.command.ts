@@ -12,7 +12,7 @@ import { UserService } from '@modules/user/user.service';
 import { PostRepository } from '@modules/m_posts/repositories/post.repository';
 import { CommentReplyEvent } from '@modules/m_notify/events/comment-reply.event';
 import { PostCommentEvent } from '@modules/m_notify/events/post-comment.event';
-import { WebsocketService, WebsocketEvent } from '@modules/m_websocket/websocket.service';
+import { WebsocketService } from '@modules/m_websocket/websocket.service';
 
 export class CreateCommentCommand implements ICommand {
   constructor(
@@ -45,7 +45,8 @@ export class CreateCommentCommandHandler
         throw new NotFoundException(`Post with ID ${data.postId} not found`);
       }
 
-      // Validate parent comment exists if provided
+      // Validate parent comment exists if provided and enforce 2-level hierarchy
+      let finalParentId = data.parentId;
       if (data.parentId) {
         const parentCommentResult = await this.repository.getCommentById(
           data.parentId,
@@ -59,40 +60,87 @@ export class CreateCommentCommandHandler
             `Parent comment with ID ${data.parentId} not found`,
           );
         }
+
+        const parentComment = parentCommentResult.rows[0];
+
+        // If the parent comment already has a parent (it's a level 2 comment),
+        // then make this comment a sibling (also level 2) by using the same parent
+        if (parentComment.parent_id) {
+          finalParentId = parentComment.parent_id;
+          this.logger.log(
+            `Comment ${data.parentId} is already level 2, making new comment sibling with parent ${finalParentId}`
+          );
+        }
       }
 
-      // Create comment
-      const insertResult = await this.repository.createComment(data, user_id);
+      // Create comment with the adjusted parent ID
+      const adjustedData = { ...data, parentId: finalParentId };
+      const insertResult = await this.repository.createComment(adjustedData, user_id);
       const createdComment = insertResult.rows[0];
 
       // Get user details for WebSocket event
       const commenter = await this.userService.findById(user_id);
 
       if (commenter && createdComment) {
-        // Emit WebSocket event for new comment
+        // Get comment thread participants for targeted WebSocket notification
+        let threadParticipantIds: number[] = [];
         try {
-          const eventData = {
-            comment: createdComment,
-            postId: data.postId,
+          const participantsResult =
+            await this.repository.getCommentThreadParticipants(data.postId);
+          if (participantsResult && participantsResult.rows) {
+            threadParticipantIds = participantsResult.rows.map(
+              (row: any) => row.user_id,
+            );
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to get thread participants: ${error.message}`,
+          );
+        }
+
+        // Emit WebSocket event for new comment to relevant users only
+        try {
+          const commenterData = {
             userId: user_id,
             userName: commenter.full_name || commenter.username || 'A user',
             userAvatar: commenter.avatar_url || null,
-            parentId: data.parentId || null,
           };
 
-          this.logger.log(`Emitting WebSocket event for new comment on post: ${data.postId}`);
-          this.websocketService.sendToAll(WebsocketEvent.COMMENT_CREATED, eventData);
+          const commentData = {
+            ...createdComment,
+            parentId: finalParentId || null,
+          };
+
+          // Get post details to find post author
+          const postResult = await this.postRepository.getPostById(data.postId);
+          const postAuthorId = postResult?.rows?.[0]?.user_id;
+
+          this.logger.log(
+            `Emitting WebSocket event for new comment on post: ${data.postId} to relevant users`,
+          );
+
+          // Use the improved notifyNewComment method that targets specific users
+          // this.websocketService.notifyNewComment(
+          //   data.postId,
+          //   postAuthorId,
+          //   user_id,
+          //   commenterData,
+          //   commentData,
+          //   threadParticipantIds,
+          // );
         } catch (wsError) {
-          this.logger.error(`Failed to emit WebSocket event: ${wsError.message}`);
+          this.logger.error(
+            `Failed to emit WebSocket event: ${wsError.message}`,
+          );
         }
       }
 
       // Check if this is a reply to another comment
-      if (data.parentId) {
+      if (finalParentId) {
         // This is a reply to another comment
         // Get the parent comment to find its owner
         const parentCommentResult = await this.repository.getCommentById(
-          data.parentId,
+          finalParentId,
         );
 
         if (
@@ -114,7 +162,7 @@ export class CreateCommentCommandHandler
                 new CommentReplyEvent(
                   commentOwnerId,
                   data.postId,
-                  data.parentId,
+                  finalParentId,
                   createdComment.post_comment_id,
                   user_id,
                   replier.full_name || replier.username || 'A user',
