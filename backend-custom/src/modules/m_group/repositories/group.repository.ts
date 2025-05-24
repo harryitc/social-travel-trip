@@ -297,6 +297,41 @@ export class GroupRepository {
     return this.client.execute(query, params);
   }
 
+  async getMessageWithUserInfo(messageId: number) {
+    const query = `
+      SELECT
+        gm.*,
+        u.username,
+        u.full_name,
+        u.avatar_url,
+        -- Get nickname from group_members
+        gm_info.nickname,
+        -- Reply information
+        reply_msg.message as reply_to_message,
+        reply_user.username as reply_to_username,
+        reply_gm_info.nickname as reply_to_nickname,
+        (
+          SELECT COUNT(*)
+          FROM message_likes ml
+          WHERE ml.group_message_id = gm.group_message_id AND ml.reaction_id > 1
+        ) as like_count,
+        EXISTS (
+          SELECT 1
+          FROM message_pins mp
+          WHERE mp.group_message_id = gm.group_message_id AND mp.group_id = gm.group_id
+        ) as is_pinned
+      FROM group_messages gm
+      LEFT JOIN users u ON gm.user_id = u.user_id
+      LEFT JOIN group_members gm_info ON gm.user_id = gm_info.user_id AND gm_info.group_id = gm.group_id
+      LEFT JOIN group_messages reply_msg ON gm.reply_to_message_id = reply_msg.group_message_id
+      LEFT JOIN users reply_user ON reply_msg.user_id = reply_user.user_id
+      LEFT JOIN group_members reply_gm_info ON reply_msg.user_id = reply_gm_info.user_id AND reply_gm_info.group_id = gm.group_id
+      WHERE gm.group_message_id = $1
+    `;
+
+    return this.client.execute(query, [messageId]);
+  }
+
   async getMessages(data: GetMessagesDto) {
     const { group_id, page = 1, limit = 10, before_id } = data;
     const offset = (page - 1) * limit;

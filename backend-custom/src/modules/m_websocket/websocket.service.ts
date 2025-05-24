@@ -332,7 +332,15 @@ export class WebsocketService {
       `📡 Sending message notification to group room: ${roomName}`,
     );
     this.logger.debug(
-      `📨 Message data: ${JSON.stringify({ groupId, senderId, messageId: messageData.group_message_id })}`,
+      `📨 Message data: ${JSON.stringify({
+        groupId,
+        senderId,
+        messageId: messageData.group_message_id,
+        username: messageData.username,
+        nickname: messageData.nickname,
+        avatar_url: messageData.avatar_url,
+        hasUserInfo: !!(messageData.username || messageData.nickname)
+      })}`,
     );
 
     // Get room info for debugging (with null checks)

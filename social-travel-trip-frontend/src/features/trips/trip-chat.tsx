@@ -123,6 +123,17 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
   const displayName = backendMessage.nickname || backendMessage.username || backendMessage.user?.username || `User ${backendMessage.user_id}`;
   const avatarUrl = backendMessage.avatar_url || backendMessage.user?.avatar_url || 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1';
 
+  // Debug log for user info extraction
+  console.log('🔄 [TripChat] Transforming message:', {
+    messageId: backendMessage.group_message_id,
+    userId: backendMessage.user_id,
+    nickname: backendMessage.nickname,
+    username: backendMessage.username,
+    avatar_url: backendMessage.avatar_url,
+    finalDisplayName: displayName,
+    finalAvatarUrl: avatarUrl
+  });
+
   return {
     id: backendMessage.group_message_id.toString(),
     content: backendMessage.message,
@@ -221,6 +232,13 @@ export function TripChat({ tripId }: TripChatProps) {
     // Set up event listeners first
     const handleNewMessage = (data: { groupId: number; senderId: number; message: any }) => {
       console.log('📨 [TripChat] Received new message:', data);
+      console.log('🔍 [TripChat] Message user info:', {
+        username: data.message?.username,
+        nickname: data.message?.nickname,
+        avatar_url: data.message?.avatar_url,
+        user_id: data.message?.user_id,
+        hasUserInfo: !!(data.message?.username || data.message?.nickname)
+      });
       if (data.groupId.toString() === tripId) {
         const transformedMessage = transformMessage(data.message);
         console.log('✅ [TripChat] Adding message to chat:', transformedMessage);

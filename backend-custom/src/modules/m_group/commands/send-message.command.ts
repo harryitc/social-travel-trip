@@ -36,7 +36,7 @@ export class SendMessageCommandHandler
 
     // Create message
     const result = await this.repository.sendMessage(dto, userId);
-    const messageData = new GroupMessage(result.rows[0]);
+    const basicMessageData = new GroupMessage(result.rows[0]);
 
     try {
       // Get all group members for WebSocket notification
@@ -46,17 +46,50 @@ export class SendMessageCommandHandler
         `Preparing WebSocket notification for group ${dto.group_id}, members: ${memberIds.join(', ')}, sender: ${userId}`,
       );
 
-      // Send WebSocket notification to group members
-      this.websocketService.notifyGroupMessage(
-        dto.group_id,
-        memberIds,
-        userId,
-        messageData,
+      // Fetch complete message with user information for WebSocket
+      const enrichedMessageResult = await this.repository.getMessageWithUserInfo(
+        basicMessageData.group_message_id,
       );
 
-      this.logger.debug(
-        `✅ Sent WebSocket notification for new message in group ${dto.group_id}`,
-      );
+      if (enrichedMessageResult.rowCount > 0) {
+        const enrichedMessageData = new GroupMessage(enrichedMessageResult.rows[0]);
+
+        this.logger.debug(
+          `📝 Enriched message data: ${JSON.stringify({
+            messageId: enrichedMessageData.group_message_id,
+            username: enrichedMessageData.username,
+            nickname: enrichedMessageData.nickname,
+            avatar_url: enrichedMessageData.avatar_url,
+          })}`,
+        );
+
+        // Send WebSocket notification to group members with enriched data
+        this.websocketService.notifyGroupMessage(
+          dto.group_id,
+          memberIds,
+          userId,
+          enrichedMessageData,
+        );
+
+        this.logger.debug(
+          `✅ Sent WebSocket notification for new message in group ${dto.group_id}`,
+        );
+
+        // Return the enriched message data
+        return enrichedMessageData;
+      } else {
+        this.logger.warn(
+          `⚠️ Could not fetch enriched message data for message ${basicMessageData.group_message_id}, falling back to basic data`,
+        );
+
+        // Fallback to basic message data for WebSocket
+        this.websocketService.notifyGroupMessage(
+          dto.group_id,
+          memberIds,
+          userId,
+          basicMessageData,
+        );
+      }
     } catch (error) {
       this.logger.error(
         `❌ Failed to send WebSocket notification for message in group ${dto.group_id}: ${error.message}`,
@@ -64,6 +97,6 @@ export class SendMessageCommandHandler
       // Don't fail the command if WebSocket notification fails
     }
 
-    return messageData;
+    return basicMessageData;
   }
 }
