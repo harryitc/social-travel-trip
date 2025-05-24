@@ -20,10 +20,11 @@ export const createGroupSchema = z.object({
     .min(1, { message: 'Địa điểm là bắt buộc' })
     .max(200, { message: 'Địa điểm không được vượt quá 200 ký tự' }),
   image: z
-    .string()
-    .refine((val) => !val || z.string().url().safeParse(val).success, {
-      message: 'URL ảnh không hợp lệ'
-    })
+    .union([
+      z.string().url({ message: 'URL ảnh không hợp lệ' }),
+      z.instanceof(File, { message: 'File ảnh không hợp lệ' }),
+      z.literal(''),
+    ])
     .optional(),
   isPrivate: z.boolean(),
 });

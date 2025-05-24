@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/radix-ui/dialog';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Input } from '@/components/ui/radix-ui/input';
@@ -10,9 +11,11 @@ import { Textarea } from '@/components/ui/radix-ui/textarea';
 
 import { Switch } from '@/components/ui/radix-ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/radix-ui/form';
-import { MapPin, ImageIcon } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import { CreateTripGroupData } from '../models/trip-group.model';
 import { createGroupSchema, CreateGroupFormValues } from '../schemas/trip-group.schema';
+import { SimpleImageUpload } from '@/components/ui/simple-image-upload';
+import { fileService } from '@/features/file/file.service';
 
 type CreateGroupDialogProps = {
   open: boolean;
@@ -21,6 +24,8 @@ type CreateGroupDialogProps = {
 };
 
 export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateGroupDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Initialize form with Zod validation
   const form = useForm<CreateGroupFormValues>({
     resolver: zodResolver(createGroupSchema),
@@ -33,22 +38,51 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
     },
   });
 
+  // Upload image function
+  const uploadImage = async (file: File): Promise<string> => {
+    try {
+      const response = await fileService.uploadFile(file);
+      // Return the file URL from the response
+      return response.files[0]?.file_url || '';
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  };
+
   // Handle form submission
-  const onSubmit = (data: CreateGroupFormValues) => {
-    // Create group data using class
-    const groupData = new CreateTripGroupData({
-      title: data.title,
-      description: data.description || '',
-      location: data.location,
-      isPrivate: data.isPrivate,
-      image: data.image || '',
-    });
+  const onSubmit = async (data: CreateGroupFormValues) => {
+    setIsSubmitting(true);
+    try {
+      let imageUrl = '';
 
-    onCreateGroup(groupData);
+      // If image is a File object, upload it first
+      if (data.image instanceof File) {
+        imageUrl = await uploadImage(data.image);
+      } else if (typeof data.image === 'string') {
+        imageUrl = data.image;
+      }
 
-    // Reset form
-    form.reset();
-    onOpenChange(false);
+      // Create group data using class
+      const groupData = new CreateTripGroupData({
+        title: data.title,
+        description: data.description || '',
+        location: data.location,
+        isPrivate: data.isPrivate,
+        image: imageUrl,
+      });
+
+      onCreateGroup(groupData);
+
+      // Reset form
+      form.reset();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error creating group:', error);
+      // Form will show validation errors automatically
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Reset form when dialog closes
@@ -154,16 +188,23 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
                     Ảnh bìa nhóm
                   </FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <ImageIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="URL ảnh bìa (tùy chọn)"
-                        className="pl-10 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600"
-                        {...field}
-                      />
-                    </div>
+                    <SimpleImageUpload
+                      value={typeof field.value === 'string' ? field.value : ''}
+                      onFileChange={(file) => {
+                        // Store the File object for upload later
+                        field.onChange(file);
+                      }}
+                      placeholder="Chọn ảnh bìa cho nhóm (tùy chọn)"
+                      maxSize={5} // 5MB
+                      className="w-full"
+                      previewSize="md"
+                      autoUpload={false}
+                    />
                   </FormControl>
                   <FormMessage className="text-sm text-red-600 dark:text-red-400" />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Hỗ trợ JPG, PNG, GIF, WebP. Tối đa 5MB.
+                  </p>
                 </FormItem>
               )}
             />
@@ -205,9 +246,9 @@ export function CreateGroupDialog({ open, onOpenChange, onCreateGroup }: CreateG
               <Button
                 type="submit"
                 className="px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-                disabled={!form.formState.isValid || form.formState.isSubmitting}
+                disabled={!form.formState.isValid || isSubmitting}
               >
-                Tạo nhóm
+                {isSubmitting ? 'Đang tạo nhóm...' : 'Tạo nhóm'}
               </Button>
             </div>
           </form>

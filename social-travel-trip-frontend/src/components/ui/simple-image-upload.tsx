@@ -299,7 +299,7 @@ export function SimpleImageUpload({
             <div key={index} className="relative group">
               <div className={`${sizeClasses[previewSize]} border border-gray-200 rounded-lg overflow-hidden`}>
                 <img
-                  src={API_ENDPOINT.file_image_v2 + preview}
+                  src={preview}
                   alt={`Preview ${index + 1}`}
                   className="w-full h-full object-cover"
                 />

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/radix-ui/label';
 import { Slider } from '@/components/ui/radix-ui/slider';
 import { Upload, Crop, RotateCw, ZoomIn, ZoomOut, X, Check, Image as ImageIcon } from 'lucide-react';
 import { notification } from 'antd';
+import { API_ENDPOINT } from '@/config/api.config';
 
 interface ImageUploadWithCropProps {
   value?: string;
@@ -244,7 +245,7 @@ export function ImageUploadWithCrop({
           <div className="relative group">
             <div className={`w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden ${cropShape === 'round' ? 'rounded-full' : ''}`}>
               <img
-                src={croppedPreview}
+                src={API_ENDPOINT.file_image_v2 + croppedPreview}
                 alt="Preview"
                 className="w-full h-full object-cover"
               />

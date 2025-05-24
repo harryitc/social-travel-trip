@@ -13,6 +13,7 @@ import { Settings, Users, Loader2, MapPin, Image as ImageIcon } from 'lucide-rea
 import { SimpleImageUpload } from '@/components/ui/upload';
 import { fileService } from '@/features/file/file.service';
 import { notification } from 'antd';
+import { API_ENDPOINT } from '@/config/api.config';
 
 interface GroupManagementDialogProps {
   open: boolean;
@@ -190,7 +191,7 @@ export function GroupManagementDialog({
                   Ảnh nhóm
                 </Label>
                 <SimpleImageUpload
-                  value={imagePreview}
+                  value={API_ENDPOINT.file_image_v2 + imagePreview}
                   onChange={(url) => {
                     setImagePreview(url || '');
                     setGroupImage(url || '');
