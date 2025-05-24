@@ -231,6 +231,19 @@ export function TripChat({ tripId }: TripChatProps) {
             console.log('⚠️ [TripChat] Message already exists, skipping:', transformedMessage.id);
             return prev;
           }
+
+          // Also check for potential duplicates by content and timestamp (for edge cases)
+          const contentDuplicate = prev.some(msg =>
+            msg.content === transformedMessage.content &&
+            msg.sender.id === transformedMessage.sender.id &&
+            Math.abs(new Date(msg.timestamp).getTime() - new Date(transformedMessage.timestamp).getTime()) < 5000 // Within 5 seconds
+          );
+
+          if (contentDuplicate) {
+            console.log('⚠️ [TripChat] Potential content duplicate detected, skipping:', transformedMessage);
+            return prev;
+          }
+
           return [...prev, transformedMessage];
         });
 
@@ -284,6 +297,7 @@ export function TripChat({ tripId }: TripChatProps) {
       console.log('🧪 [TripChat] Test event received:', data);
     };
 
+    // Register WebSocket events
     websocketService.on('group:message:sent', handleNewMessage);
     websocketService.on('group:message:liked', handleMessageLike);
     websocketService.on('group:message:unliked', handleMessageLike);
@@ -291,36 +305,21 @@ export function TripChat({ tripId }: TripChatProps) {
     websocketService.on('group:message:unpinned', handleMessagePin);
     websocketService.on('group:member:typing', handleTyping);
     websocketService.on('group:member:stop_typing', handleTyping);
-
-    // Also listen for user typing events (alternative event names)
     websocketService.on('user:typing', handleTyping);
-
-    // Listen for connection events
     websocketService.on('connection_established', handleTestEvent);
     websocketService.on('user:online', handleTestEvent);
 
-    // Connect to WebSocket after setting up event listeners
+    // Connect and join group
     websocketService.connect().then(() => {
       console.log('✅ [TripChat] WebSocket connected, joining group:', tripId);
-      console.log('🔍 [TripChat] WebSocket debug info:', websocketService.getDebugInfo());
-      // Join group room after connection is established
       websocketService.joinGroup(tripId);
     }).catch(error => {
       console.error('❌ [TripChat] WebSocket connection failed:', error);
-      console.log('🔍 [TripChat] WebSocket debug info on error:', websocketService.getDebugInfo());
     });
-
-    // Add a timeout to check WebSocket status after a delay
-    const checkTimeout = setTimeout(() => {
-      console.log('⏰ [TripChat] WebSocket status check after 3 seconds:', websocketService.getDebugInfo());
-    }, 3000);
 
     // Cleanup on unmount
     return () => {
       console.log('🧹 [TripChat] Cleaning up WebSocket events for group:', tripId);
-
-      // Clear timeout
-      clearTimeout(checkTimeout);
 
       websocketService.off('group:message:sent', handleNewMessage);
       websocketService.off('group:message:liked', handleMessageLike);
@@ -572,11 +571,12 @@ export function TripChat({ tripId }: TripChatProps) {
         throw new Error('Phản hồi từ server không hợp lệ');
       }
 
-      // Transform and add to local state
-      const transformedMessage = transformMessage(sentMessage);
-      setMessages(prev => [...prev, transformedMessage]);
+      // Don't add to local state here - let WebSocket handle it
+      // This prevents duplicate messages when WebSocket emits the same message
+      console.log('✅ [TripChat] Message sent successfully, waiting for WebSocket confirmation');
 
       // Emit event that message was sent
+      const transformedMessage = transformMessage(sentMessage);
       emit('chat:message_sent', {
         groupId: tripId,
         message: transformedMessage
@@ -740,12 +740,14 @@ export function TripChat({ tripId }: TripChatProps) {
                 <ChatSkeleton />
               ) : (
                 <div className="space-y-4 px-2">
-                  {messages.map((message) => {
+                  {messages.map((message, index) => {
                     const isOwnMessage = message.sender.id === (user?.id || '1');
+                    // Use combination of id and index to ensure unique keys
+                    const uniqueKey = `${message.id}-${index}`;
                     return (
                       <div
                         id={`message-${message.id}`}
-                        key={message.id}
+                        key={uniqueKey}
                         className={`flex gap-3 transition-all duration-200 ${
                           isOwnMessage ? 'flex-row-reverse' : ''
                         }`}
