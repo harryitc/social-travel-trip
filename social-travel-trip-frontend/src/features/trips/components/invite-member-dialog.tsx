@@ -80,7 +80,7 @@ export function InviteMemberDialog({
 
       notification.error({
         message: 'Lỗi mời thành viên',
-        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi mời thành viên',
+        description: error?.response?.data?.reasons?.message || error.message || 'Có lỗi xảy ra khi mời thành viên',
         placement: 'topRight',
         duration: 5,
       });

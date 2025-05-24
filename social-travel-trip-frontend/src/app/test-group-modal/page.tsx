@@ -29,7 +29,7 @@ export default function TestGroupModalPage() {
 
       notification.error({
         message: 'Lỗi tạo nhóm',
-        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo nhóm',
+        description: error?.response?.data?.reasons?.message || error.message || 'Có lỗi xảy ra khi tạo nhóm',
         placement: 'topRight',
         duration: 5,
       });

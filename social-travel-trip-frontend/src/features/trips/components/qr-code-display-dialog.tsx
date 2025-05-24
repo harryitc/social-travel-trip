@@ -55,7 +55,7 @@ export function QRCodeDisplayDialog({
       console.error('Error generating QR code:', error);
       notification.error({
         message: 'Lỗi tạo mã QR',
-        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tạo mã QR',
+        description: error?.response?.data?.reasons?.message || error.message || 'Có lỗi xảy ra khi tạo mã QR',
         placement: 'topRight',
         duration: 5,
       });

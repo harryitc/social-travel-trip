@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { TripGroup } from '@/features/trips/models/trip-group.model';
 import { tripGroupService } from '@/features/trips/services/trip-group.service';
 import { GroupChatList } from '@/features/trips/components/group-chat-list';
@@ -10,45 +10,27 @@ import { useEventListeners } from '@/features/stores/useEventListeners';
 import { useEventStore } from '@/features/stores/event.store';
 
 /**
- * Parallel Route: @groups/trips/[id]
- * Left column - Group list with specific group pre-selected
+ * Parallel Route: @groups/trips
+ * Left column - Group list without pre-selection
  */
 export default function GroupsDetailPage() {
   const router = useRouter();
-  const params = useParams();
   const { emit } = useEventStore();
 
   const [allGroups, setAllGroups] = useState<TripGroup[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
-  const tripId = params.id as string;
-
   // Load groups from API
   const loadGroups = async () => {
     try {
       setLoading(true);
-      console.log('📋 [GroupsDetailPage] Loading groups list for trip:', tripId);
+      console.log('📋 [GroupsPage] Loading groups list');
       const groups = await tripGroupService.getAllGroups();
-      console.log('✅ [GroupsDetailPage] Groups loaded:', groups.length, 'groups');
+      console.log('✅ [GroupsPage] Groups loaded:', groups.length, 'groups');
       setAllGroups(groups);
-
-      // Auto-select group based on URL parameter
-      if (tripId && groups.length > 0) {
-        const group = groups.find(g => g.id === tripId || g.group_id.toString() === tripId);
-        if (group) {
-          console.log('✅ [GroupsDetailPage] Found trip group:', group.title);
-          handleSelectGroup(group);
-        } else {
-          console.log('❌ [GroupsDetailPage] Trip group not found, selecting first group');
-          handleSelectGroup(groups[0]);
-        }
-      } else if (groups.length > 0) {
-        console.log('📌 [GroupsDetailPage] Auto-selecting first group:', groups[0].title);
-        handleSelectGroup(groups[0]);
-      }
     } catch (error) {
-      console.error('❌ [GroupsDetailPage] Error loading groups:', error);
+      console.error('❌ [GroupsPage] Error loading groups:', error);
     } finally {
       setLoading(false);
     }
@@ -56,11 +38,11 @@ export default function GroupsDetailPage() {
 
   // Handle group selection with Zustand events
   const handleSelectGroup = (group: TripGroup) => {
-    console.log('🎯 [GroupsDetailPage] Selected group:', group.id, group.title);
+    console.log('🎯 [GroupsPage] Selected group:', group.id, group.title);
     setSelectedGroupId(group.id);
 
-    // Update URL
-    router.replace(`/trips/${group.id}`);
+    // Update URL to specific trip
+    router.push(`/trips/${group.id}`);
 
     // Emit event for other components to listen
     emit('group:selected', { group });
@@ -68,7 +50,7 @@ export default function GroupsDetailPage() {
 
   useEffect(() => {
     loadGroups();
-  }, [tripId]);
+  }, []);
 
   // Listen to group events
   useEventListeners({

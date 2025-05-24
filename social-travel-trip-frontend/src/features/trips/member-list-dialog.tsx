@@ -61,7 +61,7 @@ export function MemberListDialog({ groupId, isOpen, onClose, onInvite }: MemberL
       console.error('Error loading group members:', error);
       notification.error({
         message: 'Lỗi tải danh sách thành viên',
-        description: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi tải danh sách thành viên',
+        description: error?.response?.data?.reasons?.message || error.message || 'Có lỗi xảy ra khi tải danh sách thành viên',
         placement: 'topRight',
         duration: 3,
       });

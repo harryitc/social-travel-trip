@@ -1,10 +1,13 @@
-/**
- * Default trips page - Uses parallel routes for 3-column layout
- * The actual content is rendered by:
- * - @groups/page.tsx (left column)
- * - @chat/page.tsx (center column)
- * - @details/page.tsx (right column)
- */
+'use client'
+
+import { GroupChatDetails } from "@/features/trips/GroupChatDetails";
+import { TripChat } from "@/features/trips/trip-chat";
+
 export default function TripsPage() {
-  return null;
+  return (
+    <>
+      <TripChat tripId={''}></TripChat>
+      <GroupChatDetails groupId={''}></GroupChatDetails>
+    </>
+  )
 }

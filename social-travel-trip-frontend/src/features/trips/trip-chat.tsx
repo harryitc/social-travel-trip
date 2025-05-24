@@ -16,7 +16,10 @@ import {
   MessageSquareQuote,
   Download,
   File as FileIcon,
-  Heart
+  Heart,
+  Search,
+  Plus,
+  Users
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -63,9 +66,6 @@ interface Message {
 
 type TripChatProps = {
   tripId: string;
-  members?: TripGroupMember[];
-  isTablet?: boolean;
-  isVerticalLayout?: boolean;
 };
 
 // Helper function to transform backend message to UI message
@@ -85,7 +85,7 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
   };
 };
 
-export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }: TripChatProps) {
+export function TripChat({ tripId }: TripChatProps) {
   const user: any = null; // TODO: Get from auth context
   const { emit } = useEventStore();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -137,7 +137,7 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
         console.error('❌ [TripChat] Error loading messages:', error);
         notification.error({
           message: 'Lỗi',
-          description:  error.response?.data?.message || 'Không thể tải tin nhắn. Vui lòng thử lại sau.',
+          description: error?.response?.data?.reasons?.message || 'Không thể tải tin nhắn. Vui lòng thử lại sau.',
           placement: 'topRight',
         });
         setMessages([]);
@@ -374,7 +374,7 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
       console.error('❌ [TripChat] Error sending message:', error);
       notification.error({
         message: 'Lỗi',
-        description: error.response?.data?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.',
+        description: error?.response?.data?.reasons?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.',
         placement: 'topRight',
       });
     }
@@ -409,290 +409,347 @@ export function TripChat({ tripId, isTablet = false, isVerticalLayout = false }:
     }
   };
 
+  // Handle create group from empty state
+  const handleCreateGroupFromEmpty = () => {
+    // Trigger create group dialog from GroupChatList component
+    const createButton = document.querySelector('[data-create-group-trigger]') as HTMLButtonElement;
+    if (createButton) {
+      createButton.click();
+    }
+  };
+
+  // Handle search from empty state
+  const handleSearchFromEmpty = () => {
+    // Focus on search input
+    const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+    }
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className={`flex-1 ${isTablet ? 'p-2' : 'p-3'} ${isVerticalLayout ? 'pt-1' : ''}`}>
-        <PinnedMessages
-          messages={messages}
-          onUnpin={handlePinMessage}
-          onScrollToMessage={scrollToMessage}
-          isTablet={isTablet}
-        />
+    <>
+      {
+        tripId ? (
+          <div className="flex flex-col h-full">
+            <ScrollArea className={`flex-1 p-3`}>
+              <PinnedMessages
+                messages={messages}
+                onUnpin={handlePinMessage}
+                onScrollToMessage={scrollToMessage}
+              />
 
-        {loading ? (
-          <ChatSkeleton />
-        ) : (
-          <div className={`${isTablet ? 'space-y-2' : 'space-y-3'}`}>
-          {messages.map((message) => (
-            <div
-              id={`message-${message.id}`}
-              key={message.id}
-              className={`flex ${isTablet ? 'gap-1.5' : 'gap-2'} transition-colors duration-300 ${
-                message.sender.id === (user?.id || '1') ? 'flex-row-reverse' : ''
-              }`}
-            >
-              <Avatar className={`${isTablet ? 'h-6 w-6' : 'h-8 w-8'} shrink-0 border border-white shadow-xs`}>
-                <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
-                <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
-              </Avatar>
+              {loading ? (
+                <ChatSkeleton />
+              ) : (
+                <div className={`space-y-3`}>
+                  {messages.map((message) => (
+                    <div
+                      id={`message-${message.id}`}
+                      key={message.id}
+                      className={`gap-2 transition-colors duration-300 ${message.sender.id === (user?.id || '1') ? 'flex-row-reverse' : ''
+                        }`}
+                    >
+                      <Avatar className="h-8 w-8 shrink-0 border border-white shadow-xs">
+                        <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
+                        <AvatarFallback>{message.sender.name[0]}</AvatarFallback>
+                      </Avatar>
 
-              <div className={`flex flex-col ${isTablet ? 'gap-0.5' : 'gap-1'} max-w-[80%] ${
+                      <div className="flex flex-col gap-1 max-w-[80%] ${
                 message.sender.id === (user?.id || '1') ? 'items-end' : ''
-              }`}>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-medium">{message.sender.name}</span>
-                  <span className="text-xs text-muted-foreground">{message.timestamp}</span>
+              }">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-medium">{message.sender.name}</span>
+                          <span className="text-xs text-muted-foreground">{message.timestamp}</span>
 
-                  {message.pinned && (
-                    <Pin className="h-3 w-3 text-purple-600" />
-                  )}
-                </div>
+                          {message.pinned && (
+                            <Pin className="h-3 w-3 text-purple-600" />
+                          )}
+                        </div>
 
-                <div className={`relative rounded-lg ${isTablet ? 'p-2' : 'p-2.5'} group ${
+                        <div className="relative rounded-lg p-2.5 group ${
                   message.sender.id === (user?.id || '1')
                     ? 'bg-purple-600 text-white shadow-xs'
                     : 'bg-secondary shadow-xs'
-                }`}>
-                  {message.replyTo && (
-                    <div className={`${isTablet ? 'mb-1.5 p-1.5' : 'mb-2 p-2'} rounded text-xs flex items-start gap-1 ${
+                }">
+                          {message.replyTo && (
+                            <div className="mb-2 p-2 rounded text-xs flex items-start gap-1 ${
                       message.sender.id === (user?.id || '1')
                         ? 'bg-purple-700/50'
                         : 'bg-secondary-foreground/10'
-                    }`}>
-                      <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium">{message.replyTo.sender.name}</div>
-                        <div className="truncate message-content">{message.replyTo.content}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="text-sm message-content">{message.content}</p>
-
-                  {/* Like count */}
-                  {message.likeCount && message.likeCount > 0 && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <Heart className="h-3 w-3 text-red-500 fill-current" />
-                      <span className="text-xs text-muted-foreground">{message.likeCount}</span>
-                    </div>
-                  )}
-
-                  {message.attachments && message.attachments.length > 0 && (
-                    <div className={`${isTablet ? 'mt-1.5 space-y-1.5' : 'mt-2 space-y-2'}`}>
-                      {message.attachments.map((attachment, index) => (
-                        attachment.type === 'image' ? (
-                          <div key={index} className="rounded-md overflow-hidden border border-white/20">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={attachment.url}
-                              alt={attachment.name}
-                              className={`${isTablet ? 'max-w-[200px]' : 'max-w-sm'} object-cover`}
-                            />
-                          </div>
-                        ) : (
-                          <div key={index} className={`flex items-center justify-between gap-2 text-sm bg-secondary-foreground/10 ${isTablet ? 'p-1.5' : 'p-2'} rounded`}>
-                            <div className="flex items-center gap-2">
-                              <FileIcon className="h-4 w-4" />
-                              <div className="flex flex-col">
-                                <span className={`truncate ${isTablet ? 'max-w-[120px]' : 'max-w-[150px]'}`}>{attachment.name}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {attachment.size ? `${Math.round(attachment.size / 1024)} KB` : ''}
-                                </span>
+                    }">
+                              <MessageSquareQuote className="h-3 w-3 shrink-0 mt-0.5" />
+                              <div>
+                                <div className="font-medium">{message.replyTo.sender.name}</div>
+                                <div className="truncate message-content">{message.replyTo.content}</div>
                               </div>
                             </div>
-                            <a
-                              href={attachment.url}
-                              download={attachment.name}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1 hover:bg-secondary-foreground/20 rounded"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Download className="h-3 w-3" />
-                            </a>
+                          )}
+
+                          <p className="text-sm message-content">{message.content}</p>
+
+                          {/* Like count */}
+                          {message.likeCount && message.likeCount > 0 && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Heart className="h-3 w-3 text-red-500 fill-current" />
+                              <span className="text-xs text-muted-foreground">{message.likeCount}</span>
+                            </div>
+                          )}
+
+                          {message.attachments && message.attachments.length > 0 && (
+                            <div className="mt-2 space-y-2">
+                              {message.attachments.map((attachment, index) => (
+                                attachment.type === 'image' ? (
+                                  <div key={index} className="rounded-md overflow-hidden border border-white/20">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={attachment.url}
+                                      alt={attachment.name}
+                                      className="max-w-sm object-cover"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div key={index} className="flex items-center justify-between gap-2 text-sm bg-secondary-foreground/10 p-2 rounded">
+                                    <div className="flex items-center gap-2">
+                                      <FileIcon className="h-4 w-4" />
+                                      <div className="flex flex-col">
+                                        <span className="truncate max-w-[150px]">{attachment.name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {attachment.size ? `${Math.round(attachment.size / 1024)} KB` : ''}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <a
+                                      href={attachment.url}
+                                      download={attachment.name}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="p-1 hover:bg-secondary-foreground/20 rounded"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <Download className="h-3 w-3" />
+                                    </a>
+                                  </div>
+                                )
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="absolute ${message.sender.id === (user?.id || '1') ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === (user?.id || '1') ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-xs shadow-xs">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align={message.sender.id === (user?.id || '1') ? "end" : "start"}>
+                                <DropdownMenuItem onClick={() => handleLikeMessage(message.id)}>
+                                  <Heart className="h-4 w-4 mr-2" />
+                                  Thích
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
+                                  <Reply className="h-4 w-4 mr-2" />
+                                  Phản hồi
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handlePinMessage(message.id)}>
+                                  <Pin className="h-4 w-4 mr-2" />
+                                  {message.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
-                        )
-                      ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Typing indicator */}
+                  {typingUsers.size > 0 && (
+                    <div className="flex gap-2 items-center">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {typingUsers.size === 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
+                      </span>
                     </div>
                   )}
 
-                  <div className={`absolute ${message.sender.id === (user?.id || '1') ? 'left-0' : 'right-0'} top-1/2 -translate-y-1/2 ${message.sender.id === (user?.id || '1') ? '-translate-x-full' : 'translate-x-full'} opacity-0 group-hover:opacity-100 transition-opacity`}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className={`${isTablet ? 'h-6 w-6' : 'h-8 w-8'} rounded-full bg-background/80 backdrop-blur-xs shadow-xs`}>
-                          <MoreVertical className={`${isTablet ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                  <div ref={messageEndRef} />
+                </div>
+              )}
+            </ScrollArea>
+
+            <div className="p-2 ${isVerticalLayout ? 'border-t-0' : 'border-t'} border-purple-100 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-900/10">
+              {/* Image preview area */}
+              {imagePreviewUrls.length > 0 && (
+                <div className="mb-1.5">
+                  <div className="text-xs text-muted-foreground mb-1">Hình ảnh ({imagePreviewUrls.length})</div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {imagePreviewUrls.map((url, index) => (
+                      <div key={index} className="relative w-12 h-12 rounded-md overflow-hidden bg-secondary border border-purple-100 dark:border-purple-800">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="preview" className="w-full h-full object-cover" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-0 right-0 h-4 w-4 p-0 bg-black/50 rounded-full"
+                          onClick={() => handleRemoveImage(index)}
+                        >
+                          <X className="h-2.5 w-2.5 text-white" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align={message.sender.id === (user?.id || '1') ? "end" : "start"}>
-                        <DropdownMenuItem onClick={() => handleLikeMessage(message.id)}>
-                          <Heart className="h-4 w-4 mr-2" />
-                          Thích
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleReplyMessage(message)}>
-                          <Reply className="h-4 w-4 mr-2" />
-                          Phản hồi
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handlePinMessage(message.id)}>
-                          <Pin className="h-4 w-4 mr-2" />
-                          {message.pinned ? 'Bỏ ghim' : 'Ghim tin nhắn'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              )}
 
-          {/* Typing indicator */}
-          {typingUsers.size > 0 && (
-            <div className="flex gap-2 items-center">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              </div>
-              <span className="text-xs text-muted-foreground">
-                {typingUsers.size === 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
-              </span>
-            </div>
-          )}
-
-          <div ref={messageEndRef} />
-          </div>
-        )}
-      </ScrollArea>
-
-      <div className={`${isTablet ? 'p-1.5' : 'p-2'} ${isVerticalLayout ? 'border-t-0' : 'border-t'} border-purple-100 dark:border-purple-900 bg-purple-50/30 dark:bg-purple-900/10`}>
-        {/* Image preview area */}
-        {imagePreviewUrls.length > 0 && (
-          <div className={`${isTablet ? 'mb-1' : 'mb-1.5'}`}>
-            <div className="text-xs text-muted-foreground mb-1">Hình ảnh ({imagePreviewUrls.length})</div>
-            <div className="flex flex-wrap gap-1.5">
-              {imagePreviewUrls.map((url, index) => (
-                <div key={index} className={`relative ${isTablet ? 'w-10 h-10' : 'w-12 h-12'} rounded-md overflow-hidden bg-secondary border border-purple-100 dark:border-purple-800`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="preview" className="w-full h-full object-cover" />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-0 right-0 h-4 w-4 p-0 bg-black/50 rounded-full"
-                    onClick={() => handleRemoveImage(index)}
-                  >
-                    <X className="h-2.5 w-2.5 text-white" />
-                  </Button>
+              {/* File preview area */}
+              {selectedFiles.length > 0 && (
+                <div className="mb-1.5">
+                  <div className="text-xs text-muted-foreground mb-1">Tệp đính kèm ({selectedFiles.length})</div>
+                  <div className="space-y-1">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-1 rounded bg-secondary/50 border border-purple-100 dark:border-purple-800">
+                        <div className="flex items-center gap-1.5">
+                          <FileIcon className="h-3 w-3 text-purple-500" />
+                          <div className="flex flex-col">
+                            <span className="text-xs truncate max-w-[180px]">{file.name}</span>
+                            <span className="text-[10px] text-muted-foreground">{Math.round(file.size / 1024)} KB</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0"
+                          onClick={() => handleRemoveFile(index)}
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              )}
 
-        {/* File preview area */}
-        {selectedFiles.length > 0 && (
-          <div className={`${isTablet ? 'mb-1' : 'mb-1.5'}`}>
-            <div className="text-xs text-muted-foreground mb-1">Tệp đính kèm ({selectedFiles.length})</div>
-            <div className="space-y-1">
-              {selectedFiles.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-1 rounded bg-secondary/50 border border-purple-100 dark:border-purple-800">
+              {/* Reply preview */}
+              {replyingTo && (
+                <div className="mb-1.5 p-1 rounded-md bg-secondary/50 border border-purple-100 dark:border-purple-800 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <FileIcon className="h-3 w-3 text-purple-500" />
-                    <div className="flex flex-col">
-                      <span className={`text-xs truncate ${isTablet ? 'max-w-[150px]' : 'max-w-[180px]'}`}>{file.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{Math.round(file.size / 1024)} KB</span>
+                    <MessageSquareQuote className="h-3 w-3 text-purple-500" />
+                    <div>
+                      <div className="text-xs font-medium">
+                        Đang trả lời {replyingTo.sender.name}
+                      </div>
+                      <div className="text-xs text-muted-foreground truncate message-content max-w-[180px]">
+                        {replyingTo.content}
+                      </div>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="h-4 w-4 p-0"
-                    onClick={() => handleRemoveFile(index)}
+                    onClick={cancelReply}
                   >
                     <X className="h-2.5 w-2.5" />
                   </Button>
                 </div>
-              ))}
+              )}
+
+              <div className="flex items-center gap-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  ref={imageInputRef}
+                  onChange={handleImageChange}
+                />
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => imageInputRef.current?.click()}
+                  title="Tải lên hình ảnh"
+                  className="h-7 w-7 text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                >
+                  <ImageIcon className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Đính kèm tệp"
+                  className="h-7 w-7 text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                >
+                  <Paperclip className="h-3.5 w-3.5" />
+                </Button>
+                <EmojiPicker onEmojiSelect={handleEmojiSelect} />
+
+                <Input
+                  placeholder="Nhập tin nhắn..."
+                  value={newMessage}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1 h-7 bg-white dark:bg-gray-900 border-purple-100 dark:border-purple-800 focus-visible:ring-purple-500"
+                />
+
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
+                  className="h-7 bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  <SendHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Reply preview */}
-        {replyingTo && (
-          <div className={`${isTablet ? 'mb-1 p-1' : 'mb-1.5 p-1'} rounded-md bg-secondary/50 border border-purple-100 dark:border-purple-800 flex items-center justify-between`}>
-            <div className="flex items-center gap-1.5">
-              <MessageSquareQuote className="h-3 w-3 text-purple-500" />
-              <div>
-                <div className="text-xs font-medium">
-                  Đang trả lời {replyingTo.sender.name}
+        ) : (
+          <>
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center space-y-6 max-w-md mx-auto px-6">
+                <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <Users className="h-12 w-12 text-white" />
                 </div>
-                <div className={`text-xs text-muted-foreground truncate message-content ${isTablet ? 'max-w-[150px]' : 'max-w-[180px]'}`}>
-                  {replyingTo.content}
+                <div className="space-y-3">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                    Chào mừng đến với Nhóm chuyến đi
+                  </h3>
+                  <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Chọn một nhóm từ danh sách bên trái để bắt đầu trò chuyện và lên kế hoạch cho chuyến đi của bạn
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    className="border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                    onClick={handleSearchFromEmpty}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Tìm nhóm
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={handleCreateGroupFromEmpty}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Tạo nhóm mới
+                  </Button>
                 </div>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-4 w-4 p-0"
-              onClick={cancelReply}
-            >
-              <X className="h-2.5 w-2.5" />
-            </Button>
-          </div>
-        )}
-
-        <div className={`flex items-center ${isTablet ? 'gap-0.5' : 'gap-1'}`}>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            ref={imageInputRef}
-            onChange={handleImageChange}
-          />
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-          />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => imageInputRef.current?.click()}
-            title="Tải lên hình ảnh"
-            className={`${isTablet ? 'h-6 w-6' : 'h-7 w-7'} text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20`}
-          >
-            <ImageIcon className={`${isTablet ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            title="Đính kèm tệp"
-            className={`${isTablet ? 'h-6 w-6' : 'h-7 w-7'} text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20`}
-          >
-            <Paperclip className={`${isTablet ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
-          </Button>
-          <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-
-          <Input
-            placeholder="Nhập tin nhắn..."
-            value={newMessage}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            className={`flex-1 ${isTablet ? 'h-6 text-xs' : 'h-7'} bg-white dark:bg-gray-900 border-purple-100 dark:border-purple-800 focus-visible:ring-purple-500`}
-          />
-
-          <Button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() && selectedImages.length === 0 && selectedFiles.length === 0}
-            className={`${isTablet ? 'h-6' : 'h-7'} bg-purple-600 hover:bg-purple-700 text-white`}
-          >
-            <SendHorizontal className={`${isTablet ? 'h-3 w-3' : 'h-3.5 w-3.5'}`} />
-          </Button>
-        </div>
-      </div>
-    </div>
+          </>
+        )
+      }
+    </>
   );
 }
