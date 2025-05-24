@@ -17,6 +17,7 @@ import { useAuth } from '@/features/auth/hooks/use-auth';
 import { notification } from 'antd';
 import { LikesModal } from './likes-modal';
 import { commentLikesAdapter } from '../services/likes-adapters';
+import { API_ENDPOINT } from '@/config/api.config';
 
 // Reaction types
 const REACTION_TYPES = [
@@ -267,7 +268,7 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
     return (
       <div key={item.comment_id} className={`flex space-x-3 ${isReply ? 'ml-8 mt-3' : ''}`}>
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={item.author.avatar} alt={item.author.full_name} />
+          <AvatarImage src={API_ENDPOINT.file_image_v2 + item.author.avatar} alt={item.author.full_name} />
           <AvatarFallback>{item.author.full_name?.[0]}</AvatarFallback>
         </Avatar>
         <div className="flex-1 space-y-1">
@@ -395,7 +396,7 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
 
       <div className="flex items-center space-x-2">
         <Avatar className="h-8 w-8">
-          <AvatarImage src={currentUser?.avatar} alt={currentUser?.full_name || 'Avatar'} />
+          <AvatarImage src={API_ENDPOINT.file_image_v2 + currentUser?.avatar} alt={currentUser?.full_name || 'Avatar'} />
           <AvatarFallback>{currentUser?.full_name?.[0] || 'U'}</AvatarFallback>
         </Avatar>
         <div className="flex-1 relative">

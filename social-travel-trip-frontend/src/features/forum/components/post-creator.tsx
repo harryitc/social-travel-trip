@@ -21,6 +21,7 @@ import { HashtagModel } from '../models/hashtag.model';
 import { hashtagService } from '../services/tag.service';
 import { UserRelaWithDetails } from '../models/user.model';
 import { userService } from '../services/user.service';
+import { API_ENDPOINT } from '@/config/api.config';
 
 export function PostCreator() {
   const router = useRouter();
@@ -320,7 +321,7 @@ export function PostCreator() {
                           className="flex items-center"
                         >
                           <Avatar className="h-6 w-6 mr-2">
-                            <AvatarImage src={user.avatar_url} alt={user.full_name} />
+                            <AvatarImage src={API_ENDPOINT.file_image_v2 + user.avatar_url} alt={user.full_name} />
                             <AvatarFallback>{user.username[0]}</AvatarFallback>
                           </Avatar>
                           {user.full_name}

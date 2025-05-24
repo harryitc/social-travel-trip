@@ -12,6 +12,7 @@ import { Heart, MapPin, Users, Calendar, Star, Share2, Bookmark, Camera, View, M
 // import 'mapbox-gl/dist/mapbox-gl.css';
 import { useParams } from 'next/navigation';
 import { GoogleMapsView } from '@/features/view360';
+import { API_ENDPOINT } from '@/config/api.config';
 
 type Review = {
   id: string;
@@ -656,7 +657,7 @@ Thời điểm lý tưởng để đến Hạ Long là từ tháng 10 đến th�
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-4">
                         <Avatar>
-                          <AvatarImage src={review.user.avatar} alt={review.user.name} />
+                          <AvatarImage src={API_ENDPOINT.file_image_v2 + review.user.avatar} alt={review.user.name} />
                           <AvatarFallback>{review.user.name[0]}</AvatarFallback>
                         </Avatar>
                         <div>

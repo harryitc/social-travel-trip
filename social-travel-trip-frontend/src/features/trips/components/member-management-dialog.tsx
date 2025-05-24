@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/radix-ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/radix-ui/dialog';
 import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
 import { Input } from '@/components/ui/radix-ui/input';
-import { Label } from '@/components/ui/radix-ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/radix-ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +29,7 @@ import {
 import { notification } from 'antd';
 import { getUserInfo } from '@/features/auth/auth.service';
 import { GroupMember } from '../member-list-dialog';
+import { API_ENDPOINT } from '@/config/api.config';
 
 interface MemberManagementDialogProps {
   open: boolean;
@@ -78,6 +77,8 @@ export function MemberManagementDialog({
       const response = await tripGroupService.getGroupMembers(groupId);
       if (response && response.members) {
         setMembers(response.members);
+      } else {
+        setMembers([]);
       }
     } catch (error: any) {
       console.error('Error loading members:', error);
@@ -92,7 +93,7 @@ export function MemberManagementDialog({
   };
 
   const handleKickMember = async (member: GroupMember) => {
-    if (member.user_id === currentUserId) {
+    if (member.user_id == currentUserId) {
       notification.warning({
         message: 'Không thể thực hiện',
         description: 'Bạn không thể kick chính mình',
@@ -101,7 +102,7 @@ export function MemberManagementDialog({
       return;
     }
 
-    if (member.role === 'admin') {
+    if (member.role == 'admin') {
       notification.warning({
         message: 'Không thể thực hiện',
         description: 'Không thể kick admin khỏi nhóm',
@@ -141,7 +142,7 @@ export function MemberManagementDialog({
   };
 
   const handleChangeRole = async (member: GroupMember, newRole: string) => {
-    if (member.user_id === currentUserId) {
+    if (member.user_id == currentUserId) {
       notification.warning({
         message: 'Không thể thực hiện',
         description: 'Bạn không thể thay đổi vai trò của chính mình',
@@ -244,8 +245,8 @@ export function MemberManagementDialog({
     }
   };
 
-  const currentUserMember = members.find(m => m.user_id === currentUserId);
-  const isCurrentUserAdmin = currentUserMember?.role === 'admin';
+  const currentUserMember = members.find(m => m.user_id == currentUserId);
+  const isCurrentUserAdmin = currentUserMember?.role == 'admin';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -283,7 +284,7 @@ export function MemberManagementDialog({
               <div className="space-y-2">
                 {filteredMembers.map((member) => {
                   const displayName = member.nickname || member.username || 'Unknown User';
-                  const isCurrentUser = member.user_id === currentUserId;
+                  const isCurrentUser = member.user_id == currentUserId;
                   const canManage = isCurrentUserAdmin && !isCurrentUser;
 
                   return (
@@ -293,25 +294,25 @@ export function MemberManagementDialog({
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={member.avatar_url} alt={displayName} />
+                          <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar_url} alt={displayName} />
                           <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
                         </Avatar>
 
                         <div className="flex-1 min-w-0">
-                          {editingNickname === member.user_id ? (
+                          {editingNickname == member.user_id ? (
                             <div className="space-y-2">
                               <Input
                                 value={newNickname}
                                 onChange={(e) => setNewNickname(e.target.value)}
                                 placeholder="Nhập nickname..."
                                 className="h-8"
-                                disabled={actionLoading === member.user_id}
+                                disabled={actionLoading == member.user_id}
                               />
                               <div className="flex gap-1">
                                 <Button
                                   size="sm"
                                   onClick={() => handleUpdateNickname(member)}
-                                  disabled={actionLoading === member.user_id}
+                                  disabled={actionLoading == member.user_id}
                                   className="h-6 px-2 text-xs"
                                 >
                                   Lưu
@@ -320,7 +321,7 @@ export function MemberManagementDialog({
                                   size="sm"
                                   variant="outline"
                                   onClick={cancelEditNickname}
-                                  disabled={actionLoading === member.user_id}
+                                  disabled={actionLoading == member.user_id}
                                   className="h-6 px-2 text-xs"
                                 >
                                   Hủy
@@ -342,7 +343,7 @@ export function MemberManagementDialog({
 
                         <div className="flex items-center gap-2">
                           <Badge
-                            variant={member.role === 'admin' ? 'default' : 'outline'}
+                            variant={member.role == 'admin' ? 'default' : 'outline'}
                             className="flex items-center gap-1"
                           >
                             {getRoleIcon(member.role)}
@@ -365,9 +366,9 @@ export function MemberManagementDialog({
                               variant="ghost"
                               size="sm"
                               className="h-8 w-8 p-0"
-                              disabled={actionLoading === member.user_id}
+                              disabled={actionLoading == member.user_id}
                             >
-                              {actionLoading === member.user_id ? (
+                              {actionLoading == member.user_id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <MoreVertical className="h-4 w-4" />
@@ -388,7 +389,7 @@ export function MemberManagementDialog({
                             <DropdownMenuItem
                               onClick={() => handleChangeRole(member, 'admin')}
                               className="cursor-pointer"
-                              disabled={member.role === 'admin'}
+                              disabled={member.role == 'admin'}
                             >
                               <Crown className="h-4 w-4 mr-2" />
                               Chuyển thành Admin
@@ -397,7 +398,7 @@ export function MemberManagementDialog({
                             <DropdownMenuItem
                               onClick={() => handleChangeRole(member, 'moderator')}
                               className="cursor-pointer"
-                              disabled={member.role === 'moderator'}
+                              disabled={member.role == 'moderator'}
                             >
                               <Shield className="h-4 w-4 mr-2" />
                               Chuyển thành Moderator
@@ -406,7 +407,7 @@ export function MemberManagementDialog({
                             <DropdownMenuItem
                               onClick={() => handleChangeRole(member, 'member')}
                               className="cursor-pointer"
-                              disabled={member.role === 'member'}
+                              disabled={member.role == 'member'}
                             >
                               <User className="h-4 w-4 mr-2" />
                               Chuyển thành Thành viên
@@ -417,7 +418,7 @@ export function MemberManagementDialog({
                             <DropdownMenuItem
                               onClick={() => handleKickMember(member)}
                               className="cursor-pointer text-red-600 hover:text-red-700"
-                              disabled={member.role === 'admin'}
+                              disabled={member.role == 'admin'}
                             >
                               <UserMinus className="h-4 w-4 mr-2" />
                               Kick khỏi nhóm

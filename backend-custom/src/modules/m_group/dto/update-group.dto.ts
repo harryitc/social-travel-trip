@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsObject } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsObject,
+} from 'class-validator';
 
 export class UpdateGroupDto {
   @ApiProperty({ default: 1 })
@@ -27,7 +33,10 @@ export class UpdateGroupDto {
   @IsNumber()
   plan_id?: number;
 
-  @ApiProperty({ required: false, description: 'JSON data containing location and other metadata' })
+  @ApiProperty({
+    required: false,
+    description: 'JSON data containing location and other metadata',
+  })
   @IsOptional()
   @IsObject()
   json_data?: any;

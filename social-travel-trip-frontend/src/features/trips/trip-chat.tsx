@@ -35,6 +35,7 @@ import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
 import { websocketService } from '@/lib/services/websocket.service';
 import { fileService } from '@/features/file/file.service';
+import { API_ENDPOINT } from '@/config/api.config';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -761,7 +762,7 @@ export function TripChat({ tripId }: TripChatProps) {
                         {/* Avatar */}
                         <div className="flex-shrink-0">
                           <Avatar className="h-9 w-9 border-2 border-white shadow-md">
-                            <AvatarImage src={message.sender.avatar} alt={message.sender.name} />
+                            <AvatarImage src={API_ENDPOINT.file_image_v2 + message.sender.avatar} alt={message.sender.name} />
                             <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-500 text-white text-sm font-semibold">
                               {message.sender.name[0]?.toUpperCase()}
                             </AvatarFallback>

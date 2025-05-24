@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/radix-ui/badge';
 import { useToast } from '@/components/ui/radix-ui/use-toast';
 import { cn } from '../../lib/utils';
 import { Info, Users, Check, MapPin, Clock } from 'lucide-react';
+import { API_ENDPOINT } from '@/config/api.config';
 
 interface ApplyTemplateModalProps {
   isOpen: boolean;
@@ -81,7 +82,7 @@ const ApplyTemplateModal: React.FC<ApplyTemplateModalProps> = ({ isOpen, onClose
                     )}
                   >
                     <Avatar className="h-16 w-16 rounded-md">
-                      <AvatarImage src={group.image} alt={group.title} className="object-cover" />
+                      <AvatarImage src={API_ENDPOINT.file_image_v2 + group.image} alt={group.title} className="object-cover" />
                       <AvatarFallback className="rounded-md">{group.title.substring(0, 2)}</AvatarFallback>
                     </Avatar>
 

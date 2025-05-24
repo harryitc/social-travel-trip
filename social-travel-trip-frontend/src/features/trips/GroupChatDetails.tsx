@@ -20,6 +20,7 @@ import { GroupManagementDialog } from './components/group-management-dialog';
 import { MemberManagementDialog } from './components/member-management-dialog';
 import { tripGroupService } from './services/trip-group.service';
 import { getUserInfo } from '@/features/auth/auth.service';
+import { API_ENDPOINT } from '@/config/api.config';
 
 type GroupChatDetailsProps = {
   groupId: string;
@@ -233,7 +234,7 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
             <div className="p-2 border-b border-purple-100 dark:border-purple-900 bg-teal-50/50 dark:bg-teal-900/10">
               <div className="flex items-center gap-3 mb-3">
                 <Avatar className="h-12 w-12 border border-teal-100 dark:border-teal-800 shadow-xs">
-                  <AvatarImage src={group.image} alt={group.title} />
+                  <AvatarImage src={API_ENDPOINT.file_image_v2 + group.image} alt={group.title} />
                   <AvatarFallback>{group.title[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -370,7 +371,7 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
                   return (
                     <div key={member.group_member_id || member.user_id || index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
                       <Avatar className="h-7 w-7">
-                        <AvatarImage src={member.avatar} alt={displayName} />
+                        <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={displayName} />
                         <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex items-center justify-between w-full">

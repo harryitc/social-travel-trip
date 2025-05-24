@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/radix-ui/textarea";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import CustomImage from "@/components/ui/custom-image";
+import { API_ENDPOINT } from "@/config/api.config";
 
 export default function BlogDetailPage() {
 
@@ -179,7 +180,7 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
             <div className="flex justify-between items-center mb-4">
               <div className="flex items-center space-x-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={post.author.avatar} />
+                  <AvatarImage src={API_ENDPOINT.file_image_v2 + post.author.avatar} />
                   <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div>
@@ -296,7 +297,7 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center space-x-2">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={comment.author.avatar} />
+                          <AvatarImage src={API_ENDPOINT.file_image_v2 + comment.author.avatar} />
                           <AvatarFallback>
                             {comment.author.name.charAt(0)}
                           </AvatarFallback>

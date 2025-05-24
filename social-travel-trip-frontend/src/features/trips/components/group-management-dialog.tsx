@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/radix-ui/input';
 import { Textarea } from '@/components/ui/radix-ui/textarea';
 import { Label } from '@/components/ui/radix-ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
-import { Settings, Upload, Users, Loader2, MapPin, Image } from 'lucide-react';
+import { Settings, Users, Loader2, MapPin, Image as ImageIcon } from 'lucide-react';
+import { SimpleImageUpload } from '@/components/ui/upload';
+import { fileService } from '@/features/file/file.service';
 import { notification } from 'antd';
 
 interface GroupManagementDialogProps {
@@ -47,29 +49,27 @@ export function GroupManagementDialog({
     }
   }, [group]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        setImagePreview(result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+
 
   const handleUpdateGroupInfo = async () => {
     try {
       setLoading(true);
 
-      // TODO: Upload image if imageFile exists
+      // Upload image if imageFile exists
       let coverUrl = groupImage;
       if (imageFile) {
-        // In a real app, you would upload the image to a file service
-        // For now, we'll use the preview URL
-        coverUrl = imagePreview;
+        try {
+          const uploadResult = await fileService.uploadFile(imageFile);
+          coverUrl = uploadResult.files[0].file_url;
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          notification.error({
+            message: 'Lỗi upload ảnh',
+            description: 'Không thể upload ảnh. Vui lòng thử lại.',
+            placement: 'topRight',
+          });
+          return;
+        }
       }
 
       // Parse location from json_data if it exists
@@ -82,7 +82,7 @@ export function GroupManagementDialog({
       }
 
       const updateData = {
-        group_id: group.group_id,
+        group_id: +group.group_id,
         name: groupName.trim(),
         description: groupDescription.trim(),
         cover_url: coverUrl,
@@ -186,37 +186,23 @@ export function GroupManagementDialog({
               {/* Group Image */}
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Image className="h-4 w-4" />
+                  <ImageIcon className="h-4 w-4" />
                   Ảnh nhóm
                 </Label>
-                <div className="space-y-3">
-                  {imagePreview && (
-                    <div className="w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex gap-2">
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      disabled={loading}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={loading}
-                      className="px-3"
-                    >
-                      <Upload className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                <SimpleImageUpload
+                  value={imagePreview}
+                  onChange={(url) => {
+                    setImagePreview(url || '');
+                    setGroupImage(url || '');
+                  }}
+                  onFileChange={(file) => setImageFile(file)}
+                  placeholder="Click to upload group image"
+                  disabled={loading}
+                  previewSize="md"
+                  maxSize={5}
+                  allowedTypes={['image/jpeg', 'image/png', 'image/gif', 'image/webp']}
+                  autoUpload={false}
+                />
               </div>
 
               {/* Action Buttons */}

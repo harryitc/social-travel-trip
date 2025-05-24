@@ -148,7 +148,7 @@ class TripGroupService {
     }
   }
 
-  async getGroupMembers(groupId: string, page: number = 1, limit: number = 20) {
+  async getGroupMembers(groupId: string, page: number = 1, limit: number = 100) {
     try {
       const response:any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/get-members`, {
         group_id: parseInt(groupId),

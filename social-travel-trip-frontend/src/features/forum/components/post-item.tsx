@@ -188,7 +188,7 @@ export function PostItem({ post }: PostItemProps) {
       <CardHeader className="px-4 py-3 flex flex-row items-start justify-between">
         <div className="flex items-center space-x-3">
           <Avatar>
-            <AvatarImage src={post.author.avatar} alt={post.author.full_name} />
+            <AvatarImage src={API_ENDPOINT.file_image_v2 + post.author.avatar} alt={post.author.full_name} />
             <AvatarFallback>{post.author.full_name?.charAt(0)}</AvatarFallback>
           </Avatar>
           <div>
