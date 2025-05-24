@@ -86,6 +86,20 @@ export class GroupMessage {
   full_name?: string;
   nickname?: string;
   avatar_url?: string;
+  // Reactions information
+  reactions?: Array<{
+    reaction_id: number;
+    count: number;
+    icon?: string;
+    label?: string;
+    users?: Array<{
+      user_id: number;
+      username: string;
+      full_name: string;
+      avatar_url: string;
+      created_at: string;
+    }>;
+  }>;
 
   constructor(data: any) {
     this.group_message_id = data.group_message_id;
@@ -110,6 +124,8 @@ export class GroupMessage {
     this.full_name = data.full_name;
     this.nickname = data.nickname;
     this.avatar_url = data.avatar_url;
+    // Map reactions information
+    this.reactions = data.reactions || [];
   }
 }
 
