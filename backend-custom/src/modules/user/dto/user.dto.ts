@@ -4,11 +4,9 @@ import {
   IsString,
   IsOptional,
   IsEmail,
-  IsDate,
-  IsBoolean,
   IsNumber,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 
 export class CreateUserDTO {
   @ApiProperty({ example: 'johndoe' })
@@ -41,7 +39,14 @@ export class CreateUserDTO {
   date_of_birth?: Date;
 
   @ApiProperty({ example: true, required: false })
-  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return Boolean(value);
+  })
   @IsOptional()
   gender?: boolean;
 
@@ -72,6 +77,10 @@ export class LoginUserDTO {
 
 export class UpdateUserDTO {
   @ApiProperty({ example: 1 })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') return parseInt(value, 10);
+    return Number(value);
+  })
   @IsNumber()
   @IsNotEmpty()
   user_id: number;
@@ -96,7 +105,14 @@ export class UpdateUserDTO {
   date_of_birth?: Date;
 
   @ApiProperty({ example: true, required: false })
-  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === null || value === undefined || value === '') return null;
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      return value.toLowerCase() === 'true';
+    }
+    return Boolean(value);
+  })
   @IsOptional()
   gender?: boolean;
 
@@ -144,7 +160,11 @@ export class SearchUserDTO {
   @IsOptional()
   limit?: number = 10;
 
-  @ApiProperty({ example: false, required: false, description: 'For autocomplete, return minimal user info' })
+  @ApiProperty({
+    example: false,
+    required: false,
+    description: 'For autocomplete, return minimal user info',
+  })
   @IsOptional()
   autocomplete?: boolean = false;
 }

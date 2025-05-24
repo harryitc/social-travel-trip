@@ -3,11 +3,10 @@
 import { useState, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Button } from '@/components/ui/radix-ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/radix-ui/dialog';
-import { Camera, Upload, X, Loader2 } from 'lucide-react';
-import { ImageUploadWithCrop } from './image-upload-with-crop';
-import { useFileUpload } from '@/hooks/use-file-upload';
+import { Camera, X, Loader2 } from 'lucide-react';
+import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
+import { notification } from 'antd';
 
 interface AvatarUploadProps {
   value?: string;
@@ -16,7 +15,6 @@ interface AvatarUploadProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   disabled?: boolean;
   showUploadButton?: boolean;
-  uploadEndpoint?: string;
 }
 
 export function AvatarUpload({
@@ -25,15 +23,11 @@ export function AvatarUpload({
   name = 'User',
   size = 'lg',
   disabled = false,
-  showUploadButton = true,
-  uploadEndpoint = '/api/upload/avatar'
+  showUploadButton = true
 }: AvatarUploadProps) {
-  const [showCropDialog, setShowCropDialog] = useState(false);
-  const [tempFile, setTempFile] = useState<File | null>(null);
-  const [tempPreview, setTempPreview] = useState<string | null>(null);
-  
+  const [uploading, setUploading] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploading, uploadFile } = useFileUpload();
 
   const sizeClasses = {
     sm: 'h-8 w-8',
@@ -49,41 +43,58 @@ export function AvatarUpload({
     xl: 'h-12 w-12'
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
+      notification.error({
+        message: 'Lỗi',
+        description: 'Vui lòng chọn file hình ảnh'
+      });
       return;
     }
 
-    setTempFile(file);
-    setShowCropDialog(true);
-
-    // Reset input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      notification.error({
+        message: 'Lỗi',
+        description: 'Kích thước file không được vượt quá 5MB'
+      });
+      return;
     }
-  };
-
-  const handleCropComplete = async (file: File | null, preview: string | null) => {
-    if (!file || !preview) return;
 
     try {
-      // Upload the cropped file
-      const result = await uploadFile(file, {
-        endpoint: uploadEndpoint,
-        maxSize: 2, // 2MB for avatars
-        allowedTypes: ['image/jpeg', 'image/png']
-      });
+      setUploading(true);
 
-      onChange(result.url);
-      setShowCropDialog(false);
-      setTempFile(null);
-      setTempPreview(null);
-    } catch (error) {
+      // Upload file using fileService
+      const result = await fileService.uploadFile(file);
+
+      if (result && result.files && result.files.length > 0) {
+        const uploadedFile = result.files[0];
+        onChange(uploadedFile.file_url || uploadedFile.server_file_name);
+
+        notification.success({
+          message: 'Thành công',
+          description: 'Tải ảnh đại diện thành công!'
+        });
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (error: any) {
       console.error('Avatar upload error:', error);
+      notification.error({
+        message: 'Lỗi',
+        description: error.message || 'Có lỗi xảy ra khi tải ảnh lên'
+      });
+    } finally {
+      setUploading(false);
+
+      // Reset input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -113,6 +124,7 @@ export function AvatarUpload({
       {/* Upload Button */}
       {showUploadButton && (
         <Button
+          type="button"
           size="sm"
           variant="secondary"
           className={`absolute -bottom-1 -right-1 ${buttonSizes[size]} p-0 rounded-full border-2 border-white dark:border-gray-800 shadow-sm`}
@@ -130,6 +142,7 @@ export function AvatarUpload({
       {/* Remove Button (when avatar exists) */}
       {value && showUploadButton && (
         <Button
+          type="button"
           size="sm"
           variant="destructive"
           className="absolute -top-1 -right-1 h-5 w-5 p-0 rounded-full border-2 border-white dark:border-gray-800 shadow-sm opacity-0 hover:opacity-100 transition-opacity"
@@ -149,57 +162,6 @@ export function AvatarUpload({
         className="hidden"
         disabled={disabled}
       />
-
-      {/* Crop Dialog */}
-      <Dialog open={showCropDialog} onOpenChange={setShowCropDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Upload Avatar
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Crop your image to create the perfect avatar. The image will be resized to 200x200 pixels.
-            </p>
-
-            {tempFile && (
-              <ImageUploadWithCrop
-                value={tempPreview}
-                onChange={handleCropComplete}
-                aspectRatio={1} // Square aspect ratio
-                cropShape="round"
-                outputWidth={200}
-                outputHeight={200}
-                placeholder="Select avatar image"
-                className="flex justify-center"
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
-  );
-}
-
-// Preset avatar upload for different use cases
-export function UserAvatarUpload(props: Omit<AvatarUploadProps, 'uploadEndpoint'>) {
-  return (
-    <AvatarUpload
-      {...props}
-      uploadEndpoint="/api/upload/user-avatar"
-    />
-  );
-}
-
-export function GroupAvatarUpload(props: Omit<AvatarUploadProps, 'uploadEndpoint' | 'size'>) {
-  return (
-    <AvatarUpload
-      {...props}
-      size="xl"
-      uploadEndpoint="/api/upload/group-avatar"
-    />
   );
 }

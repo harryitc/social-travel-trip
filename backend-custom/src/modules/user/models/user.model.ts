@@ -6,7 +6,7 @@ export class User {
   email?: string;
   phone_number?: string;
   date_of_birth?: Date;
-  gender?: boolean;
+  gender?: boolean | null;
   address?: string;
   avatar_url?: string;
   json_data?: any;
@@ -20,7 +20,20 @@ export class User {
     this.email = data.email;
     this.phone_number = data.phone_number;
     this.date_of_birth = data.date_of_birth;
-    this.gender = data.gender;
+
+    // Convert bit to boolean
+    if (data.gender !== null && data.gender !== undefined) {
+      if (typeof data.gender === 'string') {
+        this.gender = data.gender === '1';
+      } else if (Buffer.isBuffer(data.gender)) {
+        this.gender = data.gender[0] === 1;
+      } else {
+        this.gender = Boolean(data.gender);
+      }
+    } else {
+      this.gender = null;
+    }
+
     this.address = data.address;
     this.avatar_url = data.avatar_url;
     this.json_data = data.json_data;
