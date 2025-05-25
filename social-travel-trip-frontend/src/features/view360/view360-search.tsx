@@ -170,7 +170,7 @@ export function View360Search({ onSelectLocation, className = '' }: View360Searc
 
         {/* Enhanced Search Results */}
         {showResults && (
-          <div className="absolute top-full left-0 right-0 mt-2 rounded-xl border-2 border-purple-200/50 dark:border-purple-700/50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm overflow-hidden max-h-[400px] overflow-y-auto shadow-xl z-50">
+          <div className="absolute top-full left-0 right-0 mt-2 rounded-xl border-2 border-purple-200/50 dark:border-purple-700/50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm overflow-hidden max-h-[400px] overflow-y-auto shadow-xl z-[9999]">
             {searchResults.length > 0 ? (
               <div className="divide-y divide-purple-100 dark:divide-purple-800">
                 {searchResults.map(location => (

@@ -83,22 +83,16 @@ export function View360LocationTabs({ defaultLocation = 'bai-sao', className = '
 
           {VIEW_360_LOCATIONS.map(location => (
             <TabsContent key={location.id} value={location.id} className="p-0 m-0">
-              <div className="relative">
-                {/* Loading overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 flex items-center justify-center z-10 opacity-0 transition-opacity duration-300" id={`loading-${location.id}`}>
-                  <div className="text-center space-y-3">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-                    <p className="text-sm text-purple-600 dark:text-purple-400">Đang tải...</p>
-                  </div>
-                </div>
-
+              <div className="w-full h-[350px] sm:h-[400px] md:h-[500px] lg:h-[600px]">
                 <GoogleMapsView
                   mapUrl={location.googleMapsUrl}
-                  height="500px"
+                  height="100%"
+                  width="100%"
                   title={location.name}
                   showInfoCard={showInfoCard}
                   reloadButton={true}
-                  className="rounded-none border-0 h-[400px] sm:h-[500px] md:h-[600px] lg:h-[700px]"
+                  fullscreenButton={true}
+                  className="w-full h-full"
                 />
               </div>
             </TabsContent>
