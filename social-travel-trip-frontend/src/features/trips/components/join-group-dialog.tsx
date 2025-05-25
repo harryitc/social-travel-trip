@@ -140,10 +140,10 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
               <Type className="h-4 w-4" />
               Mã mời
             </TabsTrigger>
-            <TabsTrigger value="scan" className="flex items-center gap-2">
+            {/* <TabsTrigger value="scan" className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
               Quét QR
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
 
           <TabsContent value="manual" className="space-y-6">
@@ -200,7 +200,7 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
             </form>
           </TabsContent>
 
-          <TabsContent value="scan" className="space-y-4">
+          {/* <TabsContent value="scan" className="space-y-4">
             <div className="text-center space-y-4">
               {!isScanning ? (
                 <>
@@ -281,7 +281,7 @@ export function JoinGroupDialog({ open, onOpenChange, onJoinGroup }: JoinGroupDi
                 </div>
               </div>
             )}
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </DialogContent>
     </Dialog>
