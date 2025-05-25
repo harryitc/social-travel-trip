@@ -4,15 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, MapPin, X, Globe } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/radix-ui/badge';
 import {
   VIEW_360_LOCATIONS,
   View360Location,
-  searchLocations,
-  getAllRegions,
-  getAllCities
+  getAllRegions
 } from './view360-locations';
+import { matchesSearch, expandSearchQuery } from './utils/search-utils';
 
 interface View360SearchProps {
   onSelectLocation: (location: View360Location) => void;
@@ -41,12 +39,15 @@ export function View360Search({ onSelectLocation, className = '' }: View360Searc
     if (searchQuery.trim() === '') {
       setSearchResults(filteredByRegion);
     } else {
-      const normalizedQuery = searchQuery.toLowerCase().trim();
-      const results = filteredByRegion.filter(location =>
-        location.name.toLowerCase().includes(normalizedQuery) ||
-        location.city.toLowerCase().includes(normalizedQuery) ||
-        location.description.toLowerCase().includes(normalizedQuery)
-      );
+      // Use enhanced search with multiple query variations
+      const queryVariations = expandSearchQuery(searchQuery);
+      const results = filteredByRegion.filter(location => {
+        return queryVariations.some(query =>
+          matchesSearch(query, location.name) ||
+          matchesSearch(query, location.city) ||
+          matchesSearch(query, location.description)
+        );
+      });
       setSearchResults(results);
     }
   }, [searchQuery, selectedRegion]);
@@ -107,6 +108,7 @@ export function View360Search({ onSelectLocation, className = '' }: View360Searc
         <div>
           <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Tìm kiếm địa điểm 360°</h3>
           <p className="text-sm text-gray-600 dark:text-gray-400">Khám phá các địa điểm du lịch tuyệt đẹp</p>
+          <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">💡 Hỗ trợ tìm kiếm không dấu: "ha long" → "Hạ Long"</p>
         </div>
       </div>
 
@@ -149,7 +151,7 @@ export function View360Search({ onSelectLocation, className = '' }: View360Searc
         <div className="relative">
           <Input
             type="text"
-            placeholder="Nhập tên địa điểm hoặc thành phố để tìm kiếm..."
+            placeholder="VD: 'ha long', 'sai gon', 'hoi an'... (có thể gõ không dấu)"
             value={searchQuery}
             onChange={handleSearchChange}
             className="pl-12 pr-12 h-12 text-base bg-white dark:bg-gray-900 border-2 border-purple-200 dark:border-purple-700 focus:border-purple-500 dark:focus:border-purple-400 focus:ring-2 focus:ring-purple-500/20 rounded-xl transition-all duration-200"
