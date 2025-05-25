@@ -1,9 +1,7 @@
 'use client';
 
 import { PageHeader } from '@/components/ui/page-header';
-import { TravelTemplates } from '@/features/planning/travel-templates';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/radix-ui/button';
+import { PlanningDashboard } from '@/features/planning/PlanningDashboard';
 import { TabMenu } from '@/components/common/TabMenu';
 
 export default function PlanningPage() {
@@ -14,12 +12,12 @@ export default function PlanningPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <PageHeader
             title="Lập kế hoạch"
-            description="Lên lịch trình cho chuyến đi của bạn"
+            description="Tạo và quản lý lịch trình cho chuyến đi của bạn"
           />
         </div>
 
         <div className="mt-4">
-          <TravelTemplates />
+          <PlanningDashboard />
         </div>
       </div>
     </>

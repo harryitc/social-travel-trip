@@ -17,13 +17,20 @@ import { SelectTripGroup } from './select-trip-group';
 import { TripGroup } from './trip-groups-data';
 import EditableTemplateDetailsPageNew from './EditableTemplateDetailsPageNew';
 import { CreatePlanPage } from './CreatePlanPage';
+import { PlansList } from './PlansList';
+import { PlanDetailsView } from './PlanDetailsView';
+import { Plan } from './services/plan.service';
 import * as mockDB from './mock-database';
 
 export function TravelTemplates() {
-  // We don't need to keep templates in state since we're using the mock database
+  // State management for different views
+  const [currentView, setCurrentView] = useState<'list' | 'details' | 'create' | 'template-details'>('list');
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<TravelPlanTemplate | null>(null);
+
+  // Legacy states for template functionality
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState<TravelPlanTemplate | null>(null);
   const [showTemplateDetails, setShowTemplateDetails] = useState(false);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [showSelectGroupDialog, setShowSelectGroupDialog] = useState(false);
@@ -31,7 +38,6 @@ export function TravelTemplates() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(null);
   const [applyMethod, setApplyMethod] = useState<'new' | 'existing'>('new');
-  const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Initialize templates from mock database
@@ -59,7 +65,7 @@ export function TravelTemplates() {
 
   const handleViewDetails = (template: TravelPlanTemplate) => {
     setSelectedTemplate(template);
-    // Go directly to the details page instead of showing the popup
+    setCurrentView('template-details');
   };
 
   // Xử lý khi nhấn nút "Áp dụng"
@@ -141,24 +147,65 @@ export function TravelTemplates() {
     // Trong thực tế, đây là nơi bạn sẽ gọi API để áp dụng mẫu kế hoạch cho nhóm
   };
 
-  // Nếu đang ở trang tạo kế hoạch mới
-  if (showCreatePlan) {
+  // Handle different views
+  if (currentView === 'create') {
     return (
       <CreatePlanPage
-        onBack={() => setShowCreatePlan(false)}
+        onBack={() => setCurrentView('list')}
         onSave={handleSaveNewTemplate}
         onApplyToGroup={handleApplyTemplateToGroup}
       />
     );
   }
 
-  // Nếu đã chọn một mẫu, hiển thị trang chi tiết
-  if (selectedTemplate && !showApplyDialog && !showSelectGroupDialog) {
+  if (currentView === 'details' && selectedPlan) {
+    return (
+      <PlanDetailsView
+        planId={selectedPlan.plan_id}
+        onBack={() => setCurrentView('list')}
+        onEdit={(plan) => {
+          // TODO: Implement edit functionality
+          console.log('Edit plan:', plan);
+        }}
+        onApplyToGroup={(plan) => {
+          // TODO: Implement apply to group functionality
+          console.log('Apply to group:', plan);
+        }}
+      />
+    );
+  }
+
+  if (currentView === 'template-details' && selectedTemplate && !showApplyDialog && !showSelectGroupDialog) {
     return (
       <EditableTemplateDetailsPageNew
         template={selectedTemplate}
-        onBack={() => setSelectedTemplate(null)}
+        onBack={() => setCurrentView('list')}
       />
+    );
+  }
+
+  // Main view - show both backend plans and mock templates
+  if (currentView === 'list') {
+    return (
+      <div className="space-y-8">
+        {/* Backend Plans Section */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Kế hoạch từ cộng đồng</h2>
+          <PlansList
+            onSelectPlan={(plan) => {
+              setSelectedPlan(plan);
+              setCurrentView('details');
+            }}
+            onCreateNew={() => setCurrentView('create')}
+          />
+        </div>
+
+        {/* Mock Templates Section */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Mẫu kế hoạch</h2>
+          {/* Keep existing template logic below */}
+        </div>
+      </div>
     );
   }
 
@@ -200,7 +247,7 @@ export function TravelTemplates() {
 
             <Button
               className="bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={() => setShowCreatePlan(true)}
+              onClick={() => setCurrentView('create')}
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               Tạo kế hoạch mới
