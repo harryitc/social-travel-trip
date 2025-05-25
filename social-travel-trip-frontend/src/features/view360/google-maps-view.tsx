@@ -177,70 +177,96 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
   const embedUrl = getEmbedUrl(mapUrl);
 
   return (
-    <Card className={`overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs ${className}`}>
-      <CardContent className="p-0">
-        <div ref={containerRef} className="relative">
-          <div style={{ height, width }}>
-            <div className="google-maps-iframe-container">
-              <iframe
-                ref={iframeRef}
-                src={embedUrl}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="google-maps-iframe"
-                allow="fullscreen"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-forms"
-              ></iframe>
+    <div className={`relative overflow-hidden ${className}`}>
+      <div ref={containerRef} className="relative">
+        {/* Loading State */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-white to-blue-100 dark:from-purple-900/50 dark:via-gray-800 dark:to-blue-900/50 flex items-center justify-center z-20">
+          <div className="text-center space-y-4">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-200 border-t-purple-600 mx-auto"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-400 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
             </div>
-          </div>
-
-          {/* Location Info - Simplified */}
-          {title && showInfoCard && (
-            <div className="absolute top-4 left-4 z-10">
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-3 py-1.5 rounded-md flex items-center">
-                <MapPin className="h-4 w-4 mr-2 text-purple-600" />
-                <span className="font-medium text-sm">{title}</span>
-              </div>
+            <div className="space-y-2">
+              <p className="text-lg font-semibold text-purple-700 dark:text-purple-300">Đang tải Street View 360°</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Vui lòng chờ trong giây lát...</p>
             </div>
-          )}
-
-          {/* Controls - Reload and Fullscreen */}
-          <div className="absolute bottom-6 right-16 flex gap-2">
-            {reloadButton && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-                onClick={handleReload}
-                title="Tải lại ảnh"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            )}
-
-            {/* {fullscreenButton && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-                onClick={toggleFullscreen}
-                title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
-              >
-                {isFullscreen ? (
-                  <Minimize className="h-4 w-4" />
-                ) : (
-                  <Maximize className="h-4 w-4" />
-                )}
-              </Button>
-            )} */}
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <div style={{ height, width }}>
+          <div className="google-maps-iframe-container relative">
+            <iframe
+              ref={iframeRef}
+              src={embedUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="google-maps-iframe"
+              allow="fullscreen"
+              sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-forms"
+              onLoad={() => {
+                // Hide loading state when iframe loads
+                const loadingEl = containerRef.current?.querySelector('.absolute.inset-0.bg-gradient-to-br') as HTMLElement;
+                if (loadingEl) {
+                  setTimeout(() => {
+                    loadingEl.style.opacity = '0';
+                    setTimeout(() => {
+                      loadingEl.style.display = 'none';
+                    }, 300);
+                  }, 1000);
+                }
+              }}
+            ></iframe>
+          </div>
+        </div>
+
+        {/* Enhanced Location Info */}
+        {title && showInfoCard && (
+          <div className="absolute top-4 left-4 z-30">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-purple-200/50 dark:border-purple-700/50 flex items-center gap-2">
+              <div className="p-1 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                <MapPin className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">{title}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Controls */}
+        <div className="absolute bottom-4 right-4 flex gap-2 z-30">
+          {reloadButton && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-purple-200/50 dark:border-purple-700/50 hover:bg-purple-50 dark:hover:bg-purple-900/50 shadow-lg transition-all duration-200"
+              onClick={handleReload}
+              title="Tải lại Street View"
+            >
+              <RotateCcw className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </Button>
+          )}
+
+          {fullscreenButton && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-purple-200/50 dark:border-purple-700/50 hover:bg-purple-50 dark:hover:bg-purple-900/50 shadow-lg transition-all duration-200"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Thoát toàn màn hình" : "Xem toàn màn hình"}
+            >
+              {isFullscreen ? (
+                <Minimize className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              ) : (
+                <Maximize className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

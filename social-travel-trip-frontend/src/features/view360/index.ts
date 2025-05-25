@@ -4,3 +4,6 @@ export * from './universal-view360';
 export * from './view360-location-tabs';
 export * from './view360-search';
 export * from './view360-locations';
+export * from './view360-skeleton';
+export * from './view360-stats';
+export * from './view360-tips';
