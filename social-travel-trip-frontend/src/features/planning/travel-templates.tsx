@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/radix-ui/card';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Badge } from '@/components/ui/radix-ui/badge';
@@ -52,8 +52,10 @@ export function TravelTemplates() {
     { id: '5', name: 'Phạm Tuấn', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=120&h=120&dpr=1' },
   ];
 
-  // Use the mock database search function
-  const filteredTemplates = mockDB.searchTemplates(searchQuery, selectedRegion);
+  // Use the mock database search function with memoization to prevent unnecessary recalculations
+  const filteredTemplates = useMemo(() => {
+    return mockDB.searchTemplates(searchQuery, selectedRegion);
+  }, [searchQuery, selectedRegion]);
 
   const handleViewDetails = (template: TravelPlanTemplate) => {
     setSelectedTemplate(template);
@@ -118,9 +120,8 @@ export function TravelTemplates() {
     // Add the template to the mock database
     mockDB.addTemplate(newTemplate);
 
-    // Force a re-render by setting loading to true briefly
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 300);
+    // No need to force re-render since filteredTemplates will automatically update
+    // when mockDB.searchTemplates is called
   };
 
   // Hàm xử lý áp dụng mẫu kế hoạch cho nhóm
@@ -134,9 +135,8 @@ export function TravelTemplates() {
     // Increment the usage count in the mock database
     mockDB.incrementUsageCount(template.id);
 
-    // Force a re-render by setting loading to true briefly
-    setIsLoading(true);
-    setTimeout(() => setIsLoading(false), 300);
+    // No need to force re-render since filteredTemplates will automatically update
+    // when mockDB.searchTemplates is called
 
     // Trong thực tế, đây là nơi bạn sẽ gọi API để áp dụng mẫu kế hoạch cho nhóm
   };

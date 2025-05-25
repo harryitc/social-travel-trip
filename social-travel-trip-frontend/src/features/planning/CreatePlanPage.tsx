@@ -59,30 +59,32 @@ export function CreatePlanPage({ onBack, onSave, onApplyToGroup }: CreatePlanPag
 
   // Update days when duration changes
   useEffect(() => {
-    const updatedDays = [...days];
+    setDays(prevDays => {
+      const updatedDays = [...prevDays];
 
-    // If duration increased, add new days
-    if (duration > updatedDays.length) {
-      for (let i = updatedDays.length; i < duration; i++) {
-        updatedDays.push({
-          id: `day-${i+1}`,
-          date: null,
-          activities: []
-        });
+      // If duration increased, add new days
+      if (duration > updatedDays.length) {
+        for (let i = updatedDays.length; i < duration; i++) {
+          updatedDays.push({
+            id: `day-${i+1}`,
+            date: null,
+            activities: []
+          });
+        }
       }
-    }
-    // If duration decreased, remove days
-    else if (duration < updatedDays.length) {
-      updatedDays.splice(duration);
-    }
+      // If duration decreased, remove days
+      else if (duration < updatedDays.length) {
+        updatedDays.splice(duration);
+      }
 
-    setDays(updatedDays);
+      return updatedDays;
+    });
 
     // Adjust current day index if needed
     if (currentDayIndex >= duration) {
       setCurrentDayIndex(duration - 1);
     }
-  }, [duration, days, currentDayIndex]);
+  }, [duration, currentDayIndex]);
 
   // Handle adding a new tag
   const handleAddTag = () => {
