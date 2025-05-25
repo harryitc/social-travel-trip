@@ -35,7 +35,7 @@ export function View360LocationTabs({ defaultLocation = 'bai-sao', className = '
   return (
     <div className={`${className} space-y-6`}>
       {/* Enhanced Search Section */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200/50 dark:border-purple-700/50 overflow-hidden">
+      <div className="view360-search-section bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200/50 dark:border-purple-700/50 overflow-visible relative z-50">
         <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 dark:from-purple-400/10 dark:to-blue-400/10 p-1">
           <div className="bg-white dark:bg-gray-900 rounded-xl">
             <View360Search
@@ -48,7 +48,7 @@ export function View360LocationTabs({ defaultLocation = 'bai-sao', className = '
 
       {/* Enhanced Location Details Panel */}
       {selectedLocation && (
-        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200/50 dark:border-purple-700/50 overflow-hidden">
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-lg border border-purple-200/50 dark:border-purple-700/50 overflow-hidden relative z-10">
           <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-4 sm:p-6">
             <div className="flex items-center space-x-3 sm:space-x-4">
               <div className="bg-white/20 p-2 sm:p-3 rounded-full backdrop-blur-sm">
@@ -71,7 +71,7 @@ export function View360LocationTabs({ defaultLocation = 'bai-sao', className = '
       )}
 
       {/* Enhanced 360 View Container */}
-      <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-xl border border-purple-200/50 dark:border-purple-700/50 overflow-hidden">
+      <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-2xl shadow-xl border border-purple-200/50 dark:border-purple-700/50 overflow-hidden relative z-0">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="hidden">
             {VIEW_360_LOCATIONS.map(location => (

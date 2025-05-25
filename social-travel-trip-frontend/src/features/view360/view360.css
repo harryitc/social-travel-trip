@@ -187,3 +187,26 @@
 .view360-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(139, 92, 246, 0.5);
 }
+
+/* Search container z-index fix */
+.view360-search-container {
+  position: relative;
+  z-index: 1000;
+  isolation: isolate;
+}
+
+.view360-search-results {
+  position: absolute;
+  z-index: 9999 !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Create new stacking context for search */
+.view360-search-section {
+  position: relative;
+  z-index: 100;
+  isolation: isolate;
+}
