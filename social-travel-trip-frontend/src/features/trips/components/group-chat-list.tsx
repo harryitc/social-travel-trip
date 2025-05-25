@@ -45,9 +45,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
 
   const handleCreateGroup = async (groupData: CreateTripGroupData) => {
     try {
-      console.log('Creating group with data:', groupData.toBackendDTO());
       const result = await tripGroupService.createGroup(groupData);
-      console.log('Group created successfully:', result);
       setShowCreateDialog(false);
 
       // Store created group and show success dialog
@@ -58,7 +56,6 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       emit('group:created', { group: result });
     } catch (error: any) {
       console.error('Error creating group:', error);
-      console.error('Error details:', error.response?.data || error.message);
 
       // Show error notification
       notification.error({
@@ -76,15 +73,13 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       const result = await tripGroupService.joinGroup(joinData);
       setShowJoinDialog(false);
 
-      console.log('🎉 [GroupChatList] Join group result:', result);
-
       // Show success notification with proper group name
       const groupName = result.title || result.name || 'nhóm';
       notification.success({
         message: 'Tham gia nhóm thành công',
         description: `Bạn đã tham gia nhóm "${groupName}" thành công!`,
         placement: 'topRight',
-        duration: 3,
+        duration: 1.5,
       });
 
       // Emit event using Zustand
@@ -295,11 +290,11 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
         </>
       )}
 
-      <GroupCreatedSuccessDialog
+      {/* <GroupCreatedSuccessDialog
         open={showSuccessDialog}
         onOpenChange={setShowSuccessDialog}
         group={createdGroup}
-      />
+      /> */}
     </div>
   );
 }

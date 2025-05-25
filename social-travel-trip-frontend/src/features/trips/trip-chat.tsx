@@ -40,7 +40,6 @@ import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
 import { formatMessageTimestamp, formatDetailedTimestamp } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { DebugLoadMoreTest } from './debug-load-more-test';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -115,21 +114,6 @@ const transformMessage = (backendMessage: TripGroupMessage): Message => {
       console.warn('Failed to parse json_data for attachments:', error);
     }
   }
-
-  // Debug log for user info extraction and timestamp
-  console.log('🔄 [TripChat] Transforming message:', {
-    messageId: backendMessage.group_message_id,
-    userId: backendMessage.user_id,
-    nickname: backendMessage.nickname,
-    username: backendMessage.username,
-    avatar_url: backendMessage.avatar_url,
-    finalDisplayName: displayName,
-    finalAvatarUrl: avatarUrl,
-    rawTimestamp: backendMessage.created_at,
-    timestampType: typeof backendMessage.created_at,
-    formattedTimestamp: formatMessageTimestamp(backendMessage.created_at),
-    attachments: attachments
-  });
 
   return {
     id: backendMessage.group_message_id.toString(),
@@ -209,7 +193,6 @@ export function TripChat({ tripId }: TripChatProps) {
           if (transformedMessages.length > 0) {
             // For initial load, oldest message is the first one (chronologically oldest)
             setOldestMessageId(parseInt(transformedMessages[0].id));
-            console.log('🔢 [TripChat] Initial load - oldest message ID:', transformedMessages[0].id);
           }
 
           // Emit event that messages have been loaded
@@ -290,18 +273,11 @@ export function TripChat({ tripId }: TripChatProps) {
   // Load older messages function
   const loadOlderMessages = useCallback(async () => {
     if (!tripId || !hasMoreMessages || loadingOlderMessages || !oldestMessageId) {
-      console.log('🚫 [TripChat] Skipping load older messages:', {
-        tripId: !!tripId,
-        hasMoreMessages,
-        loadingOlderMessages,
-        oldestMessageId
-      });
       return;
     }
 
     try {
       setLoadingOlderMessages(true);
-      console.log('🔄 [TripChat] Loading older messages before ID:', oldestMessageId);
 
       const result = await tripGroupService.getMessages(tripId, 10, oldestMessageId);
 
@@ -314,31 +290,15 @@ export function TripChat({ tripId }: TripChatProps) {
         const previousScrollHeight = viewport?.scrollHeight || 0;
         const previousScrollTop = viewport?.scrollTop || 0;
 
-        console.log('📏 [TripChat] Before adding messages:', {
-          previousScrollHeight,
-          previousScrollTop,
-          messagesCount: transformedMessages.length
-        });
-
         // Prepend older messages to the beginning of the array
         setMessages(prev => [...transformedMessages, ...prev]);
 
         // Update pagination states
         setHasMoreMessages(result.hasMore || false);
         if (transformedMessages.length > 0) {
-          // Debug: log all message IDs and timestamps
-          console.log('📋 [TripChat] New batch messages:', transformedMessages.map(m => ({
-            id: m.id,
-            content: m.content.substring(0, 20) + '...',
-            timestamp: m.rawTimestamp
-          })));
-
           // For load more, oldest message is the first one in the new batch (chronologically oldest)
           const newOldestId = parseInt(transformedMessages[0].id);
           setOldestMessageId(newOldestId);
-          console.log('🔢 [TripChat] Previous oldest ID:', oldestMessageId);
-          console.log('🔢 [TripChat] New oldest ID:', newOldestId);
-          console.log('🔢 [TripChat] HasMore:', result.hasMore);
         }
 
         // Maintain scroll position after new messages are added
@@ -349,22 +309,13 @@ export function TripChat({ tripId }: TripChatProps) {
               const newScrollHeight = viewport.scrollHeight;
               const heightDifference = newScrollHeight - previousScrollHeight;
               const newScrollTop = previousScrollTop + heightDifference;
-
-              console.log('📏 [TripChat] After adding messages:', {
-                newScrollHeight,
-                heightDifference,
-                newScrollTop
-              });
-
               viewport.scrollTop = newScrollTop;
             }
           });
         });
 
-        console.log('✅ [TripChat] Loaded', transformedMessages.length, 'older messages');
       } else {
         setHasMoreMessages(false);
-        console.log('📭 [TripChat] No more older messages available');
       }
     } catch (error: any) {
       console.error('❌ [TripChat] Error loading older messages:', error);
@@ -383,21 +334,11 @@ export function TripChat({ tripId }: TripChatProps) {
   useEffect(() => {
     if (!tripId) return;
 
-    console.log('🔌 [TripChat] Setting up WebSocket for group:', tripId);
 
     // Set up event listeners first
     const handleNewMessage = (data: { groupId: number; senderId: number; message: any }) => {
-      console.log('📨 [TripChat] Received new message:', data);
-      console.log('🔍 [TripChat] Message user info:', {
-        username: data.message?.username,
-        nickname: data.message?.nickname,
-        avatar_url: data.message?.avatar_url,
-        user_id: data.message?.user_id,
-        hasUserInfo: !!(data.message?.username || data.message?.nickname)
-      });
       if (data.groupId.toString() == tripId) {
         const transformedMessage = transformMessage(data.message);
-        console.log('✅ [TripChat] Adding message to chat:', transformedMessage);
 
         // Mark as new message for animation
         setNewMessageIds(prev => new Set([...prev, transformedMessage.id]));
@@ -421,7 +362,6 @@ export function TripChat({ tripId }: TripChatProps) {
           // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg.id == transformedMessage.id);
           if (exists) {
-            console.log('⚠️ [TripChat] Message already exists, skipping:', transformedMessage.id);
             return prev;
           }
 
@@ -433,7 +373,6 @@ export function TripChat({ tripId }: TripChatProps) {
           );
 
           if (contentDuplicate) {
-            console.log('⚠️ [TripChat] Potential content duplicate detected, skipping:', transformedMessage);
             return prev;
           }
 
@@ -511,9 +450,6 @@ export function TripChat({ tripId }: TripChatProps) {
         });
       }
     };
-
-    // Subscribe to events with detailed logging
-    console.log('🎧 [TripChat] Subscribing to WebSocket events');
 
     // Test event listener to verify WebSocket is working
     const handleTestEvent = (data: any) => {
@@ -817,13 +753,6 @@ export function TripChat({ tripId }: TripChatProps) {
 
       // Upload images
       if (selectedImages.length > 0) {
-        notification.info({
-          message: 'Đang tải lên hình ảnh...',
-          description: `Đang tải lên ${selectedImages.length} hình ảnh`,
-          placement: 'topRight',
-          duration: 2,
-        });
-
         try {
           const imageUploadResults = await fileService.uploadMultipleFiles(selectedImages);
 
@@ -840,11 +769,11 @@ export function TripChat({ tripId }: TripChatProps) {
               });
             }
           }
-        } catch (uploadError) {
+        } catch (uploadError: any) {
           console.error('Error uploading images:', uploadError);
           notification.error({
             message: 'Lỗi tải lên hình ảnh',
-            description: 'Không thể tải lên hình ảnh. Vui lòng thử lại.',
+            description: uploadError?.response?.data?.reasons?.message || 'Không thể tải lên hình ảnh. Vui lòng thử lại.',
             placement: 'topRight',
           });
           return;
@@ -853,13 +782,6 @@ export function TripChat({ tripId }: TripChatProps) {
 
       // Upload files
       if (selectedFiles.length > 0) {
-        notification.info({
-          message: 'Đang tải lên tệp...',
-          description: `Đang tải lên ${selectedFiles.length} tệp`,
-          placement: 'topRight',
-          duration: 2,
-        });
-
         try {
           const fileUploadResults = await fileService.uploadMultipleFiles(selectedFiles);
 
@@ -949,14 +871,14 @@ export function TripChat({ tripId }: TripChatProps) {
       }
 
       // Show success notification if files were uploaded
-      if (attachments.length > 0) {
-        notification.success({
-          message: 'Thành công',
-          description: `Đã gửi tin nhắn với ${attachments.length} tệp đính kèm`,
-          placement: 'topRight',
-          duration: 2,
-        });
-      }
+      // if (attachments.length > 0) {
+      //   notification.success({
+      //     message: 'Thành công',
+      //     description: `Đã gửi tin nhắn với ${attachments.length} tệp đính kèm`,
+      //     placement: 'topRight',
+      //     duration: 2,
+      //   });
+      // }
 
     } catch (error: any) {
       console.error('❌ [TripChat] Error sending message:', error);
@@ -1038,20 +960,6 @@ export function TripChat({ tripId }: TripChatProps) {
     }
   };
 
-  // Debug function to test WebSocket
-  const handleTestWebSocket = () => {
-    console.log('🧪 [TripChat] Testing WebSocket connection...');
-    console.log('🔍 [TripChat] Current WebSocket state:', websocketService.getDebugInfo());
-
-    // Try to emit a test event
-    websocketService.emit('test:ping', { groupId: tripId, timestamp: Date.now() })
-      .then(() => {
-        console.log('✅ [TripChat] Test ping sent successfully');
-      })
-      .catch(error => {
-        console.error('❌ [TripChat] Test ping failed:', error);
-      });
-  };
 
   // Handle search from empty state
   const handleSearchFromEmpty = () => {
