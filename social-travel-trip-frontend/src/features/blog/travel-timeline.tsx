@@ -31,28 +31,38 @@ export default function TravelTimeline() {
   const years = Object.keys(locationsByYear).sort((a, b) => Number.parseInt(b) - Number.parseInt(a))
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h2 className="text-2xl font-bold text-emerald-700 mb-6">Dòng thời gian du lịch</h2>
-
+    <div className="space-y-6">
       {years.map((year) => (
-        <div key={year} className="mb-8">
-          <h3 className="text-xl font-semibold mb-4 bg-emerald-100 inline-block px-4 py-1 rounded-full">{year}</h3>
+        <div key={year} className="space-y-4">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-bold text-purple-800 dark:text-purple-300 bg-gradient-to-r from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30 px-4 py-2 rounded-full border border-purple-200 dark:border-purple-700">
+              {year}
+            </h3>
+            <div className="flex-1 h-px bg-gradient-to-r from-purple-200 to-transparent dark:from-purple-700"></div>
+          </div>
 
-          <div className="timeline-container">
+          <div className="space-y-3">
             {locationsByYear[year].map((location) => (
-              <div key={location.id} className="timeline-item">
-                <Card className="shadow-md">
+              <div key={location.id} className="group">
+                <Card className="shadow-sm hover:shadow-md transition-all duration-200 border-purple-100 dark:border-purple-900 hover:border-purple-200 dark:hover:border-purple-700">
                   <CardContent className="p-0">
                     <div className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h4 className="font-bold text-lg">{location.title}</h4>
-                          <div className="flex items-center text-sm text-gray-500 mt-1">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-bold text-lg text-purple-800 dark:text-purple-300 group-hover:text-purple-900 dark:group-hover:text-purple-200 transition-colors">
+                            {location.title}
+                          </h4>
+                          <div className="flex items-center text-sm text-purple-600 dark:text-purple-400 mt-1">
                             <MapPin className="h-3 w-3 mr-1" />
                             <span>{formatDate(location.date)}</span>
                           </div>
                         </div>
-                        <Badge className="capitalize">{location.category}</Badge>
+                        <Badge
+                          variant="outline"
+                          className="capitalize border-purple-200 text-purple-700 bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:bg-purple-900/30"
+                        >
+                          {location.category}
+                        </Badge>
                       </div>
 
                       {expandedItem === location.id ? (
@@ -80,24 +90,30 @@ export default function TravelTimeline() {
                             )}
                           </div>
                           <div className="flex justify-between items-center mt-4">
-                            <Button variant="ghost" size="sm" onClick={() => setExpandedItem(null)}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setExpandedItem(null)}
+                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300"
+                            >
                               Thu gọn
                             </Button>
                             <a
                               href={`/blog/${location.slug}`}
-                              className="text-sm font-medium text-emerald-600 hover:text-emerald-700"
+                              className="text-sm font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 flex items-center gap-1 group"
                             >
-                              Đọc thêm →
+                              Đọc thêm
+                              <span className="group-hover:translate-x-1 transition-transform">→</span>
                             </a>
                           </div>
                         </>
                       ) : (
                         <div className="mt-2">
-                          <p className="text-gray-600 text-sm line-clamp-2">{location.description}</p>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{location.description}</p>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="mt-2 text-emerald-600 p-0 h-auto"
+                            className="mt-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 p-0 h-auto"
                             onClick={() => setExpandedItem(location.id)}
                           >
                             Xem thêm

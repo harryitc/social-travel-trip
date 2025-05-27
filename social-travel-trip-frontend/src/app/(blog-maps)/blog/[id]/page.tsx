@@ -13,6 +13,11 @@ import {
   Share,
   MessageSquare,
   ArrowLeft,
+  Eye,
+  Clock,
+  Bookmark,
+  ThumbsUp,
+  Send,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
@@ -23,6 +28,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import CustomImage from "@/components/ui/custom-image";
 import { API_ENDPOINT } from "@/config/api.config";
+import { BlogBreadcrumb } from "@/features/blog/blog-breadcrumb";
 
 export default function BlogDetailPage() {
 
@@ -113,20 +119,44 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
   };
 
   return (
-    <div className="container mx-auto">
-      <Button
-        variant="ghost"
-        onClick={() => router.push("/blog")}
-        className="mb-6 flex items-center hover:bg-black/40 transition-colors"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Feed
-      </Button>
+    <div className="w-full space-y-6">
+      <BlogBreadcrumb title={post.title} />
 
-      <PageHeader
-        title={post.title}
-        description={`Được viết bởi ${post.author.name}`}
-      />
+      {/* Back Button and Quick Actions */}
+      <div className="flex items-center justify-between">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/blog")}
+          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Quay lại Blog
+        </Button>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-purple-200 text-purple-600 hover:bg-purple-50"
+          >
+            <Share className="h-4 w-4 mr-2" />
+            Chia sẻ
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSaved(!isSaved)}
+            className={`border-purple-200 ${
+              isSaved
+                ? "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                : "text-purple-600 hover:bg-purple-50"
+            }`}
+          >
+            <Bookmark className={`h-4 w-4 mr-2 ${isSaved ? "fill-current" : ""}`} />
+            {isSaved ? "Đã lưu" : "Lưu"}
+          </Button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs animate-scale-in">
@@ -177,53 +207,68 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
           </div>
 
           <CardContent className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-10 w-10">
+            {/* Author and Meta Info */}
+            <div className="flex justify-between items-start mb-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-12 w-12 ring-2 ring-purple-100 dark:ring-purple-800">
                   <AvatarImage src={API_ENDPOINT.file_image_v2 + post.author.avatar} />
-                  <AvatarFallback>{post.author.name.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                    {post.author.name.charAt(0)}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium">{post.author.name}</p>
-                  <p className="text-sm text-gray-500">{formattedDate}</p>
+                  <p className="font-semibold text-purple-800 dark:text-purple-300">{post.author.name}</p>
+                  <p className="text-sm text-purple-600 dark:text-purple-400">{formattedDate}</p>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Eye className="h-3 w-3" />
+                      1.2k views
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {post.readTime}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`flex items-center ${
-                    liked ? "text-red-500" : "text-gray-600"
+                  className={`flex items-center transition-colors ${
+                    liked ? "text-red-500 hover:text-red-600" : "text-gray-600 hover:text-red-500"
                   }`}
                   onClick={handleLike}
                 >
-                  <Heart
-                    className={`h-5 w-5 mr-1 ${liked ? "fill-current" : ""}`}
-                  />
+                  <Heart className={`h-5 w-5 mr-1 ${liked ? "fill-current" : ""}`} />
                   <span>{liked ? post.likes + 1 : post.likes}</span>
                 </Button>
 
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="flex items-center text-gray-600"
+                  className="flex items-center text-gray-600 hover:text-purple-600"
                 >
-                  <Share className="h-5 w-5 mr-1" />
-                  <span>Share</span>
+                  <ThumbsUp className="h-5 w-5 mr-1" />
+                  <span>Like</span>
                 </Button>
               </div>
             </div>
 
-            <h2 className="text-2xl font-bold mb-3">{post.title}</h2>
+            {/* Title */}
+            <h1 className="text-3xl lg:text-4xl font-bold mb-4 text-gray-900 dark:text-white leading-tight">
+              {post.title}
+            </h1>
 
-            <div className="flex flex-wrap gap-4 mb-4 text-sm text-gray-500">
-              <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-1 text-travel-blue" />
-                <span>{post.location.name}</span>
+            {/* Location and Date */}
+            <div className="flex flex-wrap gap-4 mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
+              <div className="flex items-center text-purple-700 dark:text-purple-300">
+                <MapPin className="h-4 w-4 mr-2" />
+                <span className="font-medium">{post.location.name}</span>
               </div>
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1 text-travel-orange" />
+              <div className="flex items-center text-purple-600 dark:text-purple-400">
+                <Calendar className="h-4 w-4 mr-2" />
                 <span>{fullDate}</span>
               </div>
             </div>
@@ -267,52 +312,67 @@ Thời tiết Đà Lạt tháng 5 rất dễ chịu, nhưng các bạn nên mang
 
             <Separator className="my-6" />
 
-            <div>
-              <h3 className="font-medium mb-4 flex items-center">
+            {/* Comments Section */}
+            <div className="border-t border-purple-100 dark:border-purple-800 pt-6">
+              <h3 className="text-xl font-bold mb-6 flex items-center text-purple-800 dark:text-purple-300">
                 <MessageSquare className="h-5 w-5 mr-2" />
-                Comments ({post.comments.length})
+                Bình luận ({post.comments.length})
               </h3>
 
-              <form onSubmit={handleSubmitComment} className="mb-6">
-                <Textarea
-                  placeholder="Add your comment..."
-                  className="mb-2"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                />
-                <Button
-                  // className={`flex items-center ${isSaved ? 'text-purple-600 dark:text-purple-400' : ''}`}
-                  onClick={() => setIsSaved(!isSaved)}
-                  type="submit"
-                  disabled={!commentText.trim()}
-                >
-                  {/* <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-purple-600 dark:fill-purple-400' : ''}`} /> */}
-                  Post Comment
-                </Button>
+              {/* Comment Form */}
+              <form onSubmit={handleSubmitComment} className="mb-8">
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-100 dark:border-purple-800">
+                  <Textarea
+                    placeholder="Chia sẻ suy nghĩ của bạn về bài viết này..."
+                    className="mb-3 border-purple-200 focus:border-purple-400 focus:ring-purple-400 bg-white dark:bg-gray-900"
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    rows={3}
+                  />
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-purple-600 dark:text-purple-400">
+                      💡 Hãy chia sẻ trải nghiệm hoặc câu hỏi của bạn
+                    </span>
+                    <Button
+                      type="submit"
+                      disabled={!commentText.trim()}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      Gửi bình luận
+                    </Button>
+                  </div>
+                </div>
               </form>
 
+              {/* Comments List */}
               <div className="space-y-4">
                 {post.comments.map((comment) => (
-                  <div key={comment.id} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <Avatar className="h-8 w-8">
+                  <div key={comment.id} className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-purple-100 dark:border-purple-800 hover:border-purple-200 dark:hover:border-purple-700 transition-colors">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-9 w-9 ring-2 ring-purple-100 dark:ring-purple-800">
                           <AvatarImage src={API_ENDPOINT.file_image_v2 + comment.author.avatar} />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
                             {comment.author.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">
-                          {comment.author.name}
-                        </span>
+                        <div>
+                          <span className="font-medium text-purple-800 dark:text-purple-300">
+                            {comment.author.name}
+                          </span>
+                          <p className="text-xs text-purple-600 dark:text-purple-400">
+                            {formatDistanceToNow(new Date(comment.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {formatDistanceToNow(new Date(comment.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </span>
+                      <Button variant="ghost" size="sm" className="text-gray-500 hover:text-purple-600">
+                        <Heart className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <p className="text-gray-700">{comment.text}</p>
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{comment.text}</p>
                   </div>
                 ))}
               </div>
