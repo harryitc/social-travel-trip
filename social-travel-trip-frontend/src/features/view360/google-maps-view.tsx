@@ -141,7 +141,7 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
         ></iframe>
 
         {/* Enhanced Location Info */}
-        {title && showInfoCard && (
+        {/* {title && showInfoCard && (
           <div className="absolute top-4 left-4 z-30">
             <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-purple-200/50 dark:border-purple-700/50 flex items-center gap-2">
               <div className="p-1 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
@@ -150,7 +150,7 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
               <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">{title}</span>
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Enhanced Controls */}
         <div className="absolute bottom-4 right-4 flex gap-2 z-30">
