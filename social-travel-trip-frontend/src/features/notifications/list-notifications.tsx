@@ -10,6 +10,7 @@ import { userService } from '../forum/services/user.service';
 import { NotificationModel } from './models/notification.model';
 import { notificationService, NotificationType } from './services/notification.service';
 import { useRouter } from 'next/navigation';
+import { getRelativeTime } from '@/lib/utils';
 
 /**
  * Component that displays a list of notifications
@@ -104,13 +105,13 @@ export const ListNotifications = () => {
             }
             
             // Navigate to the relevant page
-            const url = notificationService.getNotificationUrl(notification);
-            if (url !== '#') {
-                router.push(url);
-            }
+            // const url = notificationService.getNotificationUrl(notification);
+            // if (url !== '#') {
+            //     router.push(url);
+            // }
             
             // Close dropdown
-            setIsOpen(false);
+            // setIsOpen(false);
         } catch (err) {
             console.error('Error handling notification click:', err);
         }
@@ -135,12 +136,6 @@ export const ListNotifications = () => {
     useEffect(() => {
         loadNotifications();
         
-        // Initialize WebSocket listeners only once
-        if (!notificationsInitialized.current) {
-            notificationService.initializeWebSocketListeners(handleNewNotification);
-            notificationsInitialized.current = true;
-        }
-        
         // Refresh notifications when dropdown opens
         if (isOpen) {
             loadNotifications();
@@ -154,7 +149,7 @@ export const ListNotifications = () => {
                     <Button variant="dashed" size="small" className="relative">
                         <BellIcon className="h-5 w-5" />
                         {unreadCount > 0 && (
-                            <Badge count={unreadCount} size="small" className="absolute -top-1 -right-1" />
+                            <Badge count={unreadCount} size="small" className="!absolute -top-1 -right-1" />
                         )}
                     </Button>
                 </DropdownMenuTrigger>
@@ -191,7 +186,7 @@ export const ListNotifications = () => {
                             notifications.map(notification => (
                                 <DropdownMenuItem 
                                     key={notification.notify_id} 
-                                    className={`p-3 cursor-pointer ${!notification.is_read ? 'bg-purple-50' : ''}`}
+                                    className={`p-3 cursor-pointer ${!notification.is_read ? '' : 'opacity-50'}`}
                                     onClick={() => handleNotificationClick(notification)}
                                 >
                                     <div className="flex items-start gap-3">
@@ -203,13 +198,7 @@ export const ListNotifications = () => {
                                                 {notificationService.getFormattedMessage(notification)}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {new Date(notification.created_at).toLocaleString('vi-VN', {
-                                                    year: 'numeric',
-                                                    month: 'numeric',
-                                                    day: 'numeric',
-                                                    hour: 'numeric',
-                                                    minute: 'numeric'
-                                                })}
+                                                {getRelativeTime(notification.created_at)}
                                             </p>
                                         </div>
                                         {!notification.is_read && (
