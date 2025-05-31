@@ -24,6 +24,7 @@ notify/create
 notify/update
 notify/delete
 notify/mark-read
+notify/mark-all-read
 notify/get
 notify/query
 posts/query

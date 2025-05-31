@@ -6,10 +6,12 @@ import { DeleteNotifyDto } from '../dto/delete-notify.dto';
 import { GetNotifyDto } from '../dto/get-notify.dto';
 import { FilterNotifyDto } from '../dto/filter-notify.dto';
 import { MarkReadNotifyDto } from '../dto/mark-read-notify.dto';
+import { MarkAllReadNotifyDto } from '../dto/mark-all-read-notify.dto';
 import { CreateNotifyCommand } from '../commands/create-notify.command';
 import { UpdateNotifyCommand } from '../commands/update-notify.command';
 import { DeleteNotifyCommand } from '../commands/delete-notify.command';
 import { MarkReadNotifyCommand } from '../commands/mark-read-notify.command';
+import { MarkAllReadNotifyCommand } from '../commands/mark-all-read-notify.command';
 import { GetNotifyQuery } from '../queries/get-notify.query';
 import { FilterNotifyQuery } from '../queries/filter-notify.query';
 
@@ -60,5 +62,12 @@ export class NotifyService {
    */
   async getNotifications(dto: FilterNotifyDto, userId: number) {
     return this.queryBus.execute(new FilterNotifyQuery(dto, userId));
+  }
+
+  /**
+   * Mark all notifications as read for a user
+   */
+  async markAllNotificationsAsRead(dto: MarkAllReadNotifyDto, userId: number) {
+    return this.commandBus.execute(new MarkAllReadNotifyCommand(dto, userId));
   }
 }
