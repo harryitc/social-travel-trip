@@ -19,6 +19,7 @@ import { LikesModal } from './likes-modal';
 import { commentLikesAdapter } from '../services/likes-adapters';
 import { API_ENDPOINT } from '@/config/api.config';
 import { formatPostTimestamp, formatPostDetailedTimestamp } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import {
   Tooltip,
   TooltipContent,
@@ -55,6 +56,7 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
+  const reactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load comments when component mounts
   useEffect(() => {
@@ -75,8 +77,36 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      // Clear any pending timeouts when component unmounts
+      if (reactionTimeoutRef.current) {
+        clearTimeout(reactionTimeoutRef.current);
+      }
     };
   }, [showReactionPicker]);
+  
+  // Handle showing reactions with delay
+  const handleShowReactions = (commentId: string) => {
+    // Clear any existing timeout
+    if (reactionTimeoutRef.current) {
+      clearTimeout(reactionTimeoutRef.current);
+      reactionTimeoutRef.current = null;
+    }
+    setShowReactionPicker(commentId);
+  };
+
+  // Handle hiding reactions with delay
+  const handleHideReactions = () => {
+    // Set a timeout to hide the reactions after a delay
+    // This gives the user time to move their cursor to the reaction menu
+    if (reactionTimeoutRef.current) {
+      clearTimeout(reactionTimeoutRef.current);
+    }
+    
+    reactionTimeoutRef.current = setTimeout(() => {
+      setShowReactionPicker(null);
+      reactionTimeoutRef.current = null;
+    }, 300);
+  };
 
   const fetchComments = async () => {
     try {
@@ -287,14 +317,15 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <div className="relative flex items-center" ref={showReactionPicker === item.comment_id ? reactionsMenuRef : null}>
+            <div 
+                className="relative flex items-center" 
+                ref={showReactionPicker === item.comment_id ? reactionsMenuRef : null}
+                onMouseEnter={() => handleShowReactions(item.comment_id)}
+                onMouseLeave={handleHideReactions}
+              >
               <button
                 className={`hover:text-foreground flex items-center ${isLiked ? 'text-purple-600 dark:text-purple-400' : ''}`}
                 onClick={() => handleLikeComment(item.comment_id)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  setShowReactionPicker(showReactionPicker === item.comment_id ? null : item.comment_id);
-                }}
               >
                 {currentReaction && currentReaction > 1 ? (
                   <span className="mr-1 text-sm">
@@ -316,30 +347,33 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
                 )}
               </button>
 
-              {/* Reaction Picker Button */}
-              <button
-                className="ml-1 px-1 hover:text-foreground"
-                onClick={() => setShowReactionPicker(showReactionPicker === item.comment_id ? null : item.comment_id)}
-              >
-                <span className="text-xs">▼</span>
-              </button>
-
               {/* Reaction Picker */}
-              {showReactionPicker === item.comment_id && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 flex gap-1 z-10">
-                  {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
-                    <button
-                      key={reaction.id}
-                      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''
-                        }`}
-                      onClick={() => handleReaction(item.comment_id, reaction.id)}
-                      title={reaction.label}
-                    >
-                      <span className="text-lg">{reaction.icon}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <motion.div 
+                className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 flex gap-1 z-10"
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ 
+                  opacity: showReactionPicker === item.comment_id ? 1 : 0,
+                  y: showReactionPicker === item.comment_id ? 0 : 10,
+                  scale: showReactionPicker === item.comment_id ? 1 : 0.95
+                }}
+                transition={{ duration: 0.2 }}
+                style={{ pointerEvents: showReactionPicker === item.comment_id ? 'auto' : 'none' }}
+                onMouseEnter={() => handleShowReactions(item.comment_id)}
+                onMouseLeave={handleHideReactions}
+              >
+                {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
+                  <motion.button
+                    key={reaction.id}
+                    className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''}`}
+                    onClick={() => handleReaction(item.comment_id, reaction.id)}
+                    title={reaction.label}
+                    whileHover={{ scale: 1.2 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  >
+                    <span className="text-lg">{reaction.icon}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             </div>
             <button
               className="hover:text-foreground flex items-center"
