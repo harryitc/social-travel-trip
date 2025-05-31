@@ -8,8 +8,14 @@ import { postService } from '../services/post.service';
 import { Skeleton } from '@/components/ui/radix-ui/skeleton';
 import { Post, PostQueryParams } from '../models/post.model';
 import { useEventStore } from '../../stores/event.store';
+import { motion, AnimatePresence } from 'framer-motion';
+import { RefreshCw } from 'lucide-react';
 
-export function PostList() {
+interface PostListProps {
+  searchQuery?: string;
+}
+
+export function PostList({ searchQuery = '' }: PostListProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +40,13 @@ export function PostList() {
   useEffect(() => {
     fetchPostsComplex(false);
   }, []);
+  
+  // Handle search query changes
+  useEffect(() => {
+    if (searchQuery) {
+      fetchPostsComplex(false);
+    }
+  }, [searchQuery]);
 
   const fetchPostsComplex = async (loadMore?: boolean) => {
     try {
@@ -51,12 +64,17 @@ export function PostList() {
   const fetchPosts = async (loadMore?: boolean) => {
     const currentPage = loadMore ? page + 1 : 1;
 
-    // Create query params based on active tab
+    // Create query params based on active tab and search query
     const params: PostQueryParams = {
       page: currentPage,
       limit: 10,
       // sort_by: activeTab
     };
+    
+    // Add search query if provided
+    if (searchQuery) {
+      params.search = searchQuery;
+    }
 
     console.log('Fetching posts with params:', params);
 
@@ -94,13 +112,25 @@ export function PostList() {
 
   return (
     <div className="space-y-6">
-      <PostCreator />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <PostCreator />
+      </motion.div>
 
       {loading && page === 1 ? (
         // Show skeleton loader for initial load
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="space-y-3 p-4 border rounded-lg">
+            <motion.div 
+              key={i} 
+              className="space-y-3 p-4 border rounded-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.1 }}
+            >
               <div className="flex items-center space-x-3">
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="space-y-1">
@@ -114,59 +144,105 @@ export function PostList() {
                 <Skeleton className="h-8 w-16" />
                 <Skeleton className="h-8 w-16" />
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       ) : error ? (
         // Show error message
-        <div className="p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-lg text-center">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
+        <motion.div 
+          className="p-6 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-lg text-center shadow-sm"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <p className="text-red-600 dark:text-red-400 mb-3">{error}</p>
           <Button
             variant="outline"
-            className="mt-2"
+            className="mt-2 bg-white dark:bg-gray-800"
             onClick={() => fetchPostsComplex(false)}
           >
+            <RefreshCw className="h-4 w-4 mr-2" />
             Thử lại
           </Button>
-        </div>
+        </motion.div>
       ) : (
         // Show posts
         <div className="space-y-4">
-          {posts
-            .map((post) => (
-              <PostItem
+          <AnimatePresence>
+            {searchQuery && posts.length > 0 && (
+              <motion.div 
+                className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-sm text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                Hiển thị kết quả tìm kiếm cho: <span className="font-medium">"{searchQuery}"</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          <AnimatePresence>
+            {posts.map((post, index) => (
+              <motion.div
                 key={post.post_id}
-                post={post}
-              />
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
+              >
+                <PostItem post={post} />
+              </motion.div>
             ))}
-
-          {/* Show message if all posts are hidden */}
-          {/* {posts.length > 0 && posts.filter(post => !hiddenPosts.includes(post.post_id)).length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-2">Tất cả bài viết đã bị ẩn</p>
-              <Button variant="outline" onClick={handleShowAllPosts}>
-                Hiển thị lại tất cả bài viết
-              </Button>
-            </div>
-          )} */}
+          </AnimatePresence>
 
           {/* Show message if no posts are available */}
           {posts.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Không có bài viết nào</p>
-            </div>
+            <motion.div 
+              className="text-center py-12 bg-white/70 dark:bg-gray-800/70 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <p className="text-muted-foreground mb-2">
+                {searchQuery ? 
+                  `Không tìm thấy bài viết nào cho "${searchQuery}"` : 
+                  'Không có bài viết nào'}
+              </p>
+              {searchQuery && (
+                <Button 
+                  variant="outline" 
+                  className="mt-2 bg-white dark:bg-gray-800"
+                  onClick={() => window.location.reload()}
+                >
+                  Xem tất cả bài viết
+                </Button>
+              )}
+            </motion.div>
           )}
 
           {/* Load more button */}
           {hasMore && posts.length > 0 && (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleLoadMore}
-              disabled={loading}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
             >
-              {loading ? 'Đang tải...' : 'Xem thêm'}
-            </Button>
+              <Button
+                variant="outline"
+                className="w-full bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 transition-all duration-300"
+                onClick={handleLoadMore}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Đang tải...
+                  </>
+                ) : (
+                  'Xem thêm bài viết'
+                )}
+              </Button>
+            </motion.div>
           )}
         </div>
       )}

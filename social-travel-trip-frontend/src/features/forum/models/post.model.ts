@@ -155,6 +155,7 @@ export class PostQueryParams {
   sort_by?: 'newest' | 'trending' | 'following';
   hashtag?: string;
   location_id?: string;
+  search?: string;
 
   constructor(data: any = {}) {
     this.page = data.page;
@@ -162,5 +163,6 @@ export class PostQueryParams {
     this.sort_by = data.sort_by;
     this.hashtag = data.hashtag;
     this.location_id = data.location_id;
+    this.search = data.search;
   }
 }
