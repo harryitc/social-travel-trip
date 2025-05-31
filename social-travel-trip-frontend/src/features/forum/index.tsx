@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { PostList } from './components/post-list';
-import { PageHeader } from '@/components/ui/page-header';
+import { PostCreator } from './components/post-creator';
 import { motion } from 'framer-motion';
 
 export function ForumPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
   const [animationComplete, setAnimationComplete] = useState(false);
 
   useEffect(() => {
@@ -17,28 +16,32 @@ export function ForumPage() {
   }, []);
 
   return (
-    <>
+    <div className="space-y-6">
       <motion.div
+        className="mb-2"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <PageHeader
-          title="Diễn đàn"
-          description="Khám phá và chia sẻ trải nghiệm du lịch của bạn"
-        />
+        <h1 className="text-2xl font-bold text-purple-800 dark:text-purple-300">Diễn đàn</h1>
+        <p className="text-gray-600 dark:text-gray-400">Khám phá và chia sẻ trải nghiệm du lịch của bạn</p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <motion.div
-          className="md:col-span-2"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <PostList searchQuery={searchQuery} />
-        </motion.div>
-      </div>
-    </>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <PostCreator />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+      >
+        <PostList searchQuery={searchQuery} />
+      </motion.div>
+    </div>
   );
 }

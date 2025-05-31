@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PostItem } from './post-item';
-import { PostCreator } from './post-creator';
 import { postService } from '../services/post.service';
 import { Skeleton } from '@/components/ui/radix-ui/skeleton';
 import { Post, PostQueryParams } from '../models/post.model';
@@ -112,13 +111,6 @@ export function PostList({ searchQuery = '' }: PostListProps) {
 
   return (
     <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <PostCreator />
-      </motion.div>
 
       {loading && page === 1 ? (
         // Show skeleton loader for initial load
