@@ -42,74 +42,20 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Xử lý URL Google Maps để lấy embed URL và ẩn UI
+  // Xử lý URL Google Maps để lấy embed URL
   const getEmbedUrl = (url: string): string => {
-    // Kiểm tra nếu URL đã là embed URL
-    if (url.includes('maps.google.com/maps/embed') || url.includes('www.google.com/maps/embed')) {
-      // Thêm tham số để ẩn UI
-      if (!url.includes('!3m2!1sen!2s!4v')) {
-        // Thêm tham số để ẩn UI
-        const modifiedUrl = url.replace(/!4v\d+!/, '!4v1!3m2!1sen!2s!4v!');
-        // Thêm tham số để ẩn nút zoom và cho phép truy cập từ localhost
-        return modifiedUrl + '&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200';
-      }
-      // Thêm tham số để ẩn nút zoom và cho phép truy cập từ localhost
-      return url + '&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200';
-    }
-
-    // Xử lý URL dạng https://maps.app.goo.gl/XXX hoặc https://goo.gl/maps/XXX
-    let embedUrl = '';
-
     try {
-      // Nếu URL chứa tham số pb (đây là URL embed đã được định dạng)
-      if (url.includes('pb=')) {
-        // Thêm tham số để ẩn UI
-        if (!url.includes('!3m2!1sen!2s!4v')) {
-          const modifiedUrl = url.replace(/!4v\d+!/, '!4v1!3m2!1sen!2s!4v!');
-          // Thêm tham số để ẩn nút zoom và cho phép truy cập từ localhost
-          return modifiedUrl + '&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200';
-        }
-        // Thêm tham số để ẩn nút zoom và cho phép truy cập từ localhost
-        return url + '&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200';
+      // Nếu URL đã là embed URL, sử dụng trực tiếp
+      if (url.includes('google.com/maps/embed')) {
+        return url;
       }
 
-      // Nếu là URL rút gọn, thử trích xuất tham số
-      if (url.includes('maps.app.goo.gl') || url.includes('goo.gl/maps')) {
-        // Đối với URL rút gọn, chúng ta sẽ sử dụng mode=streetview và thêm tham số để ẩn UI
-        embedUrl = `https://www.google.com/maps/embed?pb=!4v1!1m3!1m2!1s${encodeURIComponent(url)}!2s!3m2!1sen!2s!4v!5e0!3m2!1svi!2s!4v1&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200`;
-      }
-      // Nếu là URL đầy đủ với tham số
-      else if (url.includes('google.com/maps')) {
-        // Trích xuất tham số từ URL
-        const urlObj = new URL(url);
-        const params = new URLSearchParams(urlObj.search);
-
-        // Nếu có tham số ll (latitude,longitude)
-        if (params.has('ll')) {
-          const ll = params.get('ll');
-          embedUrl = `https://www.google.com/maps/embed?pb=!4v1!1m3!1m2!1s!2s${ll}!3m2!1sen!2s!4v!5e0!3m2!1svi!2s!4v1&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200`;
-        }
-        // Nếu có tham số q (query/address)
-        else if (params.has('q')) {
-          const q = params.get('q');
-          embedUrl = `https://www.google.com/maps/embed?pb=!4v1!1m3!1m2!1s!2s${q}!3m2!1sen!2s!4v!5e0!3m2!1svi!2s!4v1&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200`;
-        }
-        // Nếu không có tham số phù hợp, sử dụng URL gốc
-        else {
-          embedUrl = `https://www.google.com/maps/embed/v1/streetview?key=YOUR_API_KEY&location=${encodeURIComponent(url)}&showui=false&disableDefaultUI=1&scrollwheel=0&zoomControl=0&origin=localhost:4200`;
-        }
-      }
-      // Nếu không phải URL Google Maps hợp lệ
-      else {
-        console.error('URL không hợp lệ:', url);
-        embedUrl = url; // Sử dụng URL gốc
-      }
+      // Nếu không phải embed URL, sử dụng URL gốc (vì data đã có sẵn embed URL)
+      return url;
     } catch (error) {
       console.error('Lỗi khi xử lý URL:', error);
-      embedUrl = url; // Sử dụng URL gốc nếu có lỗi
+      return url;
     }
-
-    return embedUrl;
   };
 
   // Xử lý khi nhấn nút fullscreen
@@ -177,70 +123,67 @@ export const GoogleMapsView: React.FC<GoogleMapsViewProps> = ({
   const embedUrl = getEmbedUrl(mapUrl);
 
   return (
-    <Card className={`overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs ${className}`}>
-      <CardContent className="p-0">
-        <div ref={containerRef} className="relative">
-          <div style={{ height, width }}>
-            <div className="google-maps-iframe-container">
-              <iframe
-                ref={iframeRef}
-                src={embedUrl}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="google-maps-iframe"
-                allow="fullscreen"
-                sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-forms"
-              ></iframe>
+    <div className={`relative overflow-hidden rounded-xl ${className}`} style={{ height, width }}>
+      <div ref={containerRef} className="relative w-full h-full">
+        {/* Google Maps Iframe */}
+        <iframe
+          ref={iframeRef}
+          src={embedUrl}
+          width="100%"
+          height="100%"
+          style={{ border: 0, display: 'block' }}
+          allowFullScreen
+          loading="eager"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="google-maps-iframe rounded-xl"
+          allow="fullscreen"
+          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-presentation allow-forms"
+        ></iframe>
+
+        {/* Enhanced Location Info */}
+        {title && showInfoCard && (
+          <div className="absolute top-4 left-4 z-30">
+            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-purple-200/50 dark:border-purple-700/50 flex items-center gap-2">
+              <div className="p-1 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                <MapPin className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
+              <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">{title}</span>
             </div>
           </div>
+        )}
 
-          {/* Location Info - Simplified */}
-          {title && showInfoCard && (
-            <div className="absolute top-4 left-4 z-10">
-              <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-3 py-1.5 rounded-md flex items-center">
-                <MapPin className="h-4 w-4 mr-2 text-purple-600" />
-                <span className="font-medium text-sm">{title}</span>
-              </div>
-            </div>
+        {/* Enhanced Controls */}
+        <div className="absolute bottom-4 right-4 flex gap-2 z-30">
+          {reloadButton && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-purple-200/50 dark:border-purple-700/50 hover:bg-purple-50 dark:hover:bg-purple-900/50 shadow-lg transition-all duration-200"
+              onClick={handleReload}
+              title="Tải lại Street View"
+            >
+              <RotateCcw className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            </Button>
           )}
 
-          {/* Controls - Reload and Fullscreen */}
-          <div className="absolute bottom-6 right-16 flex gap-2">
-            {reloadButton && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-                onClick={handleReload}
-                title="Tải lại ảnh"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-            )}
-
-            {/* {fullscreenButton && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm"
-                onClick={toggleFullscreen}
-                title={isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình"}
-              >
-                {isFullscreen ? (
-                  <Minimize className="h-4 w-4" />
-                ) : (
-                  <Maximize className="h-4 w-4" />
-                )}
-              </Button>
-            )} */}
-          </div>
+          {fullscreenButton && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-purple-200/50 dark:border-purple-700/50 hover:bg-purple-50 dark:hover:bg-purple-900/50 shadow-lg transition-all duration-200"
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Thoát toàn màn hình" : "Xem toàn màn hình"}
+            >
+              {isFullscreen ? (
+                <Minimize className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              ) : (
+                <Maximize className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              )}
+            </Button>
+          )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

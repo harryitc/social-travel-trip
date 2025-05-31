@@ -16,6 +16,7 @@ import { DeleteNotifyDto } from '../dto/delete-notify.dto';
 import { GetNotifyDto } from '../dto/get-notify.dto';
 import { FilterNotifyDto } from '../dto/filter-notify.dto';
 import { MarkReadNotifyDto } from '../dto/mark-read-notify.dto';
+import { MarkAllReadNotifyDto } from '../dto/mark-all-read-notify.dto';
 
 @ApiTags('Notify')
 @ApiBearerAuth('jwt')
@@ -66,6 +67,17 @@ export class NotifyController {
   markNotificationAsRead(@Body() dto: MarkReadNotifyDto, @Request() req: any) {
     const userId = req.user?.user_id;
     return this.service.markNotificationAsRead(dto, +userId);
+  }
+
+  @Post('mark-all-read')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Mark all notifications as read',
+    description: 'Marks all unread notifications as read for the current user',
+  })
+  markAllNotificationsAsRead(@Body() dto: MarkAllReadNotifyDto, @Request() req: any) {
+    const userId = req.user?.user_id;
+    return this.service.markAllNotificationsAsRead(dto, +userId);
   }
 
   @Post('get')

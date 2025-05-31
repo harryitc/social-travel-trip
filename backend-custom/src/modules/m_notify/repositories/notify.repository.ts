@@ -91,6 +91,20 @@ export class NotifyRepository {
 
     return this.client.execute(query, [userId, notifyId]);
   }
+  
+  /**
+   * Mark all notifications as read for a user
+   */
+  async markAllNotificationsAsRead(userId: number) {
+    const query = `
+      UPDATE notifications
+      SET is_read = B'1', user_updated = $1
+      WHERE user_created = $2 AND is_read = B'0'
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [userId, userId]);
+  }
 
   /**
    * Get a notification by ID

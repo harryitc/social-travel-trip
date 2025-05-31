@@ -1,25 +1,50 @@
 'use client';
 
-import { PageHeader } from '@/components/ui/page-header';
-import { Card, CardContent } from '@/components/ui/card';
-import { View360LocationTabs } from '@/features/view360';
+import { View360LocationTabs, View360Stats, View360Tips } from '@/features/view360';
 import { TabMenu } from '@/components/common/TabMenu';
+import { Globe, MapPin } from 'lucide-react';
+import '@/features/view360/view360.css';
 
 export default function View360Page() {
   return (
     <>
       <TabMenu />
-      <div className="w-full space-y-4 sm:space-y-6">
-        <PageHeader
-          title="View 360°"
-          description="Khám phá các địa điểm du lịch với góc nhìn 360 độ từ Google Maps Street View"
-        />
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900">
+        <div className="view360-container container mx-auto px-4 py-6 space-y-6">
+          {/* Enhanced Header */}
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full">
+                <Globe className="h-8 w-8 text-white" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold gradient-text">
+                View 360°
+              </h1>
+            </div>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Khám phá các địa điểm du lịch tuyệt đẹp với góc nhìn 360 độ từ Google Maps Street View
+            </p>
+            <div className="flex items-center justify-center gap-2 text-sm text-purple-600 dark:text-purple-400">
+              <MapPin className="h-4 w-4" />
+              <span>Hơn 50+ địa điểm du lịch nổi tiếng</span>
+            </div>
+          </div>
 
-        <Card className="border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-xs">
-          <CardContent className="p-3 sm:p-6">
-            <View360LocationTabs showInfoCard={false} />
-          </CardContent>
-        </Card>
+          {/* Stats Section */}
+          <div className="max-w-6xl mx-auto mb-8">
+            <View360Stats />
+          </div>
+
+          {/* Tips Section */}
+          <div className="max-w-4xl mx-auto mb-6">
+            <View360Tips />
+          </div>
+
+          {/* Main Content */}
+          <div className="max-w-7xl mx-auto">
+            <View360LocationTabs showInfoCard={true} />
+          </div>
+        </div>
       </div>
     </>
   );
