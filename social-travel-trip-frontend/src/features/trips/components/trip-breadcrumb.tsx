@@ -126,7 +126,7 @@ export function TripBreadcrumb() {
         </div>
 
         {/* Copy URL button - only show when there's a current group */}
-        {currentGroup && (
+        {/* {currentGroup && (
           <Button
             variant="outline"
             size="sm"
@@ -145,7 +145,7 @@ export function TripBreadcrumb() {
               </>
             )}
           </Button>
-        )}
+        )} */}
       </nav>
     </div>
   );
