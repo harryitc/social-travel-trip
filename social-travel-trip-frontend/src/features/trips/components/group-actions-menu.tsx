@@ -35,8 +35,9 @@ export function GroupActionsMenu({
   const currentUserMember = group.members.list.find(
     member => member.user_id === currentUserId
   );
-  const isAdminOrModerator = currentUserMember && 
+  const isAdminOrModerator = currentUserMember &&
     (currentUserMember.role === 'admin' || currentUserMember.role === 'moderator');
+  const isAdmin = currentUserMember && currentUserMember.role === 'admin';
 
   const handleAction = (action: () => void) => {
     action();
@@ -86,7 +87,7 @@ export function GroupActionsMenu({
         )}
 
         {/* Common actions */}
-        {onLeaveGroup && (
+        {onLeaveGroup && !isAdmin && (
           <DropdownMenuItem
             onClick={() => handleAction(() => onLeaveGroup(group))}
             className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400"

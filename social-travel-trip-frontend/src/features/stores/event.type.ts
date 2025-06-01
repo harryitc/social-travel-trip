@@ -12,7 +12,7 @@ export type EventMap = {
   'group:created': { group: any };
   'group:joined': { group: any };
   'group:updated': { group: any };
-  'group:left': { groupId: string };
+  'group:left': { group: any };
   'group:member_added': { group: any; member: any };
   'group:member_removed': { group: any; memberId: string };
   'group:selected': { group: any };

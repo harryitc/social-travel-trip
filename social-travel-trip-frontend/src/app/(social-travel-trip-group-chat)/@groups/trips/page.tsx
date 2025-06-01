@@ -48,6 +48,14 @@ export default function GroupsPage() {
       console.log('Group updated event received:', data);
       groupStoreService.updateGroup(data.group);
     },
+    'group:left': (data) => {
+      console.log('Group left event received:', data);
+      groupStoreService.removeGroup(data.group.id);
+      // If the left group was selected, navigate to groups list
+      if (selectedGroupId === data.group.id) {
+        router.push('/trips');
+      }
+    },
   });
 
   return (

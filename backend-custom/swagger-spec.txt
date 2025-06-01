@@ -46,6 +46,7 @@ group/create
 group/add-member
 group/get-members
 group/kick-member
+group/leave-group
 group/update-member-role
 group/update-member-nickname
 group/send-message

@@ -14,6 +14,7 @@ import { GetMessagesDto } from '../dto/get-messages.dto';
 import { GetGroupMembersDto } from '../dto/get-group-members.dto';
 import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
 import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
+import { LeaveGroupDto } from '../dto/leave-group.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { UpdateMemberNicknameDto } from '../dto/update-member-nickname.dto';
@@ -84,6 +85,13 @@ export class GroupController {
   async kickMember(@Body() dto: KickGroupMemberDto, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.kickGroupMember(dto, +userId);
+  }
+
+  @Post('leave-group')
+  @ApiOperation({ summary: 'Leave a group' })
+  async leaveGroup(@Body() dto: LeaveGroupDto, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.leaveGroup(dto, +userId);
   }
 
   @Post('update-member-role')

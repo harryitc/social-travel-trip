@@ -15,6 +15,7 @@ import { QRCodeDisplayDialog } from './qr-code-display-dialog';
 import { InviteMemberDialog, InviteMemberData } from './invite-member-dialog';
 import { GroupActionsMenu } from './group-actions-menu';
 import { GroupCreatedSuccessDialog } from './group-created-success-dialog';
+import { LeaveGroupDialog } from './leave-group-dialog';
 import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
 import { API_ENDPOINT } from '@/config/api.config';
@@ -32,6 +33,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [selectedGroupForActions, setSelectedGroupForActions] = useState<TripGroup | null>(null);
   const [createdGroup, setCreatedGroup] = useState<TripGroup | null>(null);
   const emit = useEventStore((state) => state.emit);
@@ -123,6 +125,52 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const openInviteDialog = (group: TripGroup) => {
     setSelectedGroupForActions(group);
     setShowInviteDialog(true);
+  };
+
+  const openLeaveDialog = (group: TripGroup) => {
+    setSelectedGroupForActions(group);
+    setShowLeaveDialog(true);
+  };
+
+  const handleLeaveGroup = async (group: TripGroup) => {
+    try {
+      await tripGroupService.leaveGroup({
+        group_id: parseInt(group.id)
+      });
+
+      // Show success notification
+      notification.success({
+        message: 'Rời nhóm thành công',
+        description: `Bạn đã rời khỏi nhóm "${group.title}" thành công!`,
+        placement: 'topRight',
+        duration: 3,
+      });
+
+      // Emit event using Zustand to update group list
+      emit('group:left', { group });
+    } catch (error: any) {
+      console.error('Error leaving group:', error);
+
+      // Show error notification
+      let errorMessage = 'Có lỗi xảy ra khi rời khỏi nhóm';
+
+      if (error.response?.data?.reasons?.message) {
+        errorMessage = error.response.data.reasons.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      notification.error({
+        message: 'Lỗi rời nhóm',
+        description: errorMessage,
+        placement: 'topRight',
+        duration: 5,
+      });
+
+      throw error; // Re-throw to let dialog handle loading state
+    }
   };
 
   return (
@@ -230,6 +278,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                     group={group}
                     onGenerateQR={openQRDialog}
                     onInviteMember={openInviteDialog}
+                    onLeaveGroup={openLeaveDialog}
                     currentUserId={1} // TODO: Get from auth context
                   />
                 </div>
@@ -286,6 +335,13 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
             groupId={selectedGroupForActions.id}
             groupName={selectedGroupForActions.title}
             onInviteMember={handleInviteMember}
+          />
+
+          <LeaveGroupDialog
+            open={showLeaveDialog}
+            onOpenChange={setShowLeaveDialog}
+            group={selectedGroupForActions}
+            onConfirmLeave={handleLeaveGroup}
           />
         </>
       )}

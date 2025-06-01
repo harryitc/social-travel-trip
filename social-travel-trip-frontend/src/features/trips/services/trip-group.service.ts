@@ -285,6 +285,18 @@ class TripGroupService {
     }
   }
 
+  async leaveGroup(data: {
+    group_id: number;
+  }): Promise<any> {
+    try {
+      const response: any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/leave-group`, data);
+      return response;
+    } catch (error) {
+      console.error('Error leaving group:', error);
+      throw error;
+    }
+  }
+
   // Message operations
   async sendMessage(data: SendMessageData): Promise<TripGroupMessage> {
     try {
