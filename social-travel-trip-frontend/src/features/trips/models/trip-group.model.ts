@@ -119,14 +119,14 @@ export class TripGroup {
   public join_code_expires_at?: Date;
 
   constructor(dto: TripGroupDTO) {
-    console.log('🏗️ [TripGroup] Creating TripGroup from DTO:', {
-      group_id: dto.group_id,
-      name: dto.name,
-      title: dto.title,
-      hasTitle: !!dto.title,
-      success: dto.success,
-      message: dto.message
-    });
+    // console.log('🏗️ [TripGroup] Creating TripGroup from DTO:', {
+    //   group_id: dto.group_id,
+    //   name: dto.name,
+    //   title: dto.title,
+    //   hasTitle: !!dto.title,
+    //   success: dto.success,
+    //   message: dto.message
+    // });
 
     // Backend fields
     this.group_id = dto.group_id;
