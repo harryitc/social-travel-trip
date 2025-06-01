@@ -81,6 +81,9 @@ interface Message {
       name: string;
     };
   };
+  // System message properties
+  isSystemMessage?: boolean;
+  systemMessageType?: 'member_joined' | 'member_left';
 }
 
 type TripChatProps = {
@@ -451,6 +454,54 @@ export function TripChat({ tripId }: TripChatProps) {
       }
     };
 
+    // Handle member join events
+    const handleMemberJoined = (data: { groupId: number; newMemberId: number; member: any }) => {
+      if (data.groupId.toString() == tripId) {
+        console.log('👥 Member joined group:', data);
+
+        // Create system message for member join
+        const systemMessage: Message = {
+          id: `system-join-${Date.now()}`,
+          content: `${data.member?.username || data.member?.nickname || 'Một thành viên'} đã tham gia nhóm`,
+          sender: {
+            id: 'system',
+            name: 'System',
+            avatar: ''
+          },
+          timestamp: formatMessageTimestamp(new Date().toISOString()),
+          rawTimestamp: new Date().toISOString(),
+          isSystemMessage: true,
+          systemMessageType: 'member_joined'
+        };
+
+        setMessages(prev => [...prev, systemMessage]);
+      }
+    };
+
+    // Handle member leave events
+    const handleMemberLeft = (data: { groupId: number; leftMemberId: number }) => {
+      if (data.groupId.toString() == tripId) {
+        console.log('👥 Member left group:', data);
+
+        // Create system message for member leave
+        const systemMessage: Message = {
+          id: `system-leave-${Date.now()}`,
+          content: `Một thành viên đã rời khỏi nhóm`,
+          sender: {
+            id: 'system',
+            name: 'System',
+            avatar: ''
+          },
+          timestamp: formatMessageTimestamp(new Date().toISOString()),
+          rawTimestamp: new Date().toISOString(),
+          isSystemMessage: true,
+          systemMessageType: 'member_left'
+        };
+
+        setMessages(prev => [...prev, systemMessage]);
+      }
+    };
+
     // Test event listener to verify WebSocket is working
     const handleTestEvent = (data: any) => {
       console.log('🧪 [TripChat] Test event received:', data);
@@ -464,6 +515,8 @@ export function TripChat({ tripId }: TripChatProps) {
     websocketService.on('group:message:unpinned', handleMessagePin);
     websocketService.on('group:member:typing', handleTyping);
     websocketService.on('group:member:stop_typing', handleTyping);
+    websocketService.on('group:member:joined', handleMemberJoined);
+    websocketService.on('group:member:left', handleMemberLeft);
     websocketService.on('user:typing', handleTyping);
     websocketService.on('connection_established', handleTestEvent);
     websocketService.on('user:online', handleTestEvent);
@@ -487,6 +540,8 @@ export function TripChat({ tripId }: TripChatProps) {
       websocketService.off('group:message:unpinned', handleMessagePin);
       websocketService.off('group:member:typing', handleTyping);
       websocketService.off('group:member:stop_typing', handleTyping);
+      websocketService.off('group:member:joined', handleMemberJoined);
+      websocketService.off('group:member:left', handleMemberLeft);
       websocketService.off('user:typing', handleTyping);
       websocketService.off('connection_established', handleTestEvent);
       websocketService.off('user:online', handleTestEvent);
@@ -1013,6 +1068,29 @@ export function TripChat({ tripId }: TripChatProps) {
                   )}
 
                   {messages.map((message, index) => {
+                    // Check if this is a system message
+                    if (message.isSystemMessage) {
+                      return (
+                        <div
+                          id={`message-${message.id}`}
+                          key={`${message.id}-${index}`}
+                          className="flex justify-center my-2"
+                        >
+                          <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700">
+                            <span className="flex items-center gap-2">
+                              {message.systemMessageType === 'member_joined' && (
+                                <span className="text-green-500">👋</span>
+                              )}
+                              {message.systemMessageType === 'member_left' && (
+                                <span className="text-orange-500">👋</span>
+                              )}
+                              {message.content}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     // Compare with user ID from auth context - convert both to string for comparison
                     const isOwnMessage = user?.user_id ? message.sender.id == user.user_id.toString() : false;
 

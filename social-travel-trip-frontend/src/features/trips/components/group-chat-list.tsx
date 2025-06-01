@@ -45,14 +45,6 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
     const handleMemberJoined = (data: any) => {
       console.log('👥 Member joined group:', data);
 
-      // Show notification
-      notification.info({
-        message: 'Thành viên mới',
-        description: `${data.member?.username || 'Một thành viên'} đã tham gia nhóm`,
-        placement: 'topRight',
-        duration: 3,
-      });
-
       // Emit event to update group member count
       emit('group:member_added', {
         groupId: data.groupId,
@@ -63,14 +55,6 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
     // Listen for member leave events
     const handleMemberLeft = (data: any) => {
       console.log('👥 Member left group:', data);
-
-      // Show notification
-      notification.info({
-        message: 'Thành viên rời nhóm',
-        description: `Một thành viên đã rời khỏi nhóm`,
-        placement: 'topRight',
-        duration: 3,
-      });
 
       // Emit event to update group member count
       emit('group:member_removed', {
