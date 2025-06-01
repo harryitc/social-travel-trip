@@ -66,29 +66,30 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
           console.error('❌ Failed to load group info after join:', error);
         }
       } else {
-        // Update group member count in store for existing groups
-        groupStoreService.updateGroupMemberCount(data.groupId.toString(), 1);
+        // Just emit event - parent components will handle store updates
+        console.log('👥 Other user joined group, emitting event');
       }
 
       // Emit event to update group member count
-      emit('group:member_added', {
+      const memberAddedEvent = {
         groupId: data.groupId,
         member: data.member
-      });
+      };
+      console.log('📡 [GroupChatList] Emitting group:member_added event:', memberAddedEvent);
+      emit('group:member_added', memberAddedEvent);
     };
 
     // Listen for member leave events
     const handleMemberLeft = (data: any) => {
       console.log('👥 Member left group:', data);
 
-      // Update group member count in store
-      groupStoreService.updateGroupMemberCount(data.groupId.toString(), -1);
-
       // Emit event to update group member count
-      emit('group:member_removed', {
+      const memberRemovedEvent = {
         groupId: data.groupId,
         memberId: data.leftMemberId
-      });
+      };
+      console.log('📡 [GroupChatList] Emitting group:member_removed event:', memberRemovedEvent);
+      emit('group:member_removed', memberRemovedEvent);
     };
 
     // Register WebSocket event listeners

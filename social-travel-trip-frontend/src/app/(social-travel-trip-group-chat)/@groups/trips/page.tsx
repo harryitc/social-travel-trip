@@ -66,6 +66,18 @@ export default function GroupsPage() {
         router.push('/trips');
       }
     },
+    'group:member_added': async (data) => {
+      console.log('👥 [GroupsPage] Member added event received:', data);
+      // Refresh group data from API to get accurate member info
+      await groupStoreService.refreshGroup(data.groupId.toString());
+      console.log('✅ [GroupsPage] Group refreshed after member added');
+    },
+    'group:member_removed': async (data) => {
+      console.log('👥 [GroupsPage] Member removed event received:', data);
+      // Refresh group data from API to get accurate member info
+      await groupStoreService.refreshGroup(data.groupId.toString());
+      console.log('✅ [GroupsPage] Group refreshed after member removed');
+    },
   });
 
   return (

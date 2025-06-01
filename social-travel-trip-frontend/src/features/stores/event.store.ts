@@ -21,7 +21,6 @@ interface GroupStore {
   setLoading: (loading: boolean) => void
   addGroup: (group: TripGroup) => void
   updateGroup: (group: TripGroup) => void
-  updateGroupMemberCount: (groupId: string, countChange: number) => void
   removeGroup: (groupId: string) => void
 }
 
@@ -66,7 +65,7 @@ export const useEventStore = create<EventStore>(() => {
 })
 
 // Group store để chia sẻ state giữa các component
-export const useGroupStore = create<GroupStore>((set, get) => ({
+export const useGroupStore = create<GroupStore>((set) => ({
   groups: [],
   selectedGroupId: '',
   loading: false,
@@ -89,54 +88,26 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
     }
   }),
 
-  updateGroup: (updatedGroup) => set((state) => ({
-    groups: state.groups.map(group =>
-      group.id === updatedGroup.id ? updatedGroup : group
-    )
-  })),
+  updateGroup: (updatedGroup) => set((state) => {
+    console.log('🔄 [Store] updateGroup called:', {
+      updatedGroupId: updatedGroup.id,
+      updatedGroupTitle: updatedGroup.title,
+      updatedMemberCount: updatedGroup.members.count,
+      existingGroups: state.groups.map(g => ({ id: g.id, title: g.title, count: g.members.count }))
+    });
 
-  updateGroupMemberCount: (groupId, countChange) => set((state) => ({
-    groups: state.groups.map(group => {
-      if (group.id === groupId) {
-        const newCount = Math.max(0, group.members.count + countChange);
-        console.log(`📊 [Store] Updating member count for group ${group.title}: ${group.members.count} -> ${newCount}`);
-
-        // Create a new TripGroup instance to preserve methods
-        const updatedGroup = new TripGroup({
-          group_id: group.group_id,
-          name: group.name,
-          title: group.title,
-          description: group.description,
-          cover_url: group.cover_url,
-          status: group.status,
-          json_data: group.json_data,
-          created_at: group.createdAt.toISOString(),
-          updated_at: group.updatedAt.toISOString(),
-          plan_id: group.plan_id,
-          join_code: group.join_code,
-          join_code_expires_at: group.join_code_expires_at?.toISOString(),
-          members: {
-            count: newCount,
-            max: group.members.max,
-            list: group.members.list.map(m => ({
-              group_member_id: m.group_member_id,
-              group_id: m.group_id,
-              user_id: m.user_id,
-              nickname: m.nickname,
-              role: m.role,
-              join_at: m.joinAt.toISOString(),
-              username: m.name,
-              full_name: (m as any).full_name,
-              avatar_url: m.avatar
-            }))
-          }
-        });
-
+    const newGroups = state.groups.map(group => {
+      if (group.id === updatedGroup.id) {
+        console.log(`✅ [Store] Updating group ${group.title}: ${group.members.count} -> ${updatedGroup.members.count} members`);
         return updatedGroup;
       }
       return group;
-    })
-  })),
+    });
+
+    console.log('🔄 [Store] Updated groups:', newGroups.map(g => ({ id: g.id, title: g.title, count: g.members.count })));
+
+    return { groups: newGroups };
+  }),
 
   removeGroup: (groupId) => set((state) => ({
     groups: state.groups.filter(group => group.id !== groupId)

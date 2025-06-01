@@ -77,6 +77,18 @@ export default function GroupsDetailPage() {
         router.push('/trips');
       }
     },
+    'group:member_added': async (data) => {
+      console.log('👥 [GroupsDetailPage] Member added event received:', data);
+      // Refresh group data from API to get accurate member info
+      await groupStoreService.refreshGroup(data.groupId.toString());
+      console.log('✅ [GroupsDetailPage] Group refreshed after member added');
+    },
+    'group:member_removed': async (data) => {
+      console.log('👥 [GroupsDetailPage] Member removed event received:', data);
+      // Refresh group data from API to get accurate member info
+      await groupStoreService.refreshGroup(data.groupId.toString());
+      console.log('✅ [GroupsDetailPage] Group refreshed after member removed');
+    },
   });
 
   return (
