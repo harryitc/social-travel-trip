@@ -68,8 +68,8 @@ export function TripBreadcrumb() {
   const breadcrumbItems = getBreadcrumbItems();
 
   return (
-    <div className="px-4 pt-4 bg-gray-50 dark:bg-gray-900">
-      <nav className="flex items-center justify-between mb-4">
+    <div className="flex-1">
+      <nav className="flex items-center justify-between">
         <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
           {breadcrumbItems.map((item, index) => (
             <div key={item.href} className="flex items-center">
@@ -103,7 +103,7 @@ export function TripBreadcrumb() {
             variant="outline"
             size="sm"
             onClick={handleCopyUrl}
-            className="h-8 px-3 text-xs border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+            className="h-8 px-3 text-xs border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 ml-4"
           >
             {copied ? (
               <>

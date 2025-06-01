@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { TabMenu } from "@/components/common/TabMenu";
 import { WebSocketProvider } from "@/lib/providers/websocket.provider";
-import { TripBreadcrumb } from "@/features/trips/components";
+import { GroupChatHeader } from "@/features/trips/components";
 
 type GroupChatLayoutProps = {
     children: ReactNode;
@@ -16,7 +16,8 @@ export default function GroupChatLayout({
             <TabMenu />
             <div className="flex h-[100vh] bg-gray-50 dark:bg-gray-900">
                 <div className="flex-1 flex flex-col overflow-hidden">
-                    <TripBreadcrumb></TripBreadcrumb>
+                    {/* Header with breadcrumb and notifications */}
+                    <GroupChatHeader />
                     <WebSocketProvider>
                         {/* Main 3-column layout */}
                         <div className="flex flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900 p-4 gap-4">

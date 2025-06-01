@@ -9,6 +9,7 @@ export { UserAutocomplete } from './user-autocomplete';
 export { GroupActionsMenu } from './group-actions-menu';
 export { GroupCreatedSuccessDialog } from './group-created-success-dialog';
 export { TripBreadcrumb } from './trip-breadcrumb';
+export { GroupChatHeader } from './group-chat-header';
 export { ChatSkeleton, GroupListSkeleton } from './chat-skeleton';
 export { GroupManagementDialog } from './group-management-dialog';
 export { MemberManagementDialog } from './member-management-dialog';
