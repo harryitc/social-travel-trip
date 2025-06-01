@@ -33,7 +33,7 @@ module.exports = async (client, schema) => {
     "title" varchar(255),
     "slug" varchar(255),
     "description" varchar(255),
-    "day_travel" timestamp(255),
+    "day_travel" timestamp(6),
     "location" jsonb,
     "thumbnail_url" varchar(255),
     "json_data" jsonb,
