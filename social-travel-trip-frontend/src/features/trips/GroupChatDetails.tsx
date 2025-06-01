@@ -5,7 +5,7 @@ import { TripGroup, TripGroupMember } from './models/trip-group.model';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Badge } from '@/components/ui/radix-ui/badge';
-import { Calendar, MapPin, Users, Clock, Globe, Lock, UserPlus, Pencil, Trash2, Plus, ChevronRight, Copy, QrCode, Settings } from 'lucide-react';
+import { MapPin, Users, Clock, Globe, Lock, UserPlus, Pencil, Trash2, Plus, Copy, QrCode, Settings, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/radix-ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/radix-ui/tabs';
 import { Input } from '@/components/ui/radix-ui/input';
@@ -255,177 +255,172 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
       {
         groupId && group ? (
           <div className="flex flex-col h-full">
-            {/* Group info header */}
-            <div className="p-2 border-b border-purple-100 dark:border-purple-900 bg-teal-50/50 dark:bg-teal-900/10">
-              <div className="flex items-center gap-3 mb-3">
-                <Avatar className="h-12 w-12 border border-teal-100 dark:border-teal-800 shadow-xs">
+            {/* Group info header - Compact */}
+            <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center gap-3 mb-2">
+                <Avatar className="h-10 w-10">
                   <AvatarImage src={API_ENDPOINT.file_image_v2 + group.image} alt={group.title} />
-                  <AvatarFallback>{group.title[0]}</AvatarFallback>
+                  <AvatarFallback className="bg-purple-500 text-white text-sm">
+                    {group.title[0]}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-base truncate">{group.title}</h2>
-                  <div className="flex items-center gap-1.5 text-xs mt-1">
+                  <h2 className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">{group.title}</h2>
+                  <div className="flex items-center gap-2 mt-1">
                     {group.isPrivate ? (
-                      <Badge variant="secondary" className="flex items-center gap-1 text-xs h-5">
-                        <Lock className="h-3 w-3" />
+                      <Badge variant="secondary" className="text-xs h-5 px-2">
+                        <Lock className="h-3 w-3 mr-1" />
                         Riêng tư
                       </Badge>
                     ) : (
-                      <Badge className="bg-green-500 flex items-center gap-1 text-xs h-5">
-                        <Globe className="h-3 w-3" />
+                      <Badge className="bg-green-500 text-xs h-5 px-2">
+                        <Globe className="h-3 w-3 mr-1" />
                         Công khai
                       </Badge>
+                    )}
+                    <span className="text-xs text-gray-500">{memberCount}/{group.members?.max || 10} thành viên</span>
+                  </div>
+                </div>
+                {/* Group settings icon - Only show for admin */}
+                {isCurrentUserAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full"
+                    onClick={() => setShowGroupManagement(true)}
+                    title="Cập nhật thông tin nhóm"
+                  >
+                    <Settings className="h-4 w-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Compact info */}
+              {(group.description || group.location) && (
+                <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                  {group.description && (
+                    <p className="line-clamp-2">{group.description}</p>
+                  )}
+                  {group.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      <span className="truncate">{group.location}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Join Code section - Compact */}
+            {group.join_code && (
+              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <QrCode className="h-4 w-4 text-gray-500" />
+                  <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100">Mã mời</h3>
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={group.join_code}
+                    readOnly
+                    className="font-mono text-xs bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                  />
+                  <Button
+                    onClick={copyJoinCode}
+                    variant="outline"
+                    size="sm"
+                    className="px-2"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Members section - Compact with more space for management */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <div className="p-3 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-gray-500" />
+                    <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100">Thành viên</h3>
+                    <Badge variant="outline" className="text-xs h-5 px-2">
+                      {memberCount}/{group.members?.max || 10}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {!group.isFull() && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setShowInviteDialog(true)}
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        Mời
+                      </Button>
                     )}
                   </div>
                 </div>
               </div>
 
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-3">{group.description}</p>
-
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                {group.location && (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin className="h-4 w-4 text-teal-500" />
-                    <span className="truncate">{group.location.split(',')[0]}</span>
-                  </div>
-                )}
-                {group.date && (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Calendar className="h-4 w-4 text-teal-500" />
-                    <span>{group.date}</span>
-                  </div>
-                )}
-                {group.duration && (
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Clock className="h-4 w-4 text-teal-500" />
-                    <span>{group.duration}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Users className="h-4 w-4 text-teal-500" />
-                  <span>{memberCount}/{group.members?.max || 10}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Join Code section */}
-            {group.join_code && (
-              <div className="p-3 border-b border-teal-100 dark:border-teal-900 bg-teal-50/30 dark:bg-teal-900/10">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <QrCode className="h-4 w-4 text-teal-500" />
-                    <h3 className="font-medium text-sm">Mã mời</h3>
-                  </div>
-                </div>
-
+              {/* Scrollable Member list - Takes remaining space */}
+              <div className="flex-1 overflow-y-auto p-3">
                 <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      value={group.join_code}
-                      readOnly
-                      className="font-mono text-sm bg-white dark:bg-gray-800 border-teal-200 dark:border-teal-700"
-                    />
+                  {members.map((member, index) => {
+                    const displayName = member.nickname || member.name || 'Unknown User';
+                    const username = (member as any).username || member.name;
+
+                    return (
+                      <div key={member.group_member_id || member.user_id || index} className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-900/50">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={displayName} />
+                          <AvatarFallback className="bg-purple-500 text-white text-xs">
+                            {displayName[0]?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{displayName}</p>
+                              {username !== displayName && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">@{username}</p>
+                              )}
+                            </div>
+                            {member.role === 'admin' && (
+                              <Badge variant="outline" className="text-xs h-5 px-1.5 bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                                Admin
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Quick actions for member management */}
+                  <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-800">
                     <Button
-                      onClick={copyJoinCode}
                       variant="outline"
                       size="sm"
-                      className="px-3 border-teal-200 hover:bg-teal-50 dark:border-teal-700 dark:hover:bg-teal-900/20"
+                      className="w-full h-8 text-xs"
+                      onClick={() => setShowMemberList(true)}
                     >
-                      <Copy className="h-4 w-4" />
+                      <Users className="h-3 w-3 mr-1" />
+                      Xem chi tiết tất cả thành viên
                     </Button>
+                    {isCurrentUserAdmin && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-8 text-xs mt-2"
+                        onClick={() => setShowMemberManagement(true)}
+                      >
+                        <Settings className="h-3 w-3 mr-1" />
+                        Quản lý thành viên
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Chia sẻ mã này để mời người khác tham gia nhóm
-                  </p>
                 </div>
-              </div>
-            )}
-
-            {/* Members section */}
-            <div className="p-3 border-b border-teal-100 dark:border-teal-900">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-medium text-sm">Thành viên</h3>
-                  <Badge variant="outline" className="text-xs h-5">{memberCount}/{group.members?.max || 10}</Badge>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/20"
-                    onClick={() => setShowMemberList(true)}
-                  >
-                    <Users className="h-3.5 w-3.5 text-teal-500" />
-                    <span>Xem tất cả</span>
-                    <ChevronRight className="h-3.5 w-3.5 ml-0.5 text-muted-foreground" />
-                  </Button>
-
-                  {!group.isFull() && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/20"
-                      onClick={() => setShowInviteDialog(true)}
-                    >
-                      <UserPlus className="h-3.5 w-3.5 text-teal-500" />
-                      <span>Mời</span>
-                    </Button>
-                  )}
-
-                  {isCurrentUserAdmin && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-xs gap-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/20"
-                      onClick={() => setShowGroupManagement(true)}
-                    >
-                      <Settings className="h-3.5 w-3.5 text-blue-500" />
-                      <span>Quản lý</span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Member list */}
-              <div className="space-y-1">
-                {members.slice(0, 5).map((member, index) => {
-                  const displayName = member.nickname || member.name || 'Unknown User';
-                  const username = (member as any).username || member.name;
-                  const fullName = (member as any).full_name;
-
-                  return (
-                    <div key={member.group_member_id || member.user_id || index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-secondary/50">
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={API_ENDPOINT.file_image_v2 + member.avatar} alt={displayName} />
-                        <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-sm font-medium truncate">{displayName}</span>
-                          {(username !== displayName || fullName) && (
-                            <span className="text-xs text-gray-500 truncate">
-                              {fullName ? `${fullName} (@${username})` : `@${username}`}
-                            </span>
-                          )}
-                        </div>
-                        {member.role === 'admin' && (
-                          <Badge variant="outline" className="text-xs h-5 bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800">Admin</Badge>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Show remaining members count */}
-                {members.length > 5 && (
-                  <Button
-                    variant="ghost"
-                    className="w-full h-8 text-sm text-muted-foreground hover:bg-secondary/50"
-                    onClick={() => setShowMemberList(true)}
-                  >
-                    Xem thêm {members.length - 5} thành viên khác
-                  </Button>
-                )}
               </div>
             </div>
 
@@ -466,52 +461,48 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
               onMembersUpdated={handleMembersUpdated}
             />
 
-            {/* Plan section */}
+            {/* Plan section - Compact */}
             {(tripPlan || matchingTemplate) && (
-              <div className="p-3 flex-1 overflow-hidden flex flex-col">
+              <div className="p-3 border-t border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-medium text-sm">Kế hoạch</h3>
-                    <Badge variant="outline" className="text-xs h-5 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">Đã áp dụng</Badge>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100">Kế hoạch</h3>
+                    <Badge variant="outline" className="text-xs h-5 px-2 bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                      Đã áp dụng
+                    </Badge>
                   </div>
                   {tripPlan && (
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs gap-1.5 hover:bg-teal-100 dark:hover:bg-teal-900/20"
+                      className="h-7 px-2 text-xs"
                       onClick={() => setShowTripPlanEditor(true)}
                     >
-                      <Pencil className="h-3.5 w-3.5 text-teal-500" />
-                      <span>Chỉnh sửa</span>
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Sửa
                     </Button>
                   )}
                 </div>
 
-                {/* Chế độ đầy đủ */}
+                {/* Compact Plan Card */}
                 <Button
                   variant="outline"
-                  className="w-full flex items-center gap-3 h-auto p-3 justify-start hover:bg-teal-50 dark:hover:bg-teal-900/20 group rounded-lg"
+                  className="w-full flex items-center gap-3 h-auto p-3 justify-start hover:bg-gray-50 dark:hover:bg-gray-900/50"
                   onClick={() => tripPlan ? setShowTripPlanEditor(true) : setShowPlanDetails(true)}
                 >
-                  <div className="h-16 w-16 rounded-md overflow-hidden shrink-0 border border-teal-100 dark:border-teal-800 shadow-xs">
+                  <div className="h-12 w-12 rounded-md overflow-hidden shrink-0">
                     {/* eslint-disable-next-line */}
                     <img
                       src={(tripPlan || matchingTemplate)?.image}
                       alt={(tripPlan || matchingTemplate)?.name}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      className="h-full w-full object-cover"
                     />
                   </div>
-                  <div className="text-left">
-                    <div className="font-medium text-sm">{(tripPlan || matchingTemplate)?.name}</div>
-                    <div className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-teal-500" />
-                      <span>{(tripPlan || matchingTemplate)?.duration} ngày</span>
-                      <span className="mx-1">•</span>
-                      <MapPin className="h-3.5 w-3.5 text-teal-500" />
-                      <span>{(tripPlan || matchingTemplate)?.destination.split(',')[0]}</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Nhấn để {tripPlan ? 'chỉnh sửa' : 'xem chi tiết'} lịch trình
+                  <div className="text-left flex-1 min-w-0">
+                    <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{(tripPlan || matchingTemplate)?.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {(tripPlan || matchingTemplate)?.duration} ngày • {(tripPlan || matchingTemplate)?.destination.split(',')[0]}
                     </div>
                   </div>
                 </Button>
@@ -799,15 +790,17 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
         ) : (
           <div className="flex h-full items-center justify-center p-6">
             <div className="text-center space-y-3">
-              <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-                <Users className="h-8 w-8 text-gray-400" />
+              <div className="w-12 h-12 mx-auto bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                <Users className="h-6 w-6 text-gray-400" />
               </div>
-              <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Chi tiết nhóm
-              </h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Chọn một nhóm để xem thông tin chi tiết
-              </p>
+              <div className="space-y-1">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Chi tiết nhóm
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Chọn nhóm để xem thông tin
+                </p>
+              </div>
             </div>
           </div>
         )
