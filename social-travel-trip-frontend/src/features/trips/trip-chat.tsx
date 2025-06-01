@@ -322,12 +322,12 @@ export function TripChat({ tripId }: TripChatProps) {
       }
     } catch (error: any) {
       console.error('❌ [TripChat] Error loading older messages:', error);
-      notification.error({
-        message: 'Lỗi',
-        description: 'Không thể tải tin nhắn cũ hơn. Vui lòng thử lại.',
-        placement: 'topRight',
-        duration: 3,
-      });
+      // notification.error({
+      //   message: 'Lỗi',
+      //   description: 'Không thể tải tin nhắn cũ hơn. Vui lòng thử lại.',
+      //   placement: 'topRight',
+      //   duration: 3,
+      // });
     } finally {
       setLoadingOlderMessages(false);
     }
