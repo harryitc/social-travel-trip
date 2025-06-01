@@ -7,7 +7,7 @@ export type {
   UserProfile as UserProfileType,
   UpdateProfilePayload,
   ChangePasswordPayload,
-  ProfileStats,
+  ProfileStats as ProfileStatsType,
   UserProfileWithStats
 } from './services/profile.service';
 
@@ -34,3 +34,10 @@ export { ProfilePhotos } from './components/profile-photos';
 export { ProfileTravelStats } from './components/profile-travel-stats';
 export { ProfileConnections } from './components/profile-connections';
 export { ProfileStatsCard } from './components/profile-stats-card';
+
+// Hooks
+export {
+  useProfileStats,
+  useViewProfile,
+  useProfileCompletion
+} from './hooks/use-profile-stats';
