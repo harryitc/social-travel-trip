@@ -10,16 +10,27 @@ module.exports = async (client, schema) => {
       "status" VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
       "invited_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "responded_at" TIMESTAMP NULL,
-      "expires_at" TIMESTAMP NOT NULL,
-      
-      -- Foreign key constraints
-      CONSTRAINT fk_group_invitations_group_id 
-        FOREIGN KEY (group_id) REFERENCES ${schema}."groups"(group_id) ON DELETE CASCADE,
-      CONSTRAINT fk_group_invitations_inviter_id 
-        FOREIGN KEY (inviter_id) REFERENCES ${schema}."users"(user_id) ON DELETE CASCADE,
-      CONSTRAINT fk_group_invitations_invited_user_id 
-        FOREIGN KEY (invited_user_id) REFERENCES ${schema}."users"(user_id) ON DELETE CASCADE
+      "expires_at" TIMESTAMP NOT NULL
     );
+  `);
+
+  // Add foreign key constraints with CASCADE delete for automatic cleanup
+  await client.query(`
+    ALTER TABLE ${schema}."group_invitations"
+    ADD CONSTRAINT fk_group_invitations_group_id
+    FOREIGN KEY (group_id) REFERENCES ${schema}."groups"(group_id) ON DELETE CASCADE;
+  `);
+
+  await client.query(`
+    ALTER TABLE ${schema}."group_invitations"
+    ADD CONSTRAINT fk_group_invitations_inviter_id
+    FOREIGN KEY (inviter_id) REFERENCES ${schema}."users"(user_id) ON DELETE CASCADE;
+  `);
+
+  await client.query(`
+    ALTER TABLE ${schema}."group_invitations"
+    ADD CONSTRAINT fk_group_invitations_invited_user_id
+    FOREIGN KEY (invited_user_id) REFERENCES ${schema}."users"(user_id) ON DELETE CASCADE;
   `);
 
   // Create indexes for better performance
@@ -45,9 +56,9 @@ module.exports = async (client, schema) => {
 
   // Create partial index for pending invitations only (for better performance on active invitations)
   await client.query(`
-    CREATE INDEX IF NOT EXISTS idx_group_invitations_pending 
-    ON ${schema}."group_invitations"(group_id, invited_user_id) 
-    WHERE status = 'pending' AND expires_at > CURRENT_TIMESTAMP;
+    CREATE INDEX IF NOT EXISTS idx_group_invitations_pending
+    ON ${schema}."group_invitations"(group_id, invited_user_id)
+    WHERE status = 'pending';
   `);
 
   // Create unique constraint to prevent duplicate pending invitations

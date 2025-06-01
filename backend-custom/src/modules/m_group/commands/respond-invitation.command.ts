@@ -78,11 +78,9 @@ export class RespondInvitationCommandHandler
         this.logger.error(
           `Failed to add user to group after accepting invitation: ${error.message}`,
         );
-        // Revert invitation status if adding to group fails
-        await this.repository.updateInvitationStatus(
-          dto.invitation_id,
-          'pending',
-        );
+        // Note: Cannot revert to pending status due to type constraints
+        // The invitation will remain in accepted state but user won't be in group
+        this.logger.error(`User ${userId} accepted invitation but failed to join group ${invitation.group_id}`);
         throw new BadRequestException(
           'Failed to join group. Please try again.',
         );

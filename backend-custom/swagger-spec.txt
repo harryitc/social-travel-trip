@@ -59,6 +59,7 @@ group/messages/get-pinned
 group/generate-join-qrcode
 group/join-by-code
 group/invite-member
+group/respond-invitation
 plan/query
 plan/details
 plan/create
