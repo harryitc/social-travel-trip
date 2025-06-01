@@ -1193,14 +1193,11 @@ export function TripChat({ tripId }: TripChatProps) {
                           </div>
 
                           {/* Message Bubble */}
-                          <motion.div
+                          <div
                             className={`relative px-4 py-2.5 group shadow-sm ${isOwnMessage
                               ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md'
                               : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md'
                             }`}
-                            variants={chatMotionVariants.messageBubble}
-                            initial="rest"
-                            whileHover="hover"
                           >
                             {/* Reply indicator */}
                             {message.replyTo && (
@@ -1360,7 +1357,7 @@ export function TripChat({ tripId }: TripChatProps) {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
-                          </motion.div>
+                          </div>
                         </div>
                       </motion.div>
                     );
