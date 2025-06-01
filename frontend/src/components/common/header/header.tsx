@@ -11,11 +11,10 @@ import ThemeMode from '../theme-mode/theme-mode';
 import { useThemeModeStore } from '../theme-mode/stores/theme-mode.store';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import NavBar from '../navbar';
 
-const UserInfo = dynamic(() => import('@/features/auth/components/user-info'), {
-  ssr: false,
-});
+// const UserInfo = dynamic(() => import('@/features/auth/components/user-info'), {
+//   ssr: false,
+// });
 
 export default function Header() {
   const pathname = usePathname();

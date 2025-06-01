@@ -137,7 +137,7 @@ export default function CreatePostForm() {
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema as any),
     defaultValues: {
       title: "",
       slug: "",
@@ -147,7 +147,7 @@ export default function CreatePostForm() {
       highlights: [],
       date: new Date(),
     },
-  })
+  }) as any
 
   // Handle location selection
   const handleLocationSelect = (location: any) => {
@@ -224,7 +224,7 @@ export default function CreatePostForm() {
   }
 
   // Handle form submission
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit: any = async (values: z.infer<typeof formSchema>) => {
     if (!selectedLocation) {
       toast({
         title: "Lỗi",

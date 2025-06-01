@@ -13,7 +13,7 @@ interface TripPlanContextType {
   saveError: Error | null;
   updatePlan: (updates: Partial<TripPlan>) => void;
   updateActivities: (dayIndex: number, activities: Activity[]) => void;
-  savePlan: () => Promise<void>;
+  savePlan: () => Promise<TripPlan | void>;
   revertChanges: () => void;
   hasUnsavedChanges: boolean;
 }

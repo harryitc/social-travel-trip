@@ -48,7 +48,7 @@ export class TripGroupMember {
   public id: string;
   public name: string;
   public avatar: string;
-  public role: 'admin' | 'member';
+  public role: 'admin' | 'member' | 'moderator';
   public joinAt: Date;
   public nickname?: string;
 

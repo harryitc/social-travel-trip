@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/radix-ui/skeleton';
 import Link from 'next/link';
-import { locationService, Location } from './services/location.service';
+import { locationService } from './services/location.service';
+import { Location } from './models/location.model';
 
 // Default images for locations without images
 const DEFAULT_IMAGES = [

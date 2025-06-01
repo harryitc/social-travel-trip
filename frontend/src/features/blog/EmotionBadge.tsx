@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { Emotion } from "../const";
 
 interface EmotionBadgeProps {
-  emotion: Emotion;
+  emotion: Emotion | string;
   size?: "sm" | "md" | "lg";
   withLabel?: boolean;
 }
@@ -38,7 +38,7 @@ export function EmotionBadge({
       label: "Nostalgic",
       className: "bg-green-100 text-green-700 border-green-200",
     },
-  };
+  } as any;
 
   const config = emotionConfig[emotion];
 

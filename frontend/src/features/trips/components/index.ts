@@ -13,6 +13,5 @@ export { GroupChatHeader } from './group-chat-header';
 export { ChatSkeleton, GroupListSkeleton } from './chat-skeleton';
 export { GroupManagementDialog } from './group-management-dialog';
 export { MemberManagementDialog } from './member-management-dialog';
-export { ChatColumn } from './chat-column';
 export { MessageReactions } from './message-reactions';
 export { MessageLikesModal } from './message-likes-modal';

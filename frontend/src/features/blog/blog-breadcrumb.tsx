@@ -39,9 +39,9 @@ export function BlogBreadcrumb({ title, customItems }: BlogBreadcrumbProps) {
       items.push({ label: "Blog", href: "/blog", icon: BookOpen });
 
       if (pathname.includes("/create")) {
-        items.push({ label: "Tạo bài viết", icon: Plus });
+        items.push({ label: "Tạo bài viết", href: "/blog/create", icon: Plus });
       } else if (pathname.match(/\/blog\/[^\/]+$/)) {
-        items.push({ label: title || "Chi tiết bài viết", icon: BookOpen });
+        items.push({ label: title || "Chi tiết bài viết", href: pathname, icon: BookOpen });
       }
     }
 

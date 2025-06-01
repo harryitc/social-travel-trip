@@ -1,6 +1,5 @@
 'use client';
 import MenuAntd from '@/components/common/menu';
-import LogViewer from '@/components/ui/log-viewer';
 import { UserOutlined } from '@ant-design/icons';
 import { Avatar, Layout } from 'antd';
 
@@ -28,7 +27,6 @@ export default function Default({
         {/* Main Content */}
         <Content className="p-6 bg-gray-100">{children}</Content>
       </Layout>
-      <LogViewer />
     </Layout>
   );
 }

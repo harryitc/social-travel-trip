@@ -1,7 +1,7 @@
 // Export all upload components
 export { ImageUploadWithCrop } from '../image-upload-with-crop';
 export { SimpleImageUpload } from '../simple-image-upload';
-export { AvatarUpload, UserAvatarUpload, GroupAvatarUpload } from '../avatar-upload';
+export { AvatarUpload } from '../avatar-upload';
 
 // Export hooks
 export { useFileUpload, uploadImage, uploadDocument, uploadAvatar } from '../../../hooks/use-file-upload';

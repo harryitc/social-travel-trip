@@ -131,7 +131,7 @@ export const planService = {
    */
   async updatePlanBasic(planId: number, data: Partial<CreatePlanRequest>) {
     try {
-      const response = await Http.post(PLAN_APIS.UPDATE_BASIC, {
+      const response: any = await Http.post(PLAN_APIS.UPDATE_BASIC, {
         plan_id: planId,
         ...data
       });
@@ -219,7 +219,7 @@ export const planService = {
    */
   async addPlanToGroup(data: AddPlanToGroupRequest) {
     try {
-      const response = await Http.post(PLAN_APIS.ADD_TO_GROUP, data);
+      const response: any = await Http.post(PLAN_APIS.ADD_TO_GROUP, data);
       return response;
     } catch (error) {
       console.error('Error adding plan to group:', error);
@@ -234,7 +234,7 @@ export const planService = {
    */
   async checkGroupPlan(groupId: number) {
     try {
-      const response = await Http.post(PLAN_APIS.CHECK_GROUP_PLAN, {
+      const response: any = await Http.post(PLAN_APIS.CHECK_GROUP_PLAN, {
         group_id: groupId
       });
       return response;
@@ -251,7 +251,7 @@ export const planService = {
    */
   async deletePlan(planId: number) {
     try {
-      const response = await Http.post(PLAN_APIS.DELETE, {
+      const response: any = await Http.post(PLAN_APIS.DELETE, {
         plan_id: planId
       });
       return response;
@@ -269,7 +269,7 @@ export const planService = {
    */
   async updatePlanPlaces(planId: number, dayPlaces: any[]) {
     try {
-      const response = await Http.post(PLAN_APIS.UPDATE_PLACES, {
+      const response: any = await Http.post(PLAN_APIS.UPDATE_PLACES, {
         plan_id: planId,
         day_places: dayPlaces
       });
@@ -288,7 +288,7 @@ export const planService = {
    */
   async updatePlanSchedules(planId: number, schedules: any[]) {
     try {
-      const response = await Http.post(PLAN_APIS.UPDATE_SCHEDULES, {
+      const response: any = await Http.post(PLAN_APIS.UPDATE_SCHEDULES, {
         plan_id: planId,
         schedules: schedules
       });
