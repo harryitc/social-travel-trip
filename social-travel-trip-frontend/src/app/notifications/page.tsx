@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { notificationService, NotificationType } from '@/features/notifications/services/notification.service';
 import { NotificationModel } from '@/features/notifications/models/notification.model';
-import { Card, Button, Spin, Empty, List, Typography, Badge } from 'antd';
+import { Card, Button, Spin, Empty, List, Typography, Badge, notification as antNotification } from 'antd';
 import { UserIcon, MessageSquareIcon, ThumbsUpIcon, UsersIcon, BellIcon, CheckIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { WebsocketEvent, websocketService } from '@/lib/services/websocket.service';
 
 const { Title, Text } = Typography;
 
@@ -102,10 +103,38 @@ export default function NotificationsPage() {
     }
   };
 
-  // Load notifications on component mount
+  // Handle new notification from WebSocket
+  const handleNewNotification = useCallback((notification: NotificationModel) => {
+    setNotifications(prev => [notification, ...prev]);
+
+    // Show toast notification
+    antNotification.open({
+      message: 'Thông báo mới',
+      description: notificationService.getFormattedMessage(notification),
+      placement: 'topRight',
+      duration: 5,
+    });
+  }, []);
+
+  // Load notifications on component mount and setup WebSocket
   useEffect(() => {
     loadNotifications();
-  }, [loadNotifications]);
+
+    // Setup WebSocket listener for new notifications
+    const handleWebSocketNotification = (data: any) => {
+      console.log('Received WebSocket notification:', data);
+      const notification = new NotificationModel(data);
+      handleNewNotification(notification);
+    };
+
+    // Add WebSocket listener
+    websocketService.on(WebsocketEvent.NOTIFICATION_CREATED, handleWebSocketNotification);
+
+    // Cleanup WebSocket listener
+    return () => {
+      websocketService.off(WebsocketEvent.NOTIFICATION_CREATED, handleWebSocketNotification);
+    };
+  }, [loadNotifications, handleNewNotification]);
 
   // Count unread notifications
   const unreadCount = notifications.filter(notification => !notification.is_read).length;

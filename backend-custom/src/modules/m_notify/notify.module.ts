@@ -10,9 +10,14 @@ import { NotifyController } from './controllers/notify.controller';
 
 import { EventHandlers } from './events';
 import { NotifySagas } from './notify.sagas';
+import { WebsocketModule } from '@modules/m_websocket/websocket.module';
 
 @Module({
-  imports: [CqrsModule, PostgresModule.forFeature(CONNECTION_STRING_DEFAULT)],
+  imports: [
+    CqrsModule,
+    PostgresModule.forFeature(CONNECTION_STRING_DEFAULT),
+    WebsocketModule,
+  ],
   controllers: [NotifyController],
   providers: [
     NotifyService,

@@ -135,12 +135,29 @@ export const ListNotifications = () => {
     // Initialize WebSocket listeners and load notifications
     useEffect(() => {
         loadNotifications();
-        
-        // Refresh notifications when dropdown opens
+
+        // Setup WebSocket listener for new notifications
+        const handleWebSocketNotification = (data: any) => {
+            console.log('Received WebSocket notification:', data);
+            const notification = new NotificationModel(data);
+            handleNewNotification(notification);
+        };
+
+        // Add WebSocket listener
+        websocketService.on(WebsocketEvent.NOTIFICATION_CREATED, handleWebSocketNotification);
+
+        // Cleanup WebSocket listener
+        return () => {
+            websocketService.off(WebsocketEvent.NOTIFICATION_CREATED, handleWebSocketNotification);
+        };
+    }, [loadNotifications, handleNewNotification]);
+
+    // Refresh notifications when dropdown opens
+    useEffect(() => {
         if (isOpen) {
             loadNotifications();
         }
-    }, [loadNotifications, handleNewNotification, isOpen]);
+    }, [isOpen, loadNotifications]);
 
     return (
         <>
