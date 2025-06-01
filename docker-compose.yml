@@ -33,4 +33,16 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/social_travel_trip
     networks:
       - app-network
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      args:
+        BUILD_ENV: prod  # đổi thành 'local' nếu build local
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+    networks:
+      - app-network
 
