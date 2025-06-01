@@ -14,7 +14,7 @@ import { fileService } from '@/features/file/file.service';
 import { locationService } from '@/features/explore/services/location.service';
 import { useRouter } from 'next/navigation';
 import { CreatePostPayload } from '../models/post.model';
-import { useWebSocket } from '@/lib/providers/websocket.provider';
+import websocketService from '@/lib/services/websocket.service';
 import { notification } from 'antd';
 import { useEventStore } from '../../stores/event.store';
 import { HashtagModel } from '../models/hashtag.model';
