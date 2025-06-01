@@ -3,10 +3,12 @@ export { UserProfile } from './models/profile.model';
 
 // Services
 export { profileService } from './services/profile.service';
-export type { 
+export type {
   UserProfile as UserProfileType,
   UpdateProfilePayload,
-  ChangePasswordPayload 
+  ChangePasswordPayload,
+  ProfileStats,
+  UserProfileWithStats
 } from './services/profile.service';
 
 // Schemas
@@ -31,3 +33,4 @@ export { ProfileTimeline } from './components/profile-timeline';
 export { ProfilePhotos } from './components/profile-photos';
 export { ProfileTravelStats } from './components/profile-travel-stats';
 export { ProfileConnections } from './components/profile-connections';
+export { ProfileStatsCard } from './components/profile-stats-card';

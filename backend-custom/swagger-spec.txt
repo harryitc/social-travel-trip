@@ -5,10 +5,13 @@ auth/reset-password
 auth/reset-password/confirm
 user/register
 user/details
+user/profile-stats
 user/update
 user/change-password
 user/search
 user/delete
+user/update-profile-stats
+user/record-profile-view/{profileOwnerId}
 cak/file-v2/get-list
 cak/file-v2/upload
 cak/file-v2/download
