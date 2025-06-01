@@ -12,7 +12,7 @@ COPY . .
 ARG BUILD_ENV=prod
 COPY .env.${BUILD_ENV} .env
 
-RUN npm build
+RUN npm run build
 
 # Production image
 FROM node:22-alpine AS runner
