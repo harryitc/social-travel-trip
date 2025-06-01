@@ -44,7 +44,9 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
 
   // Find a matching template for this group (in a real app, this would come from the database)
   const matchingTemplate = group ? TRAVEL_PLAN_TEMPLATES.find(
-    template => group.location && template.destination.includes(group.getLocationShort())
+    template => group.location && template.destination.includes(
+      group.getLocationShort ? group.getLocationShort() : group.location.split(',')[0] || group.location
+    )
   ) : undefined;
 
   // Fetch group details and members when component mounts or groupId changes

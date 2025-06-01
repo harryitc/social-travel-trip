@@ -37,6 +37,11 @@ export default function GroupsPage() {
     groupStoreService.loadGroups();
   }, []);
 
+  // Debug: Log when groups change
+  useEffect(() => {
+    console.log("📊 [GroupsPage] Groups updated:", groups.map(g => ({ id: g.id, title: g.title, memberCount: g.members.count })));
+  }, [groups]);
+
   // Listen to group events
   useEventListeners({
     'group:created': (data) => {

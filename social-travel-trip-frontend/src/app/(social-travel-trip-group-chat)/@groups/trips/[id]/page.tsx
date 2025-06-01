@@ -40,6 +40,11 @@ export default function GroupsDetailPage() {
     groupStoreService.loadGroups(false);
   }, []);
 
+  // Debug: Log when groups change
+  useEffect(() => {
+    console.log("📊 [GroupsDetailPage] Groups updated:", groups.map(g => ({ id: g.id, title: g.title, memberCount: g.members.count })));
+  }, [groups]);
+
   useEffect(() => {
     // Set selected group từ URL params khi params.id thay đổi
     if (params.id) {

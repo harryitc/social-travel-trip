@@ -132,6 +132,15 @@ class GroupStoreService {
   }
 
   /**
+   * Update group member count
+   */
+  updateGroupMemberCount(groupId: string, countChange: number): void {
+    const store = useGroupStore.getState();
+    store.updateGroupMemberCount(groupId, countChange);
+    console.log(`✅ [GroupStoreService] Updated member count for group ${groupId} by ${countChange}`);
+  }
+
+  /**
    * Reset store (for testing or logout)
    */
   reset(): void {

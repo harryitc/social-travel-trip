@@ -67,13 +67,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
         }
       } else {
         // Update group member count in store for existing groups
-        const targetGroup = groups.find(group => group.id === data.groupId.toString());
-        if (targetGroup) {
-          // Update the members count
-          targetGroup.members.count = targetGroup.members.count + 1;
-          // Update the group in store
-          groupStoreService.updateGroup(targetGroup);
-        }
+        groupStoreService.updateGroupMemberCount(data.groupId.toString(), 1);
       }
 
       // Emit event to update group member count
@@ -88,13 +82,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       console.log('👥 Member left group:', data);
 
       // Update group member count in store
-      const targetGroup = groups.find(group => group.id === data.groupId.toString());
-      if (targetGroup) {
-        // Update the members count
-        targetGroup.members.count = Math.max(0, targetGroup.members.count - 1); // Ensure count doesn't go below 0
-        // Update the group in store
-        groupStoreService.updateGroup(targetGroup);
-      }
+      groupStoreService.updateGroupMemberCount(data.groupId.toString(), -1);
 
       // Emit event to update group member count
       emit('group:member_removed', {
@@ -348,7 +336,9 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                       {group.location && (
                         <div className="flex items-center gap-1 truncate">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{group.getLocationShort()}</span>
+                          <span className="truncate">
+                            {group.getLocationShort ? group.getLocationShort() : group.location.split(',')[0] || group.location}
+                          </span>
                         </div>
                       )}
                     </div>
