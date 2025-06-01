@@ -250,7 +250,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       {/* Header with title and action buttons */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Nhóm chuyến đi</h2>
+          {/* <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Nhóm chuyến đi</h2> */}
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -312,7 +312,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm max-w-[calc(100%-2rem)]">
                         {group.title}
                       </h3>
                       {/* <div className="flex gap-1 ml-2">
