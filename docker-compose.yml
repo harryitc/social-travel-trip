@@ -38,6 +38,9 @@ services:
     container_name: frontend
     build:
       context: ./frontend
+    environment:
+      NODE_ENV: production
+      APP_ENV: prod
     ports:
       - "4200:4200"
     depends_on:

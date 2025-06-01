@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
   reactStrictMode: false, //Default: true -> false Fix: https://github.com/zenoamaro/react-quill/issues/784
+  experimental: {
+
+  },
   images: {
     remotePatterns: [
       {
