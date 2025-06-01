@@ -233,7 +233,7 @@ export function TripChat({ tripId }: TripChatProps) {
         console.error('❌ [TripChat] Error loading messages:', error);
         notification.error({
           message: 'Lỗi',
-          description: error?.response?.data?.reasons?.message || 'Không thể tải tin nhắn. Vui lòng thử lại sau.',
+          description: error?.message || 'Không thể tải tin nhắn. Vui lòng thử lại sau.',
           placement: 'topRight',
         });
         setMessages([]);
@@ -692,7 +692,7 @@ export function TripChat({ tripId }: TripChatProps) {
     } catch (error: any) {
       notification.error({
         message: 'Lỗi',
-        description: error?.response?.data?.reasons?.message || 'Không thể ghim tin nhắn. Vui lòng thử lại sau.',
+        description: error?.message || 'Không thể ghim tin nhắn. Vui lòng thử lại sau.',
         placement: 'topRight',
       })
       console.error('Error toggling pin message:', error);
@@ -733,7 +733,7 @@ export function TripChat({ tripId }: TripChatProps) {
       console.error('Error reacting to message:', error);
       notification.error({
         message: 'Lỗi',
-        description: error?.response?.data?.reasons?.message || 'Không thể thực hiện reaction. Vui lòng thử lại sau.',
+        description: error?.message || 'Không thể thực hiện reaction. Vui lòng thử lại sau.',
         placement: 'topRight',
       });
     }
@@ -828,7 +828,7 @@ export function TripChat({ tripId }: TripChatProps) {
           console.error('Error uploading images:', uploadError);
           notification.error({
             message: 'Lỗi tải lên hình ảnh',
-            description: uploadError?.response?.data?.reasons?.message || 'Không thể tải lên hình ảnh. Vui lòng thử lại.',
+            description: uploadError?.message || 'Không thể tải lên hình ảnh. Vui lòng thử lại.',
             placement: 'topRight',
           });
           return;
@@ -857,7 +857,7 @@ export function TripChat({ tripId }: TripChatProps) {
           console.error('Error uploading files:', uploadError);
           notification.error({
             message: 'Lỗi tải lên tệp',
-            description: uploadError?.response?.data?.reasons?.message || 'Không thể tải lên tệp. Vui lòng thử lại.',
+            description: uploadError?.message || 'Không thể tải lên tệp. Vui lòng thử lại.',
             placement: 'topRight',
           });
           return;
@@ -939,7 +939,7 @@ export function TripChat({ tripId }: TripChatProps) {
       console.error('❌ [TripChat] Error sending message:', error);
 
       // Show appropriate error message
-      let errorMessage = error?.response?.data?.reasons?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.';
+      let errorMessage = error?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại sau.';
 
       notification.error({
         message: 'Lỗi gửi tin nhắn',

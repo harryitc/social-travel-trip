@@ -21,6 +21,7 @@ import { MemberManagementDialog } from './components/member-management-dialog';
 import { tripGroupService } from './services/trip-group.service';
 import { getUserInfo } from '@/features/auth/auth.service';
 import { API_ENDPOINT } from '@/config/api.config';
+import { useEventListeners } from '@/features/stores/useEventListeners';
 
 type GroupChatDetailsProps = {
   groupId: string;
@@ -94,6 +95,42 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
     fetchGroupDetails();
   }, [groupId]);
 
+  // Handle members updated
+  const handleMembersUpdated = async () => {
+    try {
+      // Refresh members list
+      const membersData = await tripGroupService.getGroupMembers(groupId);
+      if (membersData && membersData.members) {
+        setMembers(membersData.members);
+        setMemberCount(membersData.members.length);
+      }
+    } catch (error) {
+      console.error('Error refreshing members:', error);
+    }
+  };
+
+  // Listen to group member events for real-time updates
+  useEventListeners({
+    'group:member_added': (data) => {
+      // Only update if this event is for the current group
+      if (data.groupId.toString() === groupId) {
+        console.log('👥 Member added to current group:', data);
+
+        // Refresh members list to get the latest data
+        handleMembersUpdated();
+      }
+    },
+    'group:member_removed': (data) => {
+      // Only update if this event is for the current group
+      if (data.groupId.toString() === groupId) {
+        console.log('👥 Member removed from current group:', data);
+
+        // Refresh members list to get the latest data
+        handleMembersUpdated();
+      }
+    },
+  });
+
   const handleOpenInviteDialog = () => {
     setShowInviteDialog(true);
     setShowMemberList(false);
@@ -158,20 +195,6 @@ export function GroupChatDetails({ groupId }: GroupChatDetailsProps) {
   const handleGroupUpdated = (updatedGroup: any) => {
     setGroup(updatedGroup);
     setShowGroupManagement(false);
-  };
-
-  // Handle members updated
-  const handleMembersUpdated = async () => {
-    try {
-      // Refresh members list
-      const membersData = await tripGroupService.getGroupMembers(groupId);
-      if (membersData && membersData.members) {
-        setMembers(membersData.members);
-        setMemberCount(membersData.members.length);
-      }
-    } catch (error) {
-      console.error('Error refreshing members:', error);
-    }
   };
 
   // Get current user info from auth
