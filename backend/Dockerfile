@@ -1,51 +1,24 @@
-######## BUILD
-FROM node:20.9.0 AS build
+# Base image
+FROM node:22-alpine
 
-# Thiết lập thư mục làm việc
+# Set working directory
 WORKDIR /app
 
+# Install dependencies
 COPY package*.json ./
+RUN yarn install --ignore-engines
 
+# Copy source code
 COPY . .
 
-RUN yarn install --ignore-engines
-RUN yarn build 
+# Copy environment file into container (rename to .env)
+COPY env/prod.env .env
 
+# Build NestJS
+RUN yarn build
 
-######## EXPORT
-FROM node:20.9.0 AS runtime
-
-WORKDIR /app_build
-
-# Cài đặt lại các thư viện chrome cần thiết trong runtime
-RUN apt-get update && apt-get install -y \
-    libnss3 \
-    libx11-dev \
-    libxcomposite1 \
-    libxrandr2 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libcups2 \
-    libgdk-pixbuf2.0-0 \
-    libnspr4 \
-    libxss1 \
-    libxtst6 \
-    libnss3-dev \
-    libappindicator3-1 \
-    libu2f-udev \
-    lsb-release \
-    xdg-utils \
-    libgbm1
-RUN npx puppeteer browsers install chrome
-
-COPY --from=build /app /app_build
-
-ARG NODE_ENV=server-test
-ENV NODE_ENV $NODE_ENV
-
-ENTRYPOINT ["/bin/bash", "-c", "set -a && source /app_build/.env && exec \"$@\"","--"]
-
+# Expose NestJS port (tuỳ bạn config, mặc định là 3000 hoặc 3001)
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+# Start: chạy migration trước khi start server
+CMD ["sh", "-c", "npm run migrate:prod && npm run start:prod"]

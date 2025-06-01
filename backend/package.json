@@ -13,6 +13,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "migrate": "nest start --entryFile \"configs/databases/migrations/pg-migrate.repl\"",
+    "migrate:prod": "NODE_ENV=prod nest start --entryFile \"configs/databases/migrations/pg-migrate.repl\"",
     "start:server-test": "NODE_ENV=server-test node dist/main",
     "start:prod": "NODE_ENV=prod node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
