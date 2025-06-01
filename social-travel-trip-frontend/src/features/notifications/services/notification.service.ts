@@ -59,7 +59,7 @@ export const notificationService = {
   async markAsRead(notificationId: string): Promise<void> {
     try {
       await Http.post(`${API_ENDPOINT.social_travel_trip}/notify/mark-read`, {
-        notify_id: notificationId,
+        notify_id: +notificationId,
       });
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -78,55 +78,6 @@ export const notificationService = {
       console.error('Error marking all notifications as read:', error);
       throw error;
     }
-  },
-
-  /**
-   * Initialize WebSocket listeners for notifications
-   * @param onNewNotification Callback when a new notification is received
-   */
-  initializeWebSocketListeners(onNewNotification: (notification: NotificationModel) => void): void {
-    // Connect to WebSocket if not already connected
-    if (!websocketService.isConnected()) {
-      websocketService.connect().catch((error: unknown) => {
-        console.error('Failed to connect to WebSocket for notifications:', error);
-      });
-    }
-
-    // Listen for new notifications
-    websocketService.on(WebsocketEvent.NOTIFICATION_CREATED, (data: any) => {
-      console.log('New notification received:', data);
-      const notification = new NotificationModel(data);
-      onNewNotification(notification);
-    });
-
-    // Listen for follow events
-    websocketService.on(WebsocketEvent.USER_FOLLOWED, (data: any) => {
-      console.log('User followed event:', data);
-      // The server should send a notification, but we can handle it here as well
-    });
-
-    // Listen for comment events
-    websocketService.on(WebsocketEvent.COMMENT_CREATED, (data: any) => {
-      console.log('Comment created event:', data);
-      // The server should send a notification, but we can handle it here as well
-    });
-
-    // Listen for like events
-    websocketService.on(WebsocketEvent.POST_LIKED, (data: any) => {
-      console.log('Post liked event:', data);
-      // The server should send a notification, but we can handle it here as well
-    });
-
-    websocketService.on(WebsocketEvent.COMMENT_LIKED, (data: any) => {
-      console.log('Comment liked event:', data);
-      // The server should send a notification, but we can handle it here as well
-    });
-
-    // Listen for group invite events
-    websocketService.on(WebsocketEvent.GROUP_MEMBER_JOINED, (data: any) => {
-      console.log('Group member joined event:', data);
-      // The server should send a notification, but we can handle it here as well
-    });
   },
 
   /**
@@ -235,5 +186,39 @@ export const notificationService = {
       default:
         return '#';
     }
+  },
+
+  /**
+   * Handle notification action (Accept/Decline invitation, etc.)
+   * @param action Action object from notification
+   * @returns Promise with action result
+   */
+  async handleNotificationAction(action: any): Promise<any> {
+    try {
+      const endpoint = `${API_ENDPOINT.social_travel_trip}${action.api_endpoint}`;
+      const response = await Http.post(endpoint, action.payload);
+      return response;
+    } catch (error) {
+      console.error('Error handling notification action:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Check if notification has actions
+   * @param notification Notification object
+   * @returns Boolean indicating if notification has actions
+   */
+  hasActions(notification: NotificationModel): boolean {
+    return notification.json_data?.actions && Array.isArray(notification.json_data.actions) && notification.json_data.actions.length > 0;
+  },
+
+  /**
+   * Get notification actions
+   * @param notification Notification object
+   * @returns Array of actions or empty array
+   */
+  getActions(notification: NotificationModel): any[] {
+    return notification.json_data?.actions || [];
   }
 };

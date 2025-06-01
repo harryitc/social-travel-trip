@@ -1,81 +1,326 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+
+const shimmerVariants = {
+  animate: {
+    x: ['-100%', '100%'],
+    transition: {
+      repeat: Infinity,
+      duration: 1.5,
+      ease: 'linear'
+    }
+  }
+};
+
+const skeletonVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.3 }
+  }
+};
 
 export function ChatSkeleton() {
   return (
-    <div className="flex flex-col h-full">
+    <motion.div
+      className="flex flex-col h-full"
+      variants={skeletonVariants}
+      initial="hidden"
+      animate="visible"
+    >
       {/* Header skeleton */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <motion.div
+        className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700"
+        variants={itemVariants}
+      >
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+          <motion.div
+            className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
           <div className="space-y-2">
-            <div className="w-32 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-            <div className="w-20 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <motion.div
+              className="w-32 h-4 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
+            <motion.div
+              className="w-20 h-3 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
           </div>
         </div>
-        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-      </div>
+        <motion.div
+          className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+          variants={itemVariants}
+        >
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+            variants={shimmerVariants}
+            animate="animate"
+          />
+        </motion.div>
+      </motion.div>
 
       {/* Messages skeleton */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <motion.div
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+        variants={itemVariants}
+      >
         {/* Message 1 - Other user */}
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse flex-shrink-0"></div>
+        <motion.div
+          className="flex items-start space-x-3"
+          variants={itemVariants}
+        >
+          <motion.div
+            className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0 relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
           <div className="flex-1 space-y-2">
-            <div className="w-24 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-            <div className="w-64 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            <motion.div
+              className="w-24 h-3 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
+            <motion.div
+              className="w-64 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Message 2 - Current user */}
-        <div className="flex items-start space-x-3 justify-end">
+        <motion.div
+          className="flex items-start space-x-3 justify-end"
+          variants={itemVariants}
+        >
           <div className="flex-1 space-y-2 flex flex-col items-end">
-            <div className="w-48 h-10 bg-blue-200 dark:bg-blue-800 rounded-lg animate-pulse"></div>
+            <motion.div
+              className="w-48 h-10 bg-blue-200 dark:bg-blue-800 rounded-lg relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Message 3 - Other user */}
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse flex-shrink-0"></div>
+        <motion.div
+          className="flex items-start space-x-3"
+          variants={itemVariants}
+        >
+          <motion.div
+            className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0 relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
           <div className="flex-1 space-y-2">
-            <div className="w-20 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-            <div className="w-80 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            <motion.div
+              className="w-20 h-3 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
+            <motion.div
+              className="w-80 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Message 4 - Current user */}
-        <div className="flex items-start space-x-3 justify-end">
+        <motion.div
+          className="flex items-start space-x-3 justify-end"
+          variants={itemVariants}
+        >
           <div className="flex-1 space-y-2 flex flex-col items-end">
-            <div className="w-32 h-8 bg-blue-200 dark:bg-blue-800 rounded-lg animate-pulse"></div>
+            <motion.div
+              className="w-32 h-8 bg-blue-200 dark:bg-blue-800 rounded-lg relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Message 5 - Other user with image */}
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse flex-shrink-0"></div>
+        <motion.div
+          className="flex items-start space-x-3"
+          variants={itemVariants}
+        >
+          <motion.div
+            className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-full flex-shrink-0 relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
           <div className="flex-1 space-y-2">
-            <div className="w-28 h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-            <div className="w-40 h-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            <motion.div
+              className="w-28 h-3 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
+            <motion.div
+              className="w-40 h-32 bg-gray-200 dark:bg-gray-700 rounded-lg relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Message 6 - Current user */}
-        <div className="flex items-start space-x-3 justify-end">
+        <motion.div
+          className="flex items-start space-x-3 justify-end"
+          variants={itemVariants}
+        >
           <div className="flex-1 space-y-2 flex flex-col items-end">
-            <div className="w-56 h-12 bg-blue-200 dark:bg-blue-800 rounded-lg animate-pulse"></div>
+            <motion.div
+              className="w-56 h-12 bg-blue-200 dark:bg-blue-800 rounded-lg relative overflow-hidden"
+              variants={itemVariants}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                variants={shimmerVariants}
+                animate="animate"
+              />
+            </motion.div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Input skeleton */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <motion.div
+        className="p-4 border-t border-gray-200 dark:border-gray-700"
+        variants={itemVariants}
+      >
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
-          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-          <div className="w-8 h-8 bg-blue-200 dark:bg-blue-800 rounded animate-pulse"></div>
+          <motion.div
+            className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
+          <motion.div
+            className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
+          <motion.div
+            className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
+          <motion.div
+            className="w-8 h-8 bg-blue-200 dark:bg-blue-800 rounded relative overflow-hidden"
+            variants={itemVariants}
+          >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              variants={shimmerVariants}
+              animate="animate"
+            />
+          </motion.div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

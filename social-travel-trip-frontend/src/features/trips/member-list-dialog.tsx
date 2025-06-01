@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/radix-ui/input';
 import { tripGroupService } from './services/trip-group.service';
 import { getUserInfo } from '@/features/auth/auth.service';
 import { notification } from 'antd';
+import { useEventListeners } from '@/features/stores/useEventListeners';
 
 export interface GroupMember {
   group_member_id: number;
@@ -52,6 +53,28 @@ export function MemberListDialog({ groupId, isOpen, onClose, onInvite, onManageM
       loadMembers();
     }
   }, [isOpen, groupId]);
+
+  // Listen to group member events for real-time updates
+  useEventListeners({
+    'group:member_added': (data) => {
+      // Only update if this event is for the current group and dialog is open
+      if (data.groupId.toString() === groupId && isOpen) {
+        console.log('👥 Member added to current group (dialog):', data);
+
+        // Refresh members list to get the latest data
+        loadMembers();
+      }
+    },
+    'group:member_removed': (data) => {
+      // Only update if this event is for the current group and dialog is open
+      if (data.groupId.toString() === groupId && isOpen) {
+        console.log('👥 Member removed from current group (dialog):', data);
+
+        // Refresh members list to get the latest data
+        loadMembers();
+      }
+    },
+  });
 
   const loadMembers = async () => {
     try {

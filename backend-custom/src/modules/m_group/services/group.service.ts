@@ -7,6 +7,7 @@ import { GetMessagesDto } from '../dto/get-messages.dto';
 import { GetGroupMembersDto } from '../dto/get-group-members.dto';
 import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
 import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
+import { LeaveGroupDto } from '../dto/leave-group.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { UpdateMemberNicknameDto } from '../dto/update-member-nickname.dto';
 import { ToggleMessageLikeDto } from '../dto/toggle-message-like.dto';
@@ -18,6 +19,7 @@ import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { InviteMemberDto } from '../dto/invite-member.dto';
+import { RespondInvitationDto } from '../dto/respond-invitation.dto';
 import { CreateGroupCommand } from '../commands/create-group.command';
 import { AddGroupMemberCommand } from '../commands/add-group-member.command';
 import { SendMessageCommand } from '../commands/send-message.command';
@@ -26,11 +28,13 @@ import { AddMessagePinCommand } from '../commands/add-message-pin.command';
 import { RemoveMessagePinCommand } from '../commands/remove-message-pin.command';
 import { UpdateGroupCommand } from '../commands/update-group.command';
 import { KickGroupMemberCommand } from '../commands/kick-group-member.command';
+import { LeaveGroupCommand } from '../commands/leave-group.command';
 import { UpdateMemberRoleCommand } from '../commands/update-member-role.command';
 import { UpdateMemberNicknameCommand } from '../commands/update-member-nickname.command';
 import { GenerateJoinQRCodeCommand } from '../commands/generate-join-qrcode.command';
 import { JoinGroupByCodeCommand } from '../commands/join-group-by-code.command';
 import { InviteMemberCommand } from '../commands/invite-member.command';
+import { RespondInvitationCommand } from '../commands/respond-invitation.command';
 import { GetMessagesQuery } from '../queries/get-messages.query';
 import { GetPinnedMessagesQuery } from '../queries/get-pinned-messages.query';
 import { GetListGroupsQuery } from '../queries/get-list-groups.query';
@@ -76,6 +80,10 @@ export class GroupService {
     return this.commandBus.execute(new KickGroupMemberCommand(dto, userId));
   }
 
+  async leaveGroup(dto: LeaveGroupDto, userId: number) {
+    return this.commandBus.execute(new LeaveGroupCommand(dto, userId));
+  }
+
   async updateMemberRole(dto: UpdateMemberRoleDto, userId: number) {
     return this.commandBus.execute(new UpdateMemberRoleCommand(dto, userId));
   }
@@ -96,6 +104,10 @@ export class GroupService {
 
   async inviteMember(dto: InviteMemberDto, userId: number) {
     return this.commandBus.execute(new InviteMemberCommand(dto, userId));
+  }
+
+  async respondInvitation(dto: RespondInvitationDto, userId: number) {
+    return this.commandBus.execute(new RespondInvitationCommand(dto, userId));
   }
 
   // Message operations

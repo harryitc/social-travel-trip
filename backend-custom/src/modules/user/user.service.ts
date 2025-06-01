@@ -17,6 +17,9 @@ import { FindByUsernameQuery } from './queries/find-by-username.query';
 import { FindByIDQuery } from './queries/find-by-id.query';
 import { GetUserDetailsQuery } from './queries/get-user-details.query';
 import { SearchUsersQuery } from './queries/search-users.query';
+import { GetProfileStatsQuery } from './queries/get-profile-stats.query';
+import { UpdateProfileStatsCommand, RecordProfileViewCommand } from './commands/update-profile-stats.command';
+import { UpdateProfileStatsDTO, ProfileViewDTO } from './dto/profile-stats.dto';
 
 @Injectable()
 export class UserService {
@@ -42,6 +45,10 @@ export class UserService {
     return this.queryBus.execute(new SearchUsersQuery(dto, userId));
   }
 
+  async getProfileStats(userId: number, includeActivity: boolean = false) {
+    return this.queryBus.execute(new GetProfileStatsQuery(userId, includeActivity));
+  }
+
   // Command methods
   async create(data: CreateUserDTO) {
     return this.commandBus.execute(new CreateUserCommand(data));
@@ -61,5 +68,13 @@ export class UserService {
 
   async deleteUser(data: DeleteUserDTO, userId: number) {
     return this.commandBus.execute(new DeleteUserCommand(data, userId));
+  }
+
+  async updateProfileStats(data: UpdateProfileStatsDTO, userId: number) {
+    return this.commandBus.execute(new UpdateProfileStatsCommand(data, userId));
+  }
+
+  async recordProfileView(viewerId: number, profileOwnerId: number) {
+    return this.commandBus.execute(new RecordProfileViewCommand(viewerId, profileOwnerId));
   }
 }

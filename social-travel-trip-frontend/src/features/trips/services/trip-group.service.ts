@@ -91,7 +91,19 @@ class TripGroupService {
         group_id: parseInt(id)
       });
 
-      const groupDTO: TripGroupDTO = response;
+      console.log('🔍 [TripGroupService] getGroupById response:', response);
+
+      // The response includes member_count from the backend
+      const groupDTO: TripGroupDTO = {
+        ...response,
+        members: {
+          count: response.member_count || 0,
+          max: 10, // Default max
+          list: [] // We don't need the full list for group updates
+        }
+      };
+
+      console.log('🔍 [TripGroupService] Mapped groupDTO:', groupDTO);
 
       // Map DTO to class instance
       return new TripGroup(groupDTO);
@@ -134,18 +146,6 @@ class TripGroupService {
       return new TripGroup(groupDTO);
     } catch (error) {
       console.error('Error joining trip group:', error);
-      throw error;
-    }
-  }
-
-  async leaveGroup(groupId: string, userId: string): Promise<void> {
-    try {
-      await Http.post(`${API_ENDPOINT.social_travel_trip}/group/kick-member`, {
-        group_id: parseInt(groupId),
-        user_id: parseInt(userId)
-      });
-    } catch (error) {
-      console.error('Error leaving trip group:', error);
       throw error;
     }
   }
@@ -281,6 +281,18 @@ class TripGroupService {
       return response;
     } catch (error) {
       console.error('Error inviting member:', error);
+      throw error;
+    }
+  }
+
+  async leaveGroup(data: {
+    group_id: number;
+  }): Promise<any> {
+    try {
+      const response: any = await Http.post(`${API_ENDPOINT.social_travel_trip}/group/leave-group`, data);
+      return response;
+    } catch (error) {
+      console.error('Error leaving group:', error);
       throw error;
     }
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TripGroup, CreateTripGroupData, JoinTripGroupData } from '../models/trip-group.model';
 import { tripGroupService } from '../services/trip-group.service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
@@ -15,9 +15,13 @@ import { QRCodeDisplayDialog } from './qr-code-display-dialog';
 import { InviteMemberDialog, InviteMemberData } from './invite-member-dialog';
 import { GroupActionsMenu } from './group-actions-menu';
 import { GroupCreatedSuccessDialog } from './group-created-success-dialog';
+import { LeaveGroupDialog } from './leave-group-dialog';
 import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
 import { API_ENDPOINT } from '@/config/api.config';
+import { websocketService } from '@/lib/services/websocket.service';
+import { groupStoreService } from '../services/group-store.service';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 
 type GroupChatListProps = {
   groups: TripGroup[];
@@ -32,9 +36,72 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [selectedGroupForActions, setSelectedGroupForActions] = useState<TripGroup | null>(null);
   const [createdGroup, setCreatedGroup] = useState<TripGroup | null>(null);
   const emit = useEventStore((state) => state.emit);
+  const { user } = useAuth();
+
+  // Setup WebSocket listeners for real-time group member events
+  useEffect(() => {
+    // Listen for member join events
+    const handleMemberJoined = async (data: any) => {
+      console.log('👥 Member joined group:', data);
+
+      // Check if the user who joined is the current user
+      const isCurrentUser = user?.user_id && data.newMemberId === user.user_id;
+
+      if (isCurrentUser) {
+        console.log('🎯 Current user joined a new group, loading group info...');
+        try {
+          // Load the full group information
+          const fullGroup = await tripGroupService.getGroupById(data.groupId.toString());
+
+          // Add to store and select it
+          groupStoreService.addGroup(fullGroup);
+          onSelectGroup(fullGroup);
+
+          console.log('✅ Successfully added new group to list and selected it');
+        } catch (error) {
+          console.error('❌ Failed to load group info after join:', error);
+        }
+      } else {
+        // Just emit event - parent components will handle store updates
+        console.log('👥 Other user joined group, emitting event');
+      }
+
+      // Emit event to update group member count
+      const memberAddedEvent = {
+        groupId: data.groupId,
+        member: data.member
+      };
+      console.log('📡 [GroupChatList] Emitting group:member_added event:', memberAddedEvent);
+      emit('group:member_added', memberAddedEvent);
+    };
+
+    // Listen for member leave events
+    const handleMemberLeft = (data: any) => {
+      console.log('👥 Member left group:', data);
+
+      // Emit event to update group member count
+      const memberRemovedEvent = {
+        groupId: data.groupId,
+        memberId: data.leftMemberId
+      };
+      console.log('📡 [GroupChatList] Emitting group:member_removed event:', memberRemovedEvent);
+      emit('group:member_removed', memberRemovedEvent);
+    };
+
+    // Register WebSocket event listeners
+    websocketService.onGroupMemberJoined(handleMemberJoined);
+    websocketService.onGroupMemberLeft(handleMemberLeft);
+
+    // Cleanup function to remove listeners
+    return () => {
+      // Note: WebSocket service doesn't have removeListener method yet
+      // This would be implemented if needed for cleanup
+    };
+  }, [emit, groups, user, onSelectGroup]);
 
   const filteredGroups = groups.filter(group => {
     const title = group.title || group.name || '';
@@ -71,7 +138,8 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
     try {
       const joinData = new JoinTripGroupData({ qrCode });
       const result = await tripGroupService.joinGroup(joinData);
-      setShowJoinDialog(false);
+
+      console.log('🎯 [GroupChatList] Join group result:', result);
 
       // Show success notification with proper group name
       const groupName = result.title || result.name || 'nhóm';
@@ -82,8 +150,14 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
         duration: 1.5,
       });
 
-      // Emit event using Zustand
+      // Emit event using Zustand - emit before closing dialog
+      console.log('📡 [GroupChatList] Emitting group:joined event:', result);
       emit('group:joined', { group: result });
+
+      // Close dialog after a small delay to ensure event is processed
+      setTimeout(() => {
+        setShowJoinDialog(false);
+      }, 100);
     } catch (error: any) {
       console.error('Error joining group:', error);
 
@@ -123,6 +197,52 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const openInviteDialog = (group: TripGroup) => {
     setSelectedGroupForActions(group);
     setShowInviteDialog(true);
+  };
+
+  const openLeaveDialog = (group: TripGroup) => {
+    setSelectedGroupForActions(group);
+    setShowLeaveDialog(true);
+  };
+
+  const handleLeaveGroup = async (group: TripGroup) => {
+    try {
+      await tripGroupService.leaveGroup({
+        group_id: parseInt(group.id)
+      });
+
+      // Show success notification
+      notification.success({
+        message: 'Rời nhóm thành công',
+        description: `Bạn đã rời khỏi nhóm "${group.title}" thành công!`,
+        placement: 'topRight',
+        duration: 3,
+      });
+
+      // Emit event using Zustand to update group list
+      emit('group:left', { group });
+    } catch (error: any) {
+      console.error('Error leaving group:', error);
+
+      // Show error notification
+      let errorMessage = 'Có lỗi xảy ra khi rời khỏi nhóm';
+
+      if (error.response?.data?.reasons?.message) {
+        errorMessage = error.response.data.reasons.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      notification.error({
+        message: 'Lỗi rời nhóm',
+        description: errorMessage,
+        placement: 'topRight',
+        duration: 5,
+      });
+
+      throw error; // Re-throw to let dialog handle loading state
+    }
   };
 
   return (
@@ -195,7 +315,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                       <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">
                         {group.title}
                       </h3>
-                      <div className="flex gap-1 ml-2">
+                      {/* <div className="flex gap-1 ml-2">
                         {group.hasPlan && (
                           <Badge variant="secondary" className="bg-green-100 text-green-700 border-0 text-[10px] h-5 px-1.5 dark:bg-green-900/30 dark:text-green-400">
                             KH
@@ -206,7 +326,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                             Riêng tư
                           </Badge>
                         )}
-                      </div>
+                      </div> */}
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
@@ -217,7 +337,9 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                       {group.location && (
                         <div className="flex items-center gap-1 truncate">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{group.getLocationShort()}</span>
+                          <span className="truncate">
+                            {group.getLocationShort ? group.getLocationShort() : group.location.split(',')[0] || group.location}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -230,6 +352,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                     group={group}
                     onGenerateQR={openQRDialog}
                     onInviteMember={openInviteDialog}
+                    onLeaveGroup={openLeaveDialog}
                     currentUserId={1} // TODO: Get from auth context
                   />
                 </div>
@@ -286,6 +409,13 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
             groupId={selectedGroupForActions.id}
             groupName={selectedGroupForActions.title}
             onInviteMember={handleInviteMember}
+          />
+
+          <LeaveGroupDialog
+            open={showLeaveDialog}
+            onOpenChange={setShowLeaveDialog}
+            group={selectedGroupForActions}
+            onConfirmLeave={handleLeaveGroup}
           />
         </>
       )}

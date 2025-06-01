@@ -12,6 +12,7 @@ export const environment = {
     file_v2: process.env.NEXT_PUBLIC_API_FILE_V2 ?? '',
     file_image_v2: process.env.NEXT_PUBLIC_API_FILE_IMAGE_V2 ?? '',
     image_root_path_quilljs: process.env.NEXT_PUBLIC_IMAGE_ROOT_FILE_QUILL ?? '',
+    websocket: process.env.NEXT_PUBLIC_API_WEBSOCKET ?? '',
   },
   aplication: {
     http: {
@@ -23,7 +24,6 @@ export const environment = {
       },
     },
   },
-  apiUrl: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000',
 };
 
 export const AUTH = {

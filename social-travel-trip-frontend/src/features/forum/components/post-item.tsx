@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/radix-ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/radix-ui/card';
+import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
 import { Heart, MessageCircle, MapPin } from 'lucide-react';
 
@@ -59,6 +60,7 @@ export function PostItem({ post }: PostItemProps) {
   const [showLikesModal, setShowLikesModal] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const reactionsMenuRef = useRef<HTMLDivElement>(null);
+  const reactionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -66,6 +68,35 @@ export function PostItem({ post }: PostItemProps) {
       inputRef.current.focus();
     }
   }, [showComments]);
+
+  // Functions to handle reaction menu hover behavior
+  const handleShowReactions = () => {
+    // Clear any existing timeout
+    if (reactionTimeoutRef.current) {
+      clearTimeout(reactionTimeoutRef.current);
+      reactionTimeoutRef.current = null;
+    }
+    setShowReactionPicker(true);
+  };
+
+  const handleHideReactions = () => {
+    // Set a timeout to hide the reactions after a delay
+    if (reactionTimeoutRef.current) {
+      clearTimeout(reactionTimeoutRef.current);
+    }
+    reactionTimeoutRef.current = setTimeout(() => {
+      setShowReactionPicker(false);
+    }, 300); // 300ms delay before hiding
+  };
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (reactionTimeoutRef.current) {
+        clearTimeout(reactionTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Close reaction picker when clicking outside
   useEffect(() => {
@@ -165,20 +196,28 @@ export function PostItem({ post }: PostItemProps) {
   }
 
   return (
-    <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200">
+    <Card className="overflow-hidden border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm hover:shadow-md transition-all duration-200 hover:border-purple-300 dark:hover:border-purple-700">
       <CardHeader className="px-4 py-3 flex flex-row items-start justify-between">
-        <div className="flex items-center space-x-3">
-          <Avatar>
+        <motion.div 
+          className="flex items-center space-x-3"
+          whileHover={{ scale: 1.01 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Avatar className="border-2 border-purple-100 dark:border-purple-900 ring-2 ring-white dark:ring-gray-900">
             <AvatarImage src={API_ENDPOINT.file_image_v2 + post.author.avatar} alt={post.author.full_name} />
-            <AvatarFallback>{post.author.full_name?.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
+              {post.author.full_name?.charAt(0)}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <div className="font-semibold">{post.author.full_name}</div>
+            <div className="font-semibold text-gray-900 dark:text-gray-100">{post.author.full_name}</div>
             <div className="flex items-center text-xs text-muted-foreground">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="cursor-help">{formatPostTimestamp(post.created_at)}</span>
+                    <span className="cursor-help hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                      {formatPostTimestamp(post.created_at)}
+                    </span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{formatPostDetailedTimestamp(post.created_at)}</p>
@@ -186,14 +225,14 @@ export function PostItem({ post }: PostItemProps) {
                 </Tooltip>
               </TooltipProvider>
               {post.location && post.location.name && (
-                <span className="flex items-center ml-2">
+                <span className="flex items-center ml-2 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
                   <MapPin className="h-3 w-3 mr-1" />
                   {post.location.name.split(',')[0]}
                 </span>
               )}
             </div>
           </div>
-        </div>
+        </motion.div>
         <div className="flex items-center space-x-2">
           {post.author.user_id?.toString() !== currentUser?.user_id?.toString() && (
             <FollowButton
@@ -228,116 +267,138 @@ export function PostItem({ post }: PostItemProps) {
         </div>
       </CardHeader>
       <CardContent className="px-4 py-2 space-y-3">
-        <div className="prose prose-sm dark:prose-invert max-w-none">
+        <motion.div 
+          className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-purple-900 dark:prose-headings:text-purple-300 prose-a:text-purple-600 dark:prose-a:text-purple-400 hover:prose-a:text-purple-700 dark:hover:prose-a:text-purple-300"
+          initial={{ opacity: 0.9 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
           <ReactMarkdown>{post.content}</ReactMarkdown>
-        </div>
+        </motion.div>
 
         {post.images && post.images.length > 0 && (
-          <div className={`grid ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}>
+          <motion.div 
+            className={`grid ${post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'} gap-2`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             {post.images.map((image, index) => (
-              <div
+              <motion.div
                 key={index}
                 className={`relative rounded-md overflow-hidden ${post.images.length === 1 ? 'col-span-1' :
                   index === 0 && post.images.length === 3 ? 'col-span-2' : 'col-span-1'
                   }`}
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.2 }}
               >
-                <CustomImage src={API_ENDPOINT.file_image_v2 + image} alt={`Image ${index + 1}`}
-                  className="w-full h-full object-cover"
+                <CustomImage 
+                  src={API_ENDPOINT.file_image_v2 + image} 
+                  alt={`Image ${index + 1}`}
+                  className="w-full h-full object-cover hover:brightness-105 transition-all duration-300"
                   style={{ maxHeight: post.images.length === 1 ? '400px' : '200px' }}
-                  width={100}
-                  height={100}
-                ></CustomImage>
-              </div>
+                  width={800}
+                  height={600}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
 
         {post.hashtags && post.hashtags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {post.hashtags.map((tag) => (
-              <Badge key={tag} variant="outline" className="bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100">
-                #{tag}
-              </Badge>
+          <motion.div 
+            className="flex flex-wrap gap-1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.3 }}
+          >
+            {post.hashtags.map((tag, index) => (
+              <motion.div
+                key={tag}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 * index, duration: 0.3 }}
+              >
+                <Badge 
+                  variant="outline" 
+                  className="bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 hover:bg-purple-100 hover:scale-105 transition-all duration-200 cursor-pointer"
+                >
+                  #{tag}
+                </Badge>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </CardContent>
       <CardFooter className="px-4 py-3 border-t border-purple-100 dark:border-purple-900 flex flex-col space-y-3">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-2">
             <div className="relative" ref={reactionsMenuRef}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`flex items-center transition-all duration-200 ${isLiked
-                          ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
-                          : 'hover:text-purple-600 dark:hover:text-purple-400'
-                          } ${isLiking ? 'scale-110' : ''}`}
-                        onClick={handleLike}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          setShowReactionPicker(!showReactionPicker);
-                        }}
-                        disabled={isLiking}
-                      >
-                        {currentUserReaction && currentUserReaction > 1 ? (
-                          <span className="mr-1 text-lg">
-                            {REACTION_TYPES.find(r => r.id === currentUserReaction)?.icon || '👍'}
-                          </span>
-                        ) : (
-                          <Heart
-                            className={`h-4 w-4 mr-1 transition-all duration-200 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''
-                              } ${isLiking ? 'animate-pulse' : ''}`}
-                          />
-                        )}
-                        <span
-                          className={`cursor-pointer ${likesCount > 0 ? 'hover:underline' : ''}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleShowLikes();
-                          }}
-                        >
-                          {likesCount}
-                        </span>
-                      </Button>
+              <div 
+                className="flex items-center"
+                onMouseEnter={handleShowReactions}
+                onMouseLeave={handleHideReactions}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`flex items-center transition-all duration-200 ${isLiked
+                    ? 'text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300'
+                    : 'hover:text-purple-600 dark:hover:text-purple-400'
+                    } ${isLiking ? 'scale-110' : ''}`}
+                  onClick={handleLike}
+                  disabled={isLiking}
+                >
+                  {currentUserReaction && currentUserReaction > 1 ? (
+                    <span className="mr-1 text-lg">
+                      {REACTION_TYPES.find(r => r.id === currentUserReaction)?.icon || '👍'}
+                    </span>
+                  ) : (
+                    <Heart
+                      className={`h-4 w-4 mr-1 transition-all duration-200 ${isLiked ? 'fill-purple-600 dark:fill-purple-400' : ''}
+                        } ${isLiking ? 'animate-pulse' : ''}`}
+                    />
+                  )}
+                  <span
+                    className={`cursor-pointer ${likesCount > 0 ? 'hover:underline' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleShowLikes();
+                    }}
+                  >
+                    {likesCount}
+                  </span>
+                </Button>
+              </div>
 
-                      {/* Reaction Picker Button */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="ml-1 px-2"
-                        onClick={() => setShowReactionPicker(!showReactionPicker)}
-                      >
-                        <span className="text-xs">▼</span>
-                      </Button>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{isLiked ? 'Bỏ thích' : 'Thích bài viết'} • Right-click để chọn reaction</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              {/* Reaction Picker */}
-              {showReactionPicker && (
-                <div className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 flex gap-1 z-10">
-                  {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
-                    <button
-                      key={reaction.id}
-                      className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentUserReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''
-                        }`}
-                      onClick={() => handleReaction(reaction.id)}
-                      title={reaction.label}
-                    >
-                      <span className="text-lg">{reaction.icon}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Reaction Picker - Now shows on hover with delay before hiding */}
+              <motion.div 
+                className="absolute bottom-full left-0 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 flex gap-1 z-10"
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ 
+                  opacity: showReactionPicker ? 1 : 0,
+                  y: showReactionPicker ? 0 : 10,
+                  scale: showReactionPicker ? 1 : 0.95
+                }}
+                transition={{ duration: 0.2 }}
+                style={{ pointerEvents: showReactionPicker ? 'auto' : 'none' }}
+                onMouseEnter={handleShowReactions}
+                onMouseLeave={handleHideReactions}
+              >
+                {REACTION_TYPES.filter(r => r.id > 1).map((reaction) => (
+                  <motion.button
+                    key={reaction.id}
+                    className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${currentUserReaction === reaction.id ? 'bg-purple-100 dark:bg-purple-900' : ''}
+                      }`}
+                    onClick={() => handleReaction(reaction.id)}
+                    title={reaction.label}
+                    whileHover={{ scale: 1.2 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  >
+                    <span className="text-lg">{reaction.icon}</span>
+                  </motion.button>
+                ))}
+              </motion.div>
             </div>
             <Button
               variant="ghost"

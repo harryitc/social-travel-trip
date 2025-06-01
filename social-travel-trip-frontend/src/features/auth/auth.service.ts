@@ -164,8 +164,9 @@ export const getUserInfo = () => {
 
 /**
  * Logout user by removing token and user info
+ * @param redirectPath Optional custom redirect path after logout
  */
-export const logoutService = () => {
+export const logoutService = (redirectPath?: string) => {
   // Xóa tất cả các key liên quan đến xác thực
   CoreAppStorageService.removeItems([
     CookieConfigKeys.features.auth.token,
@@ -174,6 +175,33 @@ export const logoutService = () => {
   ], {
     location: StorageLocation.COOKIES,
   });
+
   console.log('User logged out, cookies cleared');
-  window.location.href = '/auth/sign-in';
+
+  // Chuyển hướng đến trang đăng nhập hoặc trang tùy chỉnh
+  const targetPath = redirectPath || '/auth/sign-in';
+
+  // Lưu đường dẫn hiện tại để redirect sau khi đăng nhập (trừ khi đã là trang auth)
+  const currentPath = window.location.pathname + window.location.search;
+  if (!currentPath.startsWith('/auth/') && !redirectPath) {
+    const loginUrl = new URL(targetPath, window.location.origin);
+    loginUrl.searchParams.set('redirect', currentPath);
+    window.location.href = loginUrl.toString();
+  } else {
+    window.location.href = targetPath;
+  }
+};
+
+/**
+ * Clear authentication data without redirect (useful for programmatic logout)
+ */
+export const clearAuthData = () => {
+  CoreAppStorageService.removeItems([
+    CookieConfigKeys.features.auth.token,
+    CookieConfigKeys.features.auth.user,
+    CookieConfigKeys.features.auth.result
+  ], {
+    location: StorageLocation.COOKIES,
+  });
+  console.log('Authentication data cleared');
 };

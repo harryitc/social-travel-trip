@@ -119,14 +119,14 @@ export class TripGroup {
   public join_code_expires_at?: Date;
 
   constructor(dto: TripGroupDTO) {
-    console.log('🏗️ [TripGroup] Creating TripGroup from DTO:', {
-      group_id: dto.group_id,
-      name: dto.name,
-      title: dto.title,
-      hasTitle: !!dto.title,
-      success: dto.success,
-      message: dto.message
-    });
+    // console.log('🏗️ [TripGroup] Creating TripGroup from DTO:', {
+    //   group_id: dto.group_id,
+    //   name: dto.name,
+    //   title: dto.title,
+    //   hasTitle: !!dto.title,
+    //   success: dto.success,
+    //   message: dto.message
+    // });
 
     // Backend fields
     this.group_id = dto.group_id;
@@ -155,12 +155,20 @@ export class TripGroup {
     this.duration = jsonData.duration;
     this.hashtags = jsonData.hashtags || [];
 
-    // Transform members
+    // Transform members - handle both members object and direct member_count
     this.members = {
-      count: dto.members?.count || 0,
+      count: dto.members?.count || (dto as any).member_count || 0,
       max: dto.members?.max || 10,
       list: dto.members?.list?.map(memberDto => new TripGroupMember(memberDto)) || [],
     };
+
+    console.log('🏗️ [TripGroup] Constructor - member count:', {
+      fromMembers: dto.members?.count,
+      fromMemberCount: (dto as any).member_count,
+      finalCount: this.members.count,
+      groupId: this.id,
+      groupTitle: this.title
+    });
   }
 
   private parseJsonData(jsonData: any): any {

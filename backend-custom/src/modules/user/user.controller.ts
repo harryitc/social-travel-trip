@@ -16,6 +16,7 @@ import {
   DeleteUserDTO,
   GetUserDTO,
 } from './dto/user.dto';
+import { UpdateProfileStatsDTO } from './dto/profile-stats.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 
 @ApiTags('User')
@@ -36,6 +37,15 @@ export class UserController {
   async getCurrentUserDetails(@Request() req: any) {
     const userId = req['user']?.user_id;
     return this.service.getUserDetails({ user_id: +userId }, +userId);
+  }
+
+  @Get('profile-stats')
+  @ApiBearerAuth('jwt')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get user profile statistics' })
+  async getProfileStats(@Request() req: any) {
+    const userId = req['user']?.user_id;
+    return this.service.getProfileStats(+userId);
   }
 
   @Post('details')
@@ -81,5 +91,23 @@ export class UserController {
   async deleteUser(@Body() dto: DeleteUserDTO, @Request() req: any) {
     const userId = req['user']?.user_id;
     return this.service.deleteUser(dto, +userId);
+  }
+
+  @Post('update-profile-stats')
+  @ApiBearerAuth('jwt')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Update user profile statistics' })
+  async updateProfileStats(@Body() dto: UpdateProfileStatsDTO, @Request() req: any) {
+    const userId = req['user']?.user_id;
+    return this.service.updateProfileStats(dto, +userId);
+  }
+
+  @Post('record-profile-view/:profileOwnerId')
+  @ApiBearerAuth('jwt')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Record a profile view' })
+  async recordProfileView(@Request() req: any, @Body('profileOwnerId') profileOwnerId: number) {
+    const viewerId = req['user']?.user_id;
+    return this.service.recordProfileView(+viewerId, +profileOwnerId);
   }
 }

@@ -14,6 +14,7 @@ import { GetMessagesDto } from '../dto/get-messages.dto';
 import { GetGroupMembersDto } from '../dto/get-group-members.dto';
 import { GetGroupDetailsDto } from '../dto/get-group-details.dto';
 import { KickGroupMemberDto } from '../dto/kick-group-member.dto';
+import { LeaveGroupDto } from '../dto/leave-group.dto';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto';
 import { UpdateGroupDto } from '../dto/update-group.dto';
 import { UpdateMemberNicknameDto } from '../dto/update-member-nickname.dto';
@@ -26,6 +27,7 @@ import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
 import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
 import { InviteMemberDto } from '../dto/invite-member.dto';
+import { RespondInvitationDto } from '../dto/respond-invitation.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { GroupService } from '../services/group.service';
 
@@ -83,6 +85,13 @@ export class GroupController {
   async kickMember(@Body() dto: KickGroupMemberDto, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.kickGroupMember(dto, +userId);
+  }
+
+  @Post('leave-group')
+  @ApiOperation({ summary: 'Leave a group' })
+  async leaveGroup(@Body() dto: LeaveGroupDto, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.leaveGroup(dto, +userId);
   }
 
   @Post('update-member-role')
@@ -195,5 +204,12 @@ export class GroupController {
   async inviteMember(@Body() dto: InviteMemberDto, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.inviteMember(dto, +userId);
+  }
+
+  @Post('respond-invitation')
+  @ApiOperation({ summary: 'Accept or decline a group invitation' })
+  async respondInvitation(@Body() dto: RespondInvitationDto, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.respondInvitation(dto, +userId);
   }
 }

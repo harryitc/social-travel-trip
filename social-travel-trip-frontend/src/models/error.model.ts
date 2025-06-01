@@ -75,10 +75,13 @@ export class ApiErrorModel {
   }
 
   isAuthError(): boolean {
-    return this.httpStatus === 401 ||
-           this.type === ERROR_KEY.INVALID_TOKEN ||
+    return this.type === ERROR_KEY.INVALID_TOKEN ||
            this.type === ERROR_KEY.NO_TOKEN ||
            this.type === ERROR_KEY.UNAUTHORIZED;
+    // return this.httpStatus === 401 ||
+    //        this.type === ERROR_KEY.INVALID_TOKEN ||
+    //        this.type === ERROR_KEY.NO_TOKEN ||
+    //        this.type === ERROR_KEY.UNAUTHORIZED;
   }
 
   hasSystemError(): boolean {

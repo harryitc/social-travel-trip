@@ -1,15 +1,18 @@
 import {
-  Logger,
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+} from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
 import { GroupMember } from '../models/group.model';
-import { UserService } from '@modules/user/user.service';
-import { GroupInvitationEvent } from '@modules/m_notify/events/group-invitation.event';
+import { WebsocketService } from '../../m_websocket/websocket.service';
 
 export class AddGroupMemberCommand implements ICommand {
   constructor(
@@ -26,8 +29,7 @@ export class AddGroupMemberCommandHandler
 
   constructor(
     private readonly repository: GroupRepository,
-    private readonly eventBus: EventBus,
-    private readonly userService: UserService,
+    private readonly websocketService: WebsocketService,
   ) {}
 
   async execute(command: AddGroupMemberCommand): Promise<any> {
@@ -74,30 +76,29 @@ export class AddGroupMemberCommandHandler
       nickname: dto.nickname,
     });
 
+    const newMemberData = new GroupMember(result.rows[0]);
+
+    // Send WebSocket notification to existing group members about new member
     try {
-      // Get group details for notification
-      const group = groupResult.rows[0];
+      const existingMemberIds = adminMembersResult.rows.map((m) => m.user_id);
 
-      // Get admin user details for notification
-      const adminUser = await this.userService.findById(adminUserId);
+      this.websocketService.notifyGroupMemberJoined(
+        dto.group_id,
+        existingMemberIds, // Notify existing members (including admin)
+        dto.user_id,
+        newMemberData,
+      );
 
-      if (group && adminUser) {
-        // Send notification to the invited user by publishing an event
-        await this.eventBus.publish(
-          new GroupInvitationEvent(
-            dto.user_id,
-            dto.group_id,
-            group.name,
-            adminUserId,
-            adminUser.full_name || adminUser.username || 'A user',
-          )
-        );
-      }
+      this.logger.debug(
+        `📡 Sent WebSocket notification for admin adding user ${dto.user_id} to group ${dto.group_id}`,
+      );
     } catch (error) {
-      // Log error but don't fail the member addition if notification fails
-      this.logger.error(`Failed to create group invitation notification: ${error.message}`);
+      this.logger.error(
+        `❌ Failed to send WebSocket notification for group member addition: ${error.message}`,
+      );
+      // Don't fail the command if WebSocket notification fails
     }
 
-    return new GroupMember(result.rows[0]);
+    return newMemberData;
   }
 }

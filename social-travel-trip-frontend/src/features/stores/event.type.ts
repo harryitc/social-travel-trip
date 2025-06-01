@@ -12,9 +12,9 @@ export type EventMap = {
   'group:created': { group: any };
   'group:joined': { group: any };
   'group:updated': { group: any };
-  'group:left': { groupId: string };
-  'group:member_added': { group: any; member: any };
-  'group:member_removed': { group: any; memberId: string };
+  'group:left': { group: any };
+  'group:member_added': { groupId: string; member: any };
+  'group:member_removed': { groupId: string; memberId: string };
   'group:selected': { group: any };
 
   // Chat events

@@ -37,6 +37,11 @@ export default function GroupsPage() {
     groupStoreService.loadGroups();
   }, []);
 
+  // Debug: Log when groups change
+  useEffect(() => {
+    console.log("📊 [GroupsPage] Groups updated:", groups.map(g => ({ id: g.id, title: g.title, memberCount: g.members.count })));
+  }, [groups]);
+
   // Listen to group events
   useEventListeners({
     'group:created': (data) => {
@@ -44,9 +49,34 @@ export default function GroupsPage() {
       groupStoreService.addGroup(data.group);
       handleSelectGroup(data.group);
     },
+    'group:joined': (data) => {
+      console.log('Group joined event received:', data);
+      groupStoreService.addGroup(data.group);
+      handleSelectGroup(data.group);
+    },
     'group:updated': (data) => {
       console.log('Group updated event received:', data);
       groupStoreService.updateGroup(data.group);
+    },
+    'group:left': (data) => {
+      console.log('Group left event received:', data);
+      groupStoreService.removeGroup(data.group.id);
+      // If the left group was selected, navigate to groups list
+      if (selectedGroupId === data.group.id) {
+        router.push('/trips');
+      }
+    },
+    'group:member_added': async (data) => {
+      console.log('👥 [GroupsPage] Member added event received:', data);
+      // Refresh group data from API to get accurate member info
+      await groupStoreService.refreshGroup(data.groupId.toString());
+      console.log('✅ [GroupsPage] Group refreshed after member added');
+    },
+    'group:member_removed': async (data) => {
+      console.log('👥 [GroupsPage] Member removed event received:', data);
+      // Refresh group data from API to get accurate member info
+      await groupStoreService.refreshGroup(data.groupId.toString());
+      console.log('✅ [GroupsPage] Group refreshed after member removed');
     },
   });
 

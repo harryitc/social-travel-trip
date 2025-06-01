@@ -222,6 +222,70 @@ export class GroupRepository {
     return this.client.execute(query, [groupId]);
   }
 
+  // Group Invitation methods
+  async createGroupInvitation(data: {
+    group_id: number;
+    inviter_id: number;
+    invited_user_id: number;
+    expires_at?: Date;
+  }) {
+    const expiresAt = data.expires_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days default
+
+    const query = `
+      INSERT INTO group_invitations (
+        group_id, inviter_id, invited_user_id, status, invited_at, expires_at
+      )
+      VALUES ($1, $2, $3, 'pending', CURRENT_TIMESTAMP, $4)
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [
+      data.group_id,
+      data.inviter_id,
+      data.invited_user_id,
+      expiresAt
+    ]);
+  }
+
+  async getGroupInvitation(invitationId: number) {
+    const query = `
+      SELECT
+        gi.*,
+        g.name as group_name,
+        inviter.username as inviter_name,
+        inviter.avatar_url as inviter_avatar,
+        invited.username as invited_user_name
+      FROM group_invitations gi
+      JOIN groups g ON gi.group_id = g.group_id
+      JOIN users inviter ON gi.inviter_id = inviter.user_id
+      JOIN users invited ON gi.invited_user_id = invited.user_id
+      WHERE gi.invitation_id = $1
+    `;
+
+    return this.client.execute(query, [invitationId]);
+  }
+
+  async updateInvitationStatus(invitationId: number, status: 'accepted' | 'declined') {
+    const query = `
+      UPDATE group_invitations
+      SET status = $1, responded_at = CURRENT_TIMESTAMP
+      WHERE invitation_id = $2
+      RETURNING *
+    `;
+
+    return this.client.execute(query, [status, invitationId]);
+  }
+
+  async checkExistingInvitation(groupId: number, invitedUserId: number) {
+    const query = `
+      SELECT * FROM group_invitations
+      WHERE group_id = $1 AND invited_user_id = $2
+      AND status = 'pending' AND expires_at > CURRENT_TIMESTAMP
+    `;
+
+    return this.client.execute(query, [groupId, invitedUserId]);
+  }
+
   async getGroupMembersWithPagination(data: GetGroupMembersDto) {
     const { group_id, page = 1, limit = 10 } = data;
     const offset = (page - 1) * limit;

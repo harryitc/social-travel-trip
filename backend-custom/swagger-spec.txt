@@ -5,10 +5,13 @@ auth/reset-password
 auth/reset-password/confirm
 user/register
 user/details
+user/profile-stats
 user/update
 user/change-password
 user/search
 user/delete
+user/update-profile-stats
+user/record-profile-view/{profileOwnerId}
 cak/file-v2/get-list
 cak/file-v2/upload
 cak/file-v2/download
@@ -46,6 +49,7 @@ group/create
 group/add-member
 group/get-members
 group/kick-member
+group/leave-group
 group/update-member-role
 group/update-member-nickname
 group/send-message
@@ -59,6 +63,7 @@ group/messages/get-pinned
 group/generate-join-qrcode
 group/join-by-code
 group/invite-member
+group/respond-invitation
 plan/query
 plan/details
 plan/create

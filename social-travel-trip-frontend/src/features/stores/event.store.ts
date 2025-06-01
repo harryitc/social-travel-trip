@@ -65,7 +65,7 @@ export const useEventStore = create<EventStore>(() => {
 })
 
 // Group store để chia sẻ state giữa các component
-export const useGroupStore = create<GroupStore>((set, get) => ({
+export const useGroupStore = create<GroupStore>((set) => ({
   groups: [],
   selectedGroupId: '',
   loading: false,
@@ -74,15 +74,40 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
   setSelectedGroupId: (selectedGroupId) => set({ selectedGroupId }),
   setLoading: (loading) => set({ loading }),
 
-  addGroup: (group) => set((state) => ({
-    groups: [group, ...state.groups]
-  })),
+  addGroup: (group) => set((state) => {
+    // Check if group already exists
+    const existingGroupIndex = state.groups.findIndex(g => g.id === group.id);
+    if (existingGroupIndex !== -1) {
+      // Update existing group
+      const updatedGroups = [...state.groups];
+      updatedGroups[existingGroupIndex] = group;
+      return { groups: updatedGroups };
+    } else {
+      // Add new group
+      return { groups: [group, ...state.groups] };
+    }
+  }),
 
-  updateGroup: (updatedGroup) => set((state) => ({
-    groups: state.groups.map(group =>
-      group.id === updatedGroup.id ? updatedGroup : group
-    )
-  })),
+  updateGroup: (updatedGroup) => set((state) => {
+    console.log('🔄 [Store] updateGroup called:', {
+      updatedGroupId: updatedGroup.id,
+      updatedGroupTitle: updatedGroup.title,
+      updatedMemberCount: updatedGroup.members.count,
+      existingGroups: state.groups.map(g => ({ id: g.id, title: g.title, count: g.members.count }))
+    });
+
+    const newGroups = state.groups.map(group => {
+      if (group.id === updatedGroup.id) {
+        console.log(`✅ [Store] Updating group ${group.title}: ${group.members.count} -> ${updatedGroup.members.count} members`);
+        return updatedGroup;
+      }
+      return group;
+    });
+
+    console.log('🔄 [Store] Updated groups:', newGroups.map(g => ({ id: g.id, title: g.title, count: g.members.count })));
+
+    return { groups: newGroups };
+  }),
 
   removeGroup: (groupId) => set((state) => ({
     groups: state.groups.filter(group => group.id !== groupId)

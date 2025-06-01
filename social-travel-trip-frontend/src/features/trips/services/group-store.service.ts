@@ -1,4 +1,4 @@
-import { useGroupStore } from '@/features/stores/event.store';
+import { useGroupStore, useEventStore } from '@/features/stores/event.store';
 import { tripGroupService } from './trip-group.service';
 import { TripGroup } from '../models/trip-group.model';
 
@@ -68,12 +68,19 @@ class GroupStoreService {
   }
 
   /**
-   * Thêm group mới vào store
+   * Thêm group mới vào store (hoặc cập nhật nếu đã tồn tại)
    */
   addGroup(group: TripGroup): void {
     const store = useGroupStore.getState();
-    store.addGroup(group);
-    console.log('✅ [GroupStoreService] Group added to store:', group.title);
+    const existingGroup = store.groups.find(g => g.id === group.id);
+
+    if (existingGroup) {
+      console.log('📝 [GroupStoreService] Group already exists, updating:', group.title);
+      store.updateGroup(group);
+    } else {
+      console.log('✅ [GroupStoreService] Adding new group to store:', group.title);
+      store.addGroup(group);
+    }
   }
 
   /**
@@ -122,6 +129,30 @@ class GroupStoreService {
    */
   isLoadingGroups(): boolean {
     return useGroupStore.getState().loading;
+  }
+
+  /**
+   * Refresh a specific group from API and update in store
+   */
+  async refreshGroup(groupId: string): Promise<void> {
+    try {
+      console.log(`🔄 [GroupStoreService] Refreshing group ${groupId} from API`);
+
+      // Fetch updated group data from API
+      const updatedGroup = await tripGroupService.getGroupById(groupId);
+
+      // Update the group in store
+      const store = useGroupStore.getState();
+      store.updateGroup(updatedGroup);
+
+      // Emit group:updated event so other components can react
+      const eventStore = useEventStore.getState();
+      eventStore.emit('group:updated', { group: updatedGroup });
+
+      console.log(`✅ [GroupStoreService] Successfully refreshed group ${updatedGroup.title} and emitted update event`);
+    } catch (error) {
+      console.error(`❌ [GroupStoreService] Failed to refresh group ${groupId}:`, error);
+    }
   }
 
   /**

@@ -1,31 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, Home, Users, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/radix-ui/button';
 import { TripGroup } from '../models/trip-group.model';
 import { useEventListeners } from '@/features/stores/useEventListeners';
+import { useGroupStore } from '@/features/stores/event.store';
 
 
 export function TripBreadcrumb() {
   const pathname = usePathname();
   const [copied, setCopied] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<TripGroup | null>(null);
 
-  // Listen to group selection events
+  // Get group data from store
+  const { groups, selectedGroupId } = useGroupStore();
+
+  // Find the currently selected group from store
+  const selectedGroup = groups.find(group => group.id === selectedGroupId) || null;
+
+  // Extract group ID from URL if not in store
+  const urlGroupId = pathname.match(/\/trips\/([^\/]+)/)?.[1];
+
+  // Use URL group ID as fallback if store doesn't have selectedGroupId
+  const currentGroupId = selectedGroupId || urlGroupId;
+  const currentGroup = groups.find(group => group.id === currentGroupId) || selectedGroup;
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🍞 [TripBreadcrumb] State update:', {
+      pathname,
+      selectedGroupId,
+      urlGroupId,
+      currentGroupId,
+      hasCurrentGroup: !!currentGroup,
+      currentGroupTitle: currentGroup?.title,
+      currentGroupMemberCount: currentGroup?.members.count,
+      totalGroups: groups.length
+    });
+  }, [pathname, selectedGroupId, urlGroupId, currentGroupId, currentGroup, groups.length]);
+
+  // Listen to group events (for real-time updates)
   useEventListeners({
     'group:selected': (data) => {
-      console.log('🍞 [BreadcrumbDetailPage] Group selected:', data.group.id, data.group.title);
-      setSelectedGroup(data.group);
+      console.log('🍞 [BreadcrumbDetailPage] Group selected event:', data.group.id, data.group.title);
+      // No need to set local state - store will be updated
     },
     'group:updated': (data) => {
-      // Update group info if it's the currently selected group
-      if (selectedGroup && selectedGroup.id === data.group.id) {
-        console.log('🍞 [BreadcrumbDetailPage] Group updated:', data.group.title);
-        setSelectedGroup(data.group);
-      }
+      console.log('🍞 [BreadcrumbDetailPage] Group updated event:', {
+        title: data.group.title,
+        memberCount: data.group.members.count,
+        isCurrentGroup: currentGroup?.id === data.group.id
+      });
+      // No need to set local state - store will be updated
     },
   });
 
@@ -54,11 +82,11 @@ export function TripBreadcrumb() {
       },
     ];
 
-    // Nếu có selectedGroup và đang ở trang chi tiết
-    if (selectedGroup && pathname.includes('/trips/')) {
+    // Nếu có currentGroup và đang ở trang chi tiết
+    if (currentGroup && pathname.includes('/trips/')) {
       items.push({
-        label: selectedGroup.title,
-        href: `/trips/${selectedGroup.id}`,
+        label: `${currentGroup.title}`,
+        href: `/trips/${currentGroup.id}`,
       } as any);
     }
 
@@ -68,8 +96,8 @@ export function TripBreadcrumb() {
   const breadcrumbItems = getBreadcrumbItems();
 
   return (
-    <div className="px-4 pt-4 bg-gray-50 dark:bg-gray-900">
-      <nav className="flex items-center justify-between mb-4">
+    <div className="flex-1">
+      <nav className="flex items-center justify-between">
         <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
           {breadcrumbItems.map((item, index) => (
             <div key={item.href} className="flex items-center">
@@ -97,13 +125,13 @@ export function TripBreadcrumb() {
           ))}
         </div>
 
-        {/* Copy URL button - only show when there's a selected group */}
-        {selectedGroup && (
+        {/* Copy URL button - only show when there's a current group */}
+        {/* {currentGroup && (
           <Button
             variant="outline"
             size="sm"
             onClick={handleCopyUrl}
-            className="h-8 px-3 text-xs border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+            className="h-8 px-3 text-xs border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800 ml-4"
           >
             {copied ? (
               <>
@@ -117,7 +145,7 @@ export function TripBreadcrumb() {
               </>
             )}
           </Button>
-        )}
+        )} */}
       </nav>
     </div>
   );
