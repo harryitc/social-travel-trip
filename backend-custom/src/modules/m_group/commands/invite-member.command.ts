@@ -12,7 +12,9 @@ import {
 } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { InviteMemberDto } from '../dto/invite-member.dto';
-import { GroupMember } from '../models/group.model';
+import { GroupInvitation } from '../models/group-invitation.model';
+import { UserService } from '@modules/user/user.service';
+import { GroupInvitationEvent } from '@modules/m_notify/events/group-invitation.event';
 
 export class InviteMemberCommand implements ICommand {
   constructor(
@@ -30,6 +32,7 @@ export class InviteMemberCommandHandler
   constructor(
     private readonly repository: GroupRepository,
     private readonly eventBus: EventBus,
+    private readonly userService: UserService,
   ) {}
 
   async execute(command: InviteMemberCommand): Promise<any> {
@@ -76,23 +79,45 @@ export class InviteMemberCommandHandler
       throw new BadRequestException('User is already a member of this group');
     }
 
-    // Add user to the group
-    const result = await this.repository.addGroupMember({
+    // Check if there's already a pending invitation
+    const existingInvitation = await this.repository.checkExistingInvitation(
+      dto.group_id,
+      targetUser.user_id
+    );
+
+    if (existingInvitation.rowCount > 0) {
+      throw new BadRequestException('User already has a pending invitation to this group');
+    }
+
+    // Create invitation instead of adding directly
+    const invitationResult = await this.repository.createGroupInvitation({
       group_id: dto.group_id,
-      user_id: targetUser.user_id,
-      role: dto.role || 'member',
-      nickname: dto.nickname,
+      inviter_id: adminUserId,
+      invited_user_id: targetUser.user_id,
     });
 
-    const newMember = new GroupMember(result.rows[0]);
+    const invitation = new GroupInvitation(invitationResult.rows[0]);
 
-    // TODO: Send notification to invited user
-    // this.eventBus.publish(new GroupMemberInvitedEvent(...));
+    // Get group and inviter details for notification
+    const group = groupResult.rows[0];
+    const inviter = await this.userService.findById(adminUserId);
+
+    // Send notification to invited user
+    await this.eventBus.publish(
+      new GroupInvitationEvent(
+        targetUser.user_id,
+        dto.group_id,
+        group.name,
+        adminUserId,
+        inviter.full_name || inviter.username || 'A user',
+        invitation.invitation_id,
+      )
+    );
 
     return {
       success: true,
-      message: `Successfully invited ${targetUser.username} to the group`,
-      member: newMember,
+      message: `Successfully sent invitation to ${targetUser.username}`,
+      invitation: invitation,
       invited_user: {
         user_id: targetUser.user_id,
         username: targetUser.username,

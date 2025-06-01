@@ -68,17 +68,17 @@ export default function NotificationsPage() {
       // Mark as read if not already read
       if (!notification.is_read) {
         await notificationService.markAsRead(notification.notify_id);
-        
+
         // Update local state
-        setNotifications(prev => 
-          prev.map(item => 
-            item.notify_id === notification.notify_id 
-              ? { ...item, is_read: true } 
+        setNotifications(prev =>
+          prev.map(item =>
+            item.notify_id === notification.notify_id
+              ? { ...item, is_read: true }
               : item
           )
         );
       }
-      
+
       // Navigate to the relevant page
       const url = notificationService.getNotificationUrl(notification);
       if (url !== '#') {
@@ -86,6 +86,40 @@ export default function NotificationsPage() {
       }
     } catch (err) {
       console.error('Error handling notification click:', err);
+    }
+  };
+
+  // Handle notification action (Accept/Decline)
+  const handleNotificationAction = async (action: any, notification: NotificationModel, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent notification click
+
+    try {
+      console.log('🎯 Handling notification action:', action);
+
+      const result = await notificationService.handleNotificationAction(action);
+      console.log('✅ Action result:', result);
+
+      // Show success message
+      antNotification.success({
+        message: 'Thành công',
+        description: result.message || `${action.label} thành công`,
+        placement: 'topRight',
+        duration: 3,
+      });
+
+      // Remove the notification from list after action
+      setNotifications(prev =>
+        prev.filter(item => item.notify_id !== notification.notify_id)
+      );
+
+    } catch (err: any) {
+      console.error('❌ Error handling notification action:', err);
+      antNotification.error({
+        message: 'Lỗi',
+        description: err.response?.data?.message || `Không thể ${action.label.toLowerCase()}`,
+        placement: 'topRight',
+        duration: 5,
+      });
     }
   };
 
@@ -122,16 +156,30 @@ export default function NotificationsPage() {
 
     // Setup WebSocket listener for new notifications
     const handleWebSocketNotification = (data: any) => {
-      console.log('Received WebSocket notification:', data);
+      console.log('🔔 Notifications Page: Received WebSocket notification:', data);
       const notification = new NotificationModel(data);
       handleNewNotification(notification);
     };
 
-    // Add WebSocket listener
+    // Setup WebSocket listener for new notifications
+    console.log('🔔 Notifications Page: Setting up WebSocket listener...');
+
+    // Add listener first
     websocketService.on(WebsocketEvent.NOTIFICATION_CREATED, handleWebSocketNotification);
+    console.log('🔔 Notifications Page: WebSocket listener added for NOTIFICATION_CREATED');
+
+    // Connect WebSocket
+    websocketService.connect().then(() => {
+      console.log('🔔 Notifications Page: WebSocket connected successfully');
+      const debugInfo = websocketService.getDebugInfo();
+      console.log('🔔 Notifications Page: WebSocket debug info:', debugInfo);
+    }).catch(error => {
+      console.error('🔔 Notifications Page: WebSocket connection failed:', error);
+    });
 
     // Cleanup WebSocket listener
     return () => {
+      console.log('🔔 Notifications Page: Cleaning up WebSocket listener');
       websocketService.off(WebsocketEvent.NOTIFICATION_CREATED, handleWebSocketNotification);
     };
   }, [loadNotifications, handleNewNotification]);
@@ -192,15 +240,34 @@ export default function NotificationsPage() {
                     </div>
                   }
                   description={
-                    <Text type="secondary">
-                      {new Date(notification.created_at).toLocaleString('vi-VN', {
-                        year: 'numeric',
-                        month: 'numeric',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric'
-                      })}
-                    </Text>
+                    <div className="space-y-2">
+                      <Text type="secondary">
+                        {new Date(notification.created_at).toLocaleString('vi-VN', {
+                          year: 'numeric',
+                          month: 'numeric',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: 'numeric'
+                        })}
+                      </Text>
+
+                      {/* Action buttons for group invitations */}
+                      {notificationService.hasActions(notification) && (
+                        <div className="flex gap-2 mt-2">
+                          {notificationService.getActions(notification).map((action, index) => (
+                            <Button
+                              key={index}
+                              size="small"
+                              type={action.type === 'accept' ? 'primary' : 'default'}
+                              className={action.type === 'accept' ? 'bg-green-500 hover:bg-green-600' : ''}
+                              onClick={(e) => handleNotificationAction(action, notification, e)}
+                            >
+                              {action.label}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   }
                 />
               </List.Item>

@@ -11,6 +11,7 @@ export class GroupInvitationEvent {
     public readonly groupName: string,
     public readonly inviterId: number,
     public readonly inviterName: string,
+    public readonly invitationId: number,
   ) {}
 }
 

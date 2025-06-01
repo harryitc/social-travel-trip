@@ -26,6 +26,7 @@ import { GetPinnedMessagesDto } from '../dto/get-pinned-messages.dto';
 import { GenerateJoinQRCodeDto } from '../dto/generate-join-qrcode.dto';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
 import { InviteMemberDto } from '../dto/invite-member.dto';
+import { RespondInvitationDto } from '../dto/respond-invitation.dto';
 import { JwtAuthGuard } from '@modules/auth/jwt.guard';
 import { GroupService } from '../services/group.service';
 
@@ -195,5 +196,12 @@ export class GroupController {
   async inviteMember(@Body() dto: InviteMemberDto, @Request() req: any) {
     const userId = req['user']?.user_id ?? 'test';
     return this.service.inviteMember(dto, +userId);
+  }
+
+  @Post('respond-invitation')
+  @ApiOperation({ summary: 'Accept or decline a group invitation' })
+  async respondInvitation(@Body() dto: RespondInvitationDto, @Request() req: any) {
+    const userId = req['user']?.user_id ?? 'test';
+    return this.service.respondInvitation(dto, +userId);
   }
 }

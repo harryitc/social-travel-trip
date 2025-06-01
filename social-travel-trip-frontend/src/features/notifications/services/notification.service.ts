@@ -186,5 +186,39 @@ export const notificationService = {
       default:
         return '#';
     }
+  },
+
+  /**
+   * Handle notification action (Accept/Decline invitation, etc.)
+   * @param action Action object from notification
+   * @returns Promise with action result
+   */
+  async handleNotificationAction(action: any): Promise<any> {
+    try {
+      const endpoint = `${API_ENDPOINT.social_travel_trip}${action.api_endpoint}`;
+      const response = await Http.post(endpoint, action.payload);
+      return response;
+    } catch (error) {
+      console.error('Error handling notification action:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Check if notification has actions
+   * @param notification Notification object
+   * @returns Boolean indicating if notification has actions
+   */
+  hasActions(notification: NotificationModel): boolean {
+    return notification.json_data?.actions && Array.isArray(notification.json_data.actions) && notification.json_data.actions.length > 0;
+  },
+
+  /**
+   * Get notification actions
+   * @param notification Notification object
+   * @returns Array of actions or empty array
+   */
+  getActions(notification: NotificationModel): any[] {
+    return notification.json_data?.actions || [];
   }
 };

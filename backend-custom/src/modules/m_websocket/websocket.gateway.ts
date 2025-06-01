@@ -21,7 +21,7 @@ import { WebsocketService } from './websocket.service';
     methods: ['GET', 'POST'],
     credentials: true,
   },
-  namespace: '/social',
+  namespace: 'social',
   transports: ['websocket', 'polling'],
 })
 export class WebsocketGateway
@@ -87,7 +87,9 @@ export class WebsocketGateway
     try {
       const token = this.extractTokenFromHeader(client);
       if (!token) {
-        this.logger.warn(`No token provided for client: ${client.id} - allowing connection for debugging`);
+        this.logger.warn(
+          `No token provided for client: ${client.id} - allowing connection for debugging`,
+        );
 
         // For debugging: allow connection without token
         client.data.user = { sub: 'anonymous', username: 'anonymous' };
@@ -159,7 +161,9 @@ export class WebsocketGateway
     const { authorization } = client.handshake.headers;
     const authToken = client.handshake.auth?.token;
 
-    this.logger.debug(`Authorization header: ${authorization || 'not provided'}`);
+    this.logger.debug(
+      `Authorization header: ${authorization || 'not provided'}`,
+    );
     this.logger.debug(`Auth token: ${authToken || 'not provided'}`);
     this.logger.debug(
       `Full handshake auth:`,
@@ -188,7 +192,9 @@ export class WebsocketGateway
         return token;
       } else {
         // Token without Bearer prefix
-        this.logger.debug(`Token extracted from auth object (no Bearer prefix)`);
+        this.logger.debug(
+          `Token extracted from auth object (no Bearer prefix)`,
+        );
         return authToken;
       }
     }

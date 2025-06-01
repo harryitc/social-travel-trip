@@ -4,7 +4,12 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { CommandHandler, ICommand, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import {
+  CommandHandler,
+  ICommand,
+  ICommandHandler,
+  EventBus,
+} from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
 import { GroupMember } from '../models/group.model';
@@ -90,12 +95,14 @@ export class AddGroupMemberCommandHandler
             group.name,
             adminUserId,
             adminUser.full_name || adminUser.username || 'A user',
-          )
+          ),
         );
       }
     } catch (error) {
       // Log error but don't fail the member addition if notification fails
-      this.logger.error(`Failed to create group invitation notification: ${error.message}`);
+      this.logger.error(
+        `Failed to create group invitation notification: ${error.message}`,
+      );
     }
 
     return new GroupMember(result.rows[0]);

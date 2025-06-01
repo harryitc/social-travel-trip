@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { environment } from '@/config/environment';
 import { getAccessToken } from '@/features/auth/auth.service';
+import { API_ENDPOINT } from '@/config/api.config';
 
 // WebSocket event types
 export enum WebsocketEvent {
@@ -98,7 +99,7 @@ class WebSocketService {
 
     return new Promise((resolve, reject) => {
       try {
-        const socketUrl = `${environment.apiUrl || 'http://localhost:3000'}/social`;
+        const socketUrl = `${API_ENDPOINT.websocket || 'http://localhost:3000'}/social`;
         console.log('WebSocket Service: Connecting to', socketUrl);
         console.log('WebSocket Service: Using token:', token ? token.substring(0, 10) + '...' : 'none');
 
@@ -372,7 +373,7 @@ class WebSocketService {
       reconnectAttempts: this.reconnectAttempts,
       eventHandlersCount: this.eventHandlers.size,
       eventHandlers: Array.from(this.eventHandlers.keys()),
-      socketUrl: `${environment.apiUrl || 'http://localhost:3000'}/social`,
+      socketUrl: `${API_ENDPOINT.websocket || 'http://localhost:3000'}/social`,
       hasToken: !!getAccessToken(),
     };
   }
@@ -380,25 +381,25 @@ class WebSocketService {
   /**
    * Test WebSocket connection with simple ping
    */
-  testConnection(): Promise<boolean> {
-    return new Promise((resolve) => {
-      if (!this.socket?.connected) {
-        console.log('WebSocket Service: Not connected, attempting to connect...');
-        this.connect()
-          .then(() => {
-            console.log('WebSocket Service: Connected successfully for test');
-            resolve(true);
-          })
-          .catch((error) => {
-            console.error('WebSocket Service: Connection test failed:', error);
-            resolve(false);
-          });
-      } else {
-        console.log('WebSocket Service: Already connected');
-        resolve(true);
-      }
-    });
-  }
+  // testConnection(): Promise<boolean> {
+  //   return new Promise((resolve) => {
+  //     if (!this.socket?.connected) {
+  //       console.log('WebSocket Service: Not connected, attempting to connect...');
+  //       this.connect()
+  //         .then(() => {
+  //           console.log('WebSocket Service: Connected successfully for test');
+  //           resolve(true);
+  //         })
+  //         .catch((error) => {
+  //           console.error('WebSocket Service: Connection test failed:', error);
+  //           resolve(false);
+  //         });
+  //     } else {
+  //       console.log('WebSocket Service: Already connected');
+  //       resolve(true);
+  //     }
+  //   });
+  // }
 
   // Group messaging methods
   /**

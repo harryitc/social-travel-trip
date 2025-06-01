@@ -200,7 +200,28 @@ export class NotifySagas {
             group_name: event.groupName,
             inviter_id: event.inviterId,
             inviter_name: event.inviterName,
+            invitation_id: event.invitationId,
             message: `${event.inviterName} invited you to join the group "${event.groupName}"`,
+            actions: [
+              {
+                type: 'accept',
+                label: 'Accept',
+                api_endpoint: '/group/respond-invitation',
+                payload: {
+                  invitation_id: event.invitationId,
+                  response: 'accepted'
+                }
+              },
+              {
+                type: 'decline',
+                label: 'Decline',
+                api_endpoint: '/group/respond-invitation',
+                payload: {
+                  invitation_id: event.invitationId,
+                  response: 'declined'
+                }
+              }
+            ]
           },
         };
 
