@@ -1,5 +1,5 @@
-import DefaultLoading from '@/components/ui/default-loading';
+import FloatingBubblesBackground from "@/components/ui/bubble-loading";
 
 export default function Loading() {
-  return <DefaultLoading />;
+  return <FloatingBubblesBackground />;
 }

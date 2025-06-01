@@ -264,3 +264,11 @@
     word-break: break-all;
   }
 }
+
+
+
+/* Cố định bug của Radix ScrollArea gây lỗi truncate */
+[data-radix-scroll-area-viewport] > div {
+  display: block !important;
+  min-width: 0 !important;
+}
