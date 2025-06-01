@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/radix-ui/toaster";
+import RouteLoader from "./route-loader"; // sẽ tạo ở bước sau
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-linear-to-br from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 min-h-screen`}>
         <AntdProviderLayout>
           <ThemeProvider attribute="class" defaultTheme="light">
+              <RouteLoader />
               {children}
           </ThemeProvider>
         </AntdProviderLayout>
