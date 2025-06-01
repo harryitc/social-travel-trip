@@ -1,88 +1,36 @@
-# Social Travel Trip
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Social Travel Trip là một ứng dụng web giúp người dùng khám phá, chia sẻ và lưu giữ những kỷ niệm du lịch của họ. Dự án được xây dựng bằng [Next.js](https://nextjs.org/) và tích hợp với các công nghệ hiện đại như Tailwind CSS, React, và nhiều thư viện hỗ trợ khác.
+## Getting Started
 
-<div>
-    <img align="center" width="400" src="demo/home.png" />
-</div>
+First, run the development server:
 
-## 🚀 Tính năng chính
-
-- **Khám phá địa điểm**: Duyệt qua các địa điểm du lịch phổ biến và tìm kiếm cảm hứng cho chuyến đi tiếp theo.
-- **Blog du lịch**: Viết và chia sẻ trải nghiệm du lịch của bạn với cộng đồng.
-- **Lưu giữ kỷ niệm**: Tạo album ảnh và lưu giữ những khoảnh khắc đáng nhớ.
-- **Tích hợp bản đồ**: Xem vị trí các địa điểm trên bản đồ tương tác.
-- **Xác thực người dùng**: Đăng nhập và đăng ký tài khoản để cá nhân hóa trải nghiệm.
-
-## 🛠️ Công nghệ sử dụng
-
-- **Frontend**: [Next.js](https://nextjs.org/), [React](https://reactjs.org/), [Tailwind CSS](https://tailwindcss.com/)
-- **Backend**: Tích hợp API với Next.js
-- **Thư viện hỗ trợ**:
-  - `lucide-react` để hiển thị biểu tượng
-  - `date-fns` để xử lý ngày tháng
-  - `react-map-gl` để tích hợp bản đồ
-
-## 📂 Cấu trúc thư mục
-
-
-```plaintext
-.
-├── app/
-│   ├── globals.css          # File CSS toàn cục
-│   ├── layout.tsx           # Layout chính của ứng dụng
-│   ├── page.tsx             # Trang chính
-│   ├── providers.tsx        # Cung cấp context và provider
-│   ├── auth/                # Chức năng xác thực
-│   ├── blog/                # Chức năng blog
-│   ├── explore/             # Chức năng khám phá
-├── components/              # Các thành phần giao diện
-├── hooks/                   # Custom hooks
-├── lib/                     # Các thư viện và tiện ích
-├── .next/                   # Thư mục build của Next.js
-├── public/                  # Tài nguyên tĩnh
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-## 📦 Cài đặt
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-1. Clone dự án:
-   ```bash
-   git clone https://github.com/harryitc/social-travel-trip.git
-   cd social-travel-trip
-   ```
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-2. Cài đặt các gói:
-   ```bash
-   npm install
-   ```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-3. Chạy ứng dụng:
-   ```bash
-   npm run dev
-   ```
+## Learn More
 
-## 🤝 Chia sẻ cảm nghĩ
+To learn more about Next.js, take a look at the following resources:
 
-Chia sẻ cảm nghĩ của bạn về dự án này và giúp chúng tôi cải thiện nó. Đóng góp của bạn rất quý giá!
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## 📝 Giấy phép
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-Dự án này được cấp phép theo giấy phép MIT. Xem tệp LICENSE để biết thêm thông tin.
+## Deploy on Vercel
 
-## 🤝 Đóng góp
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Chúng tôi rất vui mừng khi nhận được đóng góp từ cộng đồng. Vui lòng xem tệp CONTRIBUTING.md để biết thêm thông tin về cách đóng góp cho dự án này.
-1. Fork dự án này.
-2. Tạo một nhánh mới:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. Thực hiện các thay đổi của bạn và cam kết:
-   ```bash
-   git commit -m "Mô tả ngắn gọn về thay đổi"
-   ```
-4. Đẩy nhánh của bạn lên GitHub:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-5. Tạo một pull request và mô tả các thay đổi của bạn.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
