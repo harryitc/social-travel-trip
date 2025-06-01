@@ -3,6 +3,7 @@ import { ERROR_KEY } from '@/error.config';
 import { notification as Notification } from 'antd';
 import { isWindow } from './utils/windows.util';
 import { isDevMode } from './utils/development-mode.utils';
+import { logoutService } from '@/features/auth/auth.service';
 
 // Biến lưu trữ callback xử lý lỗi tùy chỉnh
 let customErrorHandler: ((error: ApiErrorModel) => void) | null = null;
@@ -13,6 +14,36 @@ let customErrorHandler: ((error: ApiErrorModel) => void) | null = null;
  */
 export const setCustomErrorHandler = (handler: (error: ApiErrorModel) => void) => {
   customErrorHandler = handler;
+};
+
+/**
+ * Xóa handler tùy chỉnh
+ */
+export const clearCustomErrorHandler = (): void => {
+  customErrorHandler = null;
+};
+
+/**
+ * Xử lý lỗi authentication với logout tự động
+ * @param error Đối tượng lỗi API
+ * @param showNotification Có hiển thị thông báo hay không
+ */
+export const handleAuthError = (error: ApiErrorModel, showNotification: boolean = true): void => {
+  if (isWindow()) {
+    if (showNotification) {
+      Notification.warning({
+        message: 'Phiên đăng nhập đã hết hạn',
+        description: error.getErrorMessage(),
+        placement: 'topRight',
+        duration: 3,
+      });
+    }
+
+    // Logout và chuyển hướng sau một khoảng thời gian ngắn
+    setTimeout(() => {
+      logoutService();
+    }, showNotification ? 1500 : 0);
+  }
 };
 
 /**
@@ -30,10 +61,7 @@ export const handleApiError = (error: ApiErrorModel): void => {
 
   // Xử lý lỗi xác thực
   if (error.isAuthError()) {
-    if (isWindow()) {
-      // Chuyển hướng đến trang đăng nhập
-      window.location.href = '/auth/login';
-    }
+    handleAuthError(error, true);
     return;
   }
 
@@ -75,9 +103,7 @@ export const useApiErrorHandler = (
       options.onAuthError();
     } else {
       // Xử lý mặc định
-      if (isWindow()) {
-        window.location.href = '/auth/login';
-      }
+      handleAuthError(error, true);
     }
     return;
   }

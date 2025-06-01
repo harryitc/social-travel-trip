@@ -15,18 +15,13 @@ export const postService = {
   /**
    * Create a new post
    * @param payload Post creation payload
-   * @param files Optional files to upload
    * @returns Promise with created post
    */
   async createPost(payload: CreatePostPayload): Promise<Post> {
-    try {
-      // Create post
-      const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/create`, payload);
-      return new Post(response);
-    } catch (error) {
-      console.error('Error creating post:', error);
-      throw error;
-    }
+    // HTTP interceptor sẽ tự động xử lý lỗi auth
+    // Các lỗi khác sẽ được throw về component để xử lý
+    const response = await Http.post(`${API_ENDPOINT.social_travel_trip}/posts/create`, payload);
+    return new Post(response);
   },
 
   /**
