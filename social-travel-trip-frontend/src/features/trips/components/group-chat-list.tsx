@@ -20,6 +20,8 @@ import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
 import { API_ENDPOINT } from '@/config/api.config';
 import { websocketService } from '@/lib/services/websocket.service';
+import { groupStoreService } from '../services/group-store.service';
+import { useAuth } from '@/features/auth/hooks/use-auth';
 
 type GroupChatListProps = {
   groups: TripGroup[];
@@ -38,12 +40,41 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const [selectedGroupForActions, setSelectedGroupForActions] = useState<TripGroup | null>(null);
   const [createdGroup, setCreatedGroup] = useState<TripGroup | null>(null);
   const emit = useEventStore((state) => state.emit);
+  const { user } = useAuth();
 
   // Setup WebSocket listeners for real-time group member events
   useEffect(() => {
     // Listen for member join events
-    const handleMemberJoined = (data: any) => {
+    const handleMemberJoined = async (data: any) => {
       console.log('👥 Member joined group:', data);
+
+      // Check if the user who joined is the current user
+      const isCurrentUser = user?.user_id && data.newMemberId === user.user_id;
+
+      if (isCurrentUser) {
+        console.log('🎯 Current user joined a new group, loading group info...');
+        try {
+          // Load the full group information
+          const fullGroup = await tripGroupService.getGroupById(data.groupId.toString());
+
+          // Add to store and select it
+          groupStoreService.addGroup(fullGroup);
+          onSelectGroup(fullGroup);
+
+          console.log('✅ Successfully added new group to list and selected it');
+        } catch (error) {
+          console.error('❌ Failed to load group info after join:', error);
+        }
+      } else {
+        // Update group member count in store for existing groups
+        const targetGroup = groups.find(group => group.id === data.groupId.toString());
+        if (targetGroup) {
+          // Update the members count
+          targetGroup.members.count = targetGroup.members.count + 1;
+          // Update the group in store
+          groupStoreService.updateGroup(targetGroup);
+        }
+      }
 
       // Emit event to update group member count
       emit('group:member_added', {
@@ -55,6 +86,15 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
     // Listen for member leave events
     const handleMemberLeft = (data: any) => {
       console.log('👥 Member left group:', data);
+
+      // Update group member count in store
+      const targetGroup = groups.find(group => group.id === data.groupId.toString());
+      if (targetGroup) {
+        // Update the members count
+        targetGroup.members.count = Math.max(0, targetGroup.members.count - 1); // Ensure count doesn't go below 0
+        // Update the group in store
+        groupStoreService.updateGroup(targetGroup);
+      }
 
       // Emit event to update group member count
       emit('group:member_removed', {
@@ -72,7 +112,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
       // Note: WebSocket service doesn't have removeListener method yet
       // This would be implemented if needed for cleanup
     };
-  }, [emit]);
+  }, [emit, groups, user, onSelectGroup]);
 
   const filteredGroups = groups.filter(group => {
     const title = group.title || group.name || '';
@@ -109,7 +149,8 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
     try {
       const joinData = new JoinTripGroupData({ qrCode });
       const result = await tripGroupService.joinGroup(joinData);
-      setShowJoinDialog(false);
+
+      console.log('🎯 [GroupChatList] Join group result:', result);
 
       // Show success notification with proper group name
       const groupName = result.title || result.name || 'nhóm';
@@ -120,8 +161,14 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
         duration: 1.5,
       });
 
-      // Emit event using Zustand
+      // Emit event using Zustand - emit before closing dialog
+      console.log('📡 [GroupChatList] Emitting group:joined event:', result);
       emit('group:joined', { group: result });
+
+      // Close dialog after a small delay to ensure event is processed
+      setTimeout(() => {
+        setShowJoinDialog(false);
+      }, 100);
     } catch (error: any) {
       console.error('Error joining group:', error);
 

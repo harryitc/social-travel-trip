@@ -40,6 +40,7 @@ import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
 import { formatMessageTimestamp, formatDetailedTimestamp } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { groupStoreService } from './services/group-store.service';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -475,6 +476,14 @@ export function TripChat({ tripId }: TripChatProps) {
         };
 
         setMessages(prev => [...prev, systemMessage]);
+
+        // Update group member count in store
+        const groups = groupStoreService.getGroups();
+        const targetGroup = groups.find(group => group.id === data.groupId.toString());
+        if (targetGroup) {
+          targetGroup.members.count = targetGroup.members.count + 1;
+          groupStoreService.updateGroup(targetGroup);
+        }
       }
     };
 
@@ -499,6 +508,14 @@ export function TripChat({ tripId }: TripChatProps) {
         };
 
         setMessages(prev => [...prev, systemMessage]);
+
+        // Update group member count in store
+        const groups = groupStoreService.getGroups();
+        const targetGroup = groups.find(group => group.id === data.groupId.toString());
+        if (targetGroup) {
+          targetGroup.members.count = Math.max(0, targetGroup.members.count - 1);
+          groupStoreService.updateGroup(targetGroup);
+        }
       }
     };
 

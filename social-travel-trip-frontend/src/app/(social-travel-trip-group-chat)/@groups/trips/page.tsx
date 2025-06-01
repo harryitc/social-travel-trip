@@ -44,6 +44,11 @@ export default function GroupsPage() {
       groupStoreService.addGroup(data.group);
       handleSelectGroup(data.group);
     },
+    'group:joined': (data) => {
+      console.log('Group joined event received:', data);
+      groupStoreService.addGroup(data.group);
+      handleSelectGroup(data.group);
+    },
     'group:updated': (data) => {
       console.log('Group updated event received:', data);
       groupStoreService.updateGroup(data.group);

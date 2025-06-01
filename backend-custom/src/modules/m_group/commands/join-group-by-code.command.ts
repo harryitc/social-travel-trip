@@ -100,20 +100,20 @@ export class JoinGroupByCodeCommandHandler
       success: response.success
     }));
 
-    // Send WebSocket notification to existing group members about new member
+    // Send WebSocket notification to all group members (including the new member)
     try {
-      const existingMemberIds = initialMembersResult.rows.map((m) => m.user_id);
+      const allMemberIds = [...initialMembersResult.rows.map((m) => m.user_id), userId];
       const newMemberData = new GroupMember(result.rows[0]);
 
       this.websocketService.notifyGroupMemberJoined(
         group.group_id,
-        existingMemberIds, // Notify existing members (not including the new member)
+        allMemberIds, // Notify all members (including the new member)
         userId,
         newMemberData,
       );
 
       this.logger.debug(
-        `📡 Sent WebSocket notification for user ${userId} joining group ${group.group_id}`,
+        `📡 Sent WebSocket notification for user ${userId} joining group ${group.group_id} to ${allMemberIds.length} members`,
       );
     } catch (error) {
       this.logger.error(

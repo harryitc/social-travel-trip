@@ -68,12 +68,19 @@ class GroupStoreService {
   }
 
   /**
-   * Thêm group mới vào store
+   * Thêm group mới vào store (hoặc cập nhật nếu đã tồn tại)
    */
   addGroup(group: TripGroup): void {
     const store = useGroupStore.getState();
-    store.addGroup(group);
-    console.log('✅ [GroupStoreService] Group added to store:', group.title);
+    const existingGroup = store.groups.find(g => g.id === group.id);
+
+    if (existingGroup) {
+      console.log('📝 [GroupStoreService] Group already exists, updating:', group.title);
+      store.updateGroup(group);
+    } else {
+      console.log('✅ [GroupStoreService] Adding new group to store:', group.title);
+      store.addGroup(group);
+    }
   }
 
   /**
