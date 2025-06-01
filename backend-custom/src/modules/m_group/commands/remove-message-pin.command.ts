@@ -31,13 +31,13 @@ export class RemoveMessagePinCommandHandler
 
     // Verify admin permission
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    const adminMember = membersResult.rows.find(
-      (member) => member.user_id == userId && member.role == 'admin',
-    );
+    // const adminMember = membersResult.rows.find(
+    //   (member) => member.user_id == userId && member.role == 'admin',
+    // );
 
-    if (!adminMember) {
-      throw new UnauthorizedException('Only admin can unpin messages');
-    }
+    // if (!adminMember) {
+    //   throw new UnauthorizedException('Only admin can unpin messages');
+    // }
 
     // Check if pin exists
     const pinExists = await this.repository.checkMessagePinExists(

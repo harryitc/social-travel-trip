@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './chat-animations.css';
 import { ScrollArea } from '@/components/ui/radix-ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
@@ -40,6 +41,7 @@ import { fileService } from '@/features/file/file.service';
 import { API_ENDPOINT } from '@/config/api.config';
 import { formatMessageTimestamp, formatDetailedTimestamp } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { chatMotionVariants } from './components/chat-motion-variants';
 
 // Transform TripGroupMessage to Message format for UI compatibility
 interface Message {
@@ -1040,20 +1042,47 @@ export function TripChat({ tripId }: TripChatProps) {
               {loading ? (
                 <ChatSkeleton />
               ) : (
-                <div className={`space-y-4 px-2 message-container ${isTyping ? 'typing-mode' : ''}`}>
+                <motion.div
+                  className={`space-y-4 px-2 message-container ${isTyping ? 'typing-mode' : ''}`}
+                  variants={chatMotionVariants.messageContainer}
+                  initial="hidden"
+                  animate="visible"
+                >
                   {/* Loading indicator for older messages */}
-                  {loadingOlderMessages && (
-                    <div className="flex justify-center py-4 animate-in fade-in duration-300">
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <AnimatePresence>
+                    {loadingOlderMessages && (
+                      <motion.div
+                        className="flex justify-center py-4"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
+                          <div className="flex space-x-1">
+                            <motion.div
+                              className="w-2 h-2 bg-purple-500 rounded-full"
+                              variants={chatMotionVariants.typingDot}
+                              animate="animate"
+                            />
+                            <motion.div
+                              className="w-2 h-2 bg-purple-500 rounded-full"
+                              variants={chatMotionVariants.typingDot}
+                              animate="animate"
+                              style={{ animationDelay: '0.1s' }}
+                            />
+                            <motion.div
+                              className="w-2 h-2 bg-purple-500 rounded-full"
+                              variants={chatMotionVariants.typingDot}
+                              animate="animate"
+                              style={{ animationDelay: '0.2s' }}
+                            />
+                          </div>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">Đang tải tin nhắn cũ hơn...</span>
                         </div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Đang tải tin nhắn cũ hơn...</span>
-                      </div>
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   {/* Load more button (optional - shown when not auto-loading) */}
                   {!loadingOlderMessages && hasMoreMessages && !isUserNearTop && messages.length > 0 && (
@@ -1071,23 +1100,45 @@ export function TripChat({ tripId }: TripChatProps) {
                     // Check if this is a system message
                     if (message.isSystemMessage) {
                       return (
-                        <div
+                        <motion.div
                           id={`message-${message.id}`}
                           key={`${message.id}-${index}`}
                           className="flex justify-center my-2"
+                          variants={chatMotionVariants.message}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
                         >
-                          <div className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700">
+                          <motion.div
+                            className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700"
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          >
                             <span className="flex items-center gap-2">
                               {message.systemMessageType === 'member_joined' && (
-                                <span className="text-green-500">👋</span>
+                                <motion.span
+                                  className="text-green-500"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ delay: 0.2, type: "spring", stiffness: 500 }}
+                                >
+                                  👋
+                                </motion.span>
                               )}
                               {message.systemMessageType === 'member_left' && (
-                                <span className="text-orange-500">👋</span>
+                                <motion.span
+                                  className="text-orange-500"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ delay: 0.2, type: "spring", stiffness: 500 }}
+                                >
+                                  👋
+                                </motion.span>
                               )}
                               {message.content}
                             </span>
-                          </div>
-                        </div>
+                          </motion.div>
+                        </motion.div>
                       );
                     }
 
@@ -1100,17 +1151,15 @@ export function TripChat({ tripId }: TripChatProps) {
                     // Use combination of id and index to ensure unique keys
                     const uniqueKey = `${message.id}-${index}`;
                     return (
-                      <div
+                      <motion.div
                         id={`message-${message.id}`}
                         key={uniqueKey}
-                        className={`flex gap-3 transition-all duration-500 ease-out ${isOwnMessage ? 'flex-row-reverse' : ''
-                          } ${isNewMessage
-                            ? 'new-message-enter new-message-fade animate-optimized'
-                            : ''
-                          }`}
-                        style={isNewMessage ? {
-                          animationFillMode: 'both',
-                        } : undefined}
+                        className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
+                        variants={isNewMessage ? chatMotionVariants.newMessage : chatMotionVariants.message}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        transition={{ delay: index * 0.02 }}
                       >
                         {/* Avatar */}
                         <div className="flex-shrink-0">
@@ -1144,10 +1193,15 @@ export function TripChat({ tripId }: TripChatProps) {
                           </div>
 
                           {/* Message Bubble */}
-                          <div className={`relative px-4 py-2.5 group shadow-sm message-bubble ${isOwnMessage
-                            ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md hover:shadow-lg hover:shadow-purple-500/25'
-                            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600'
-                            }`}>
+                          <motion.div
+                            className={`relative px-4 py-2.5 group shadow-sm ${isOwnMessage
+                              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md'
+                              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md'
+                            }`}
+                            variants={chatMotionVariants.messageBubble}
+                            initial="rest"
+                            whileHover="hover"
+                          >
                             {/* Reply indicator */}
                             {message.replyTo && (
                               <div className={`mb-2 p-2 rounded-lg text-xs flex items-start gap-2 ${isOwnMessage
@@ -1306,151 +1360,285 @@ export function TripChat({ tripId }: TripChatProps) {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
-                          </div>
+                          </motion.div>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
 
                   <div ref={messageEndRef} />
-                </div>
+                </motion.div>
               )}
 
               {/* Scroll to bottom button */}
-              {showScrollToBottom && (
-                <div className="absolute bottom-4 right-4 z-10">
-                  <Button
-                    onClick={scrollToBottom}
-                    className="h-10 w-10 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl scroll-button-enter"
-                    size="icon"
-                    title="Cuộn xuống tin nhắn mới"
+              <AnimatePresence>
+                {showScrollToBottom && (
+                  <motion.div
+                    className="absolute bottom-4 right-4 z-10"
+                    variants={chatMotionVariants.scrollButton}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
                   >
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      animate="bounce"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                      />
-                    </svg>
-                  </Button>
-                </div>
-              )}
+                      <Button
+                        onClick={scrollToBottom}
+                        className="h-10 w-10 rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-xl"
+                        size="icon"
+                        title="Cuộn xuống tin nhắn mới"
+                      >
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                          />
+                        </svg>
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Typing indicator */}
-              {typingUsers.size > 0 && (
-                <div className="absolute bottom-4 left-4 z-10">
-                  <div className="flex gap-3 items-center px-2 animate-in slide-in-from-bottom-2 fade-in duration-300">
-                    <div className="flex-shrink-0">
-                      <div className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center animate-pulse">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        </div>
+              <AnimatePresence>
+                {typingUsers.size > 0 && (
+                  <motion.div
+                    className="absolute bottom-4 left-4 z-10"
+                    variants={chatMotionVariants.typingIndicator}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                  >
+                    <div className="flex gap-3 items-center px-2">
+                      <div className="flex-shrink-0">
+                        <motion.div
+                          className="h-9 w-9 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+                          animate={{ scale: [1, 1.05, 1] }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                        >
+                          <div className="flex space-x-1">
+                            <motion.div
+                              className="w-2 h-2 bg-purple-500 rounded-full"
+                              variants={chatMotionVariants.typingDot}
+                              animate="animate"
+                            />
+                            <motion.div
+                              className="w-2 h-2 bg-purple-500 rounded-full"
+                              variants={chatMotionVariants.typingDot}
+                              animate="animate"
+                              style={{ animationDelay: '0.1s' }}
+                            />
+                            <motion.div
+                              className="w-2 h-2 bg-purple-500 rounded-full"
+                              variants={chatMotionVariants.typingDot}
+                              animate="animate"
+                              style={{ animationDelay: '0.2s' }}
+                            />
+                          </div>
+                        </motion.div>
                       </div>
+                      <motion.div
+                        className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <span className="text-sm text-gray-600 dark:text-gray-400 italic">
+                          {typingUsers.size == 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
+                        </span>
+                      </motion.div>
                     </div>
-                    <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-2 border border-gray-200 dark:border-gray-700 shadow-sm">
-                      <span className="text-sm text-gray-600 dark:text-gray-400 italic">
-                        {typingUsers.size == 1 ? 'Ai đó đang nhập...' : `${typingUsers.size} người đang nhập...`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
             </ScrollArea>
 
             <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 chat-input-area">{/* Input area */}
               {/* Image preview area */}
-              {imagePreviewUrls.length > 0 && (
-                <div className="mb-3 animate-in slide-in-from-bottom-2 fade-in duration-300">
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Hình ảnh ({imagePreviewUrls.length})
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {imagePreviewUrls.map((url, index) => (
-                      <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm transform transition-all duration-200 hover:scale-105">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={url} alt="preview" className="w-full h-full object-cover transition-transform duration-200 hover:scale-110" />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 rounded-full shadow-md transition-all duration-200 hover:scale-110"
-                          onClick={() => handleRemoveImage(index)}
+              <AnimatePresence>
+                {imagePreviewUrls.length > 0 && (
+                  <motion.div
+                    className="mb-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Hình ảnh ({imagePreviewUrls.length})
+                    </div>
+                    <motion.div
+                      className="flex flex-wrap gap-2"
+                      variants={chatMotionVariants.messageContainer}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {imagePreviewUrls.map((url, index) => (
+                        <motion.div
+                          key={index}
+                          className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm"
+                          variants={chatMotionVariants.fileUpload}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          whileHover={{ scale: 1.05 }}
+                          transition={{ delay: index * 0.05 }}
                         >
-                          <X className="h-3 w-3 text-white" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <motion.img
+                            src={url}
+                            alt="preview"
+                            className="w-full h-full object-cover"
+                            whileHover={{ scale: 1.1 }}
+                            transition={{ duration: 0.2 }}
+                          />
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute -top-1 -right-1 h-5 w-5 p-0 bg-red-500 hover:bg-red-600 rounded-full shadow-md"
+                              onClick={() => handleRemoveImage(index)}
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </Button>
+                          </motion.div>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* File preview area */}
-              {selectedFiles.length > 0 && (
-                <div className="mb-3 animate-in slide-in-from-bottom-2 fade-in duration-300">
-                  <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Tệp đính kèm ({selectedFiles.length})
-                  </div>
-                  <div className="space-y-2">
-                    {selectedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-md">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md transition-colors duration-200">
-                            <FileIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium truncate max-w-[200px]">{file.name}</span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">{Math.round(file.size / 1024)} KB</span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 hover:scale-110"
-                          onClick={() => handleRemoveFile(index)}
+              <AnimatePresence>
+                {selectedFiles.length > 0 && (
+                  <motion.div
+                    className="mb-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Tệp đính kèm ({selectedFiles.length})
+                    </div>
+                    <motion.div
+                      className="space-y-2"
+                      variants={chatMotionVariants.messageContainer}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {selectedFiles.map((file, index) => (
+                        <motion.div
+                          key={index}
+                          className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                          variants={chatMotionVariants.fileUpload}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          whileHover={{ scale: 1.02, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+                          transition={{ delay: index * 0.05 }}
                         >
-                          <X className="h-3 w-3 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                          <div className="flex items-center gap-2">
+                            <motion.div
+                              className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md"
+                              whileHover={{ scale: 1.1 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <FileIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </motion.div>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium truncate max-w-[200px]">{file.name}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{Math.round(file.size / 1024)} KB</span>
+                            </div>
+                          </div>
+                          <motion.div
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 p-0 hover:bg-red-100 dark:hover:bg-red-900/30"
+                              onClick={() => handleRemoveFile(index)}
+                            >
+                              <X className="h-3 w-3 text-red-500" />
+                            </Button>
+                          </motion.div>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Reply preview */}
-              {replyingTo && (
-                <div className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between animate-in slide-in-from-bottom-2 fade-in duration-300 transform hover:scale-[1.02] transition-transform">
-                  <div className="flex items-center gap-2">
-                    <MessageSquareQuote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    <div>
-                      <div className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                        Đang trả lời {replyingTo.sender.name}
-                      </div>
-                      <div className="text-sm text-blue-600 dark:text-blue-400 truncate message-content max-w-[250px]">
-                        {replyingTo.content}
+              <AnimatePresence>
+                {replyingTo && (
+                  <motion.div
+                    className="mb-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between"
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <motion.div
+                        initial={{ rotate: 0 }}
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <MessageSquareQuote className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      </motion.div>
+                      <div>
+                        <div className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                          Đang trả lời {replyingTo.sender.name}
+                        </div>
+                        <div className="text-sm text-blue-600 dark:text-blue-400 truncate message-content max-w-[250px]">
+                          {replyingTo.content}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800 transition-all duration-200 hover:scale-110"
-                    onClick={cancelReply}
-                  >
-                    <X className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-                  </Button>
-                </div>
-              )}
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 p-0 hover:bg-blue-200 dark:hover:bg-blue-800"
+                        onClick={cancelReply}
+                      >
+                        <X className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Input controls */}
-              <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 transition-all duration-200 focus-within:border-purple-300 focus-within:shadow-lg focus-within:shadow-purple-500/10">
+              <motion.div
+                className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 transition-all duration-200 focus-within:border-purple-300 focus-within:shadow-lg focus-within:shadow-purple-500/10"
+                initial={{ scale: 1 }}
+                whileHover={{ scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
                 <input
                   type="file"
                   accept="image/*"
@@ -1469,24 +1657,34 @@ export function TripChat({ tripId }: TripChatProps) {
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => imageInputRef.current?.click()}
-                    title="Tải lên hình ảnh"
-                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full transition-all duration-200 hover:scale-110"
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <ImageIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => fileInputRef.current?.click()}
-                    title="Đính kèm tệp"
-                    className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full transition-all duration-200 hover:scale-110"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => imageInputRef.current?.click()}
+                      title="Tải lên hình ảnh"
+                      className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Đính kèm tệp"
+                      className="h-8 w-8 text-gray-500 hover:text-blue-600 hover:bg-blue-100 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 rounded-full"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
                   <EmojiPicker onEmojiSelect={handleEmojiSelect} />
 
                 </div>
@@ -1501,26 +1699,39 @@ export function TripChat({ tripId }: TripChatProps) {
                 />
 
                 {/* Send button */}
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={(!newMessage.trim() && selectedImages.length == 0 && selectedFiles.length == 0) || sendingMessage}
-                  className={`h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${sendingMessage ? 'animate-spin' : 'hover:scale-110'
-                    }`}
-                  title={
-                    sendingMessage
-                      ? "Đang gửi..."
-                      : newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0
-                        ? "Gửi tin nhắn"
-                        : "Nhập tin nhắn để gửi"
-                  }
+                <motion.div
+                  whileHover={{ scale: sendingMessage ? 1 : 1.1 }}
+                  whileTap={{ scale: sendingMessage ? 1 : 0.9 }}
+                  animate={sendingMessage ? { rotate: 360 } : { rotate: 0 }}
+                  transition={{
+                    rotate: { duration: 1, repeat: sendingMessage ? Infinity : 0, ease: "linear" },
+                    scale: { type: "spring", stiffness: 400, damping: 25 }
+                  }}
                 >
-                  {sendingMessage ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <SendHorizontal className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={(!newMessage.trim() && selectedImages.length == 0 && selectedFiles.length == 0) || sendingMessage}
+                    className="h-8 w-8 p-0 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white rounded-full shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={
+                      sendingMessage
+                        ? "Đang gửi..."
+                        : newMessage.trim() || selectedImages.length > 0 || selectedFiles.length > 0
+                          ? "Gửi tin nhắn"
+                          : "Nhập tin nhắn để gửi"
+                    }
+                  >
+                    {sendingMessage ? (
+                      <motion.div
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                    ) : (
+                      <SendHorizontal className="h-4 w-4" />
+                    )}
+                  </Button>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
         ) : (

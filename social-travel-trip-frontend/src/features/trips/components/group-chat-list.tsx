@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TripGroup, CreateTripGroupData, JoinTripGroupData } from '../models/trip-group.model';
 import { tripGroupService } from '../services/trip-group.service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
@@ -22,6 +23,7 @@ import { API_ENDPOINT } from '@/config/api.config';
 import { websocketService } from '@/lib/services/websocket.service';
 import { groupStoreService } from '../services/group-store.service';
 import { useAuth } from '@/features/auth/hooks/use-auth';
+import { chatMotionVariants } from './chat-motion-variants';
 
 type GroupChatListProps = {
   groups: TripGroup[];
@@ -288,17 +290,29 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
 
       {/* Group list */}
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2">
+        <motion.div
+          className="p-3 space-y-2"
+          variants={chatMotionVariants.groupList}
+          initial="hidden"
+          animate="visible"
+        >
           {filteredGroups.length > 0 ? (
-            filteredGroups.map((group) => (
-              <div
-                key={group.id}
-                className={`relative group/item rounded-xl transition-all duration-200 ${
-                  group.id === selectedGroupId
-                    ? 'bg-blue-50 border border-blue-200 shadow-sm dark:bg-blue-900/20 dark:border-blue-800'
-                    : 'hover:bg-gray-50 border border-transparent dark:hover:bg-gray-800'
-                }`}
-              >
+            <AnimatePresence>
+              {filteredGroups.map((group, index) => (
+                <motion.div
+                  key={group.id}
+                  variants={chatMotionVariants.groupItem}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ delay: index * 0.05 }}
+                  whileHover="hover"
+                  className={`relative group/item rounded-xl ${
+                    group.id === selectedGroupId
+                      ? 'bg-blue-50 border border-blue-200 shadow-sm dark:bg-blue-900/20 dark:border-blue-800'
+                      : 'hover:bg-gray-50 border border-transparent dark:hover:bg-gray-800'
+                  }`}
+                >
                 <button
                   className="w-full flex items-center gap-3 p-3 text-left"
                   onClick={() => onSelectGroup(group)}
@@ -356,10 +370,16 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                     currentUserId={1} // TODO: Get from auth context
                   />
                 </div>
-              </div>
-            ))
+                </motion.div>
+              ))}
+            </AnimatePresence>
           ) : (
-            <div className="py-16 text-center">
+            <motion.div
+              className="py-16 text-center"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
               <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center dark:bg-gray-800">
                 <Search className="h-8 w-8 text-gray-400" />
               </div>
@@ -367,17 +387,22 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
                 Thử tìm kiếm với từ khóa khác hoặc tạo nhóm mới để bắt đầu
               </p>
-              <Button
-                size="sm"
-                onClick={() => setShowCreateDialog(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Tạo nhóm mới
-              </Button>
-            </div>
+                <Button
+                  size="sm"
+                  onClick={() => setShowCreateDialog(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Tạo nhóm mới
+                </Button>
+              </motion.div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </ScrollArea>
 
       {/* Dialogs */}

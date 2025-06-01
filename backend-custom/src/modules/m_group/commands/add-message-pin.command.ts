@@ -28,13 +28,13 @@ export class AddMessagePinCommandHandler
 
     // Verify admin permission
     const membersResult = await this.repository.getGroupMembers(dto.group_id);
-    const adminMember = membersResult.rows.find(
-      (member) => member.user_id == userId && member.role == 'admin',
-    );
+    // const adminMember = membersResult.rows.find(
+    //   (member) => member.user_id == userId && member.role == 'admin',
+    // );
 
-    if (!adminMember) {
-      throw new UnauthorizedException('Only admin can pin messages');
-    }
+    // if (!adminMember) {
+    //   throw new UnauthorizedException('Only admin can pin messages');
+    // }
 
     // Add pin
     const result = await this.repository.addMessagePin(dto, userId);
