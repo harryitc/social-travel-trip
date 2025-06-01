@@ -315,7 +315,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                       <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate text-sm">
                         {group.title}
                       </h3>
-                      <div className="flex gap-1 ml-2">
+                      {/* <div className="flex gap-1 ml-2">
                         {group.hasPlan && (
                           <Badge variant="secondary" className="bg-green-100 text-green-700 border-0 text-[10px] h-5 px-1.5 dark:bg-green-900/30 dark:text-green-400">
                             KH
@@ -326,7 +326,7 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
                             Riêng tư
                           </Badge>
                         )}
-                      </div>
+                      </div> */}
                     </div>
 
                     <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
