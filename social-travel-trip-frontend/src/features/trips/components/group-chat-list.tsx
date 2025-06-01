@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TripGroup, CreateTripGroupData, JoinTripGroupData } from '../models/trip-group.model';
 import { tripGroupService } from '../services/trip-group.service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/radix-ui/avatar';
@@ -19,6 +19,7 @@ import { LeaveGroupDialog } from './leave-group-dialog';
 import { notification } from 'antd';
 import { useEventStore } from '@/features/stores/event.store';
 import { API_ENDPOINT } from '@/config/api.config';
+import { websocketService } from '@/lib/services/websocket.service';
 
 type GroupChatListProps = {
   groups: TripGroup[];
@@ -37,6 +38,57 @@ export function GroupChatList({ groups, selectedGroupId, onSelectGroup }: GroupC
   const [selectedGroupForActions, setSelectedGroupForActions] = useState<TripGroup | null>(null);
   const [createdGroup, setCreatedGroup] = useState<TripGroup | null>(null);
   const emit = useEventStore((state) => state.emit);
+
+  // Setup WebSocket listeners for real-time group member events
+  useEffect(() => {
+    // Listen for member join events
+    const handleMemberJoined = (data: any) => {
+      console.log('👥 Member joined group:', data);
+
+      // Show notification
+      notification.info({
+        message: 'Thành viên mới',
+        description: `${data.member?.username || 'Một thành viên'} đã tham gia nhóm`,
+        placement: 'topRight',
+        duration: 3,
+      });
+
+      // Emit event to update group member count
+      emit('group:member_added', {
+        groupId: data.groupId,
+        member: data.member
+      });
+    };
+
+    // Listen for member leave events
+    const handleMemberLeft = (data: any) => {
+      console.log('👥 Member left group:', data);
+
+      // Show notification
+      notification.info({
+        message: 'Thành viên rời nhóm',
+        description: `Một thành viên đã rời khỏi nhóm`,
+        placement: 'topRight',
+        duration: 3,
+      });
+
+      // Emit event to update group member count
+      emit('group:member_removed', {
+        groupId: data.groupId,
+        memberId: data.leftMemberId
+      });
+    };
+
+    // Register WebSocket event listeners
+    websocketService.onGroupMemberJoined(handleMemberJoined);
+    websocketService.onGroupMemberLeft(handleMemberLeft);
+
+    // Cleanup function to remove listeners
+    return () => {
+      // Note: WebSocket service doesn't have removeListener method yet
+      // This would be implemented if needed for cleanup
+    };
+  }, [emit]);
 
   const filteredGroups = groups.filter(group => {
     const title = group.title || group.name || '';

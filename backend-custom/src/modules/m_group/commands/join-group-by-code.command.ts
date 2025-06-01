@@ -3,6 +3,7 @@ import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { JoinGroupByCodeDto } from '../dto/join-group-by-code.dto';
 import { GroupMember } from '../models/group.model';
+import { WebsocketService } from '../../m_websocket/websocket.service';
 
 export class JoinGroupByCodeCommand implements ICommand {
   constructor(
@@ -17,7 +18,10 @@ export class JoinGroupByCodeCommandHandler
 {
   private readonly logger = new Logger(JoinGroupByCodeCommand.name);
 
-  constructor(private readonly repository: GroupRepository) {}
+  constructor(
+    private readonly repository: GroupRepository,
+    private readonly websocketService: WebsocketService,
+  ) {}
 
   async execute(command: JoinGroupByCodeCommand): Promise<any> {
     const { dto, userId } = command;
@@ -95,6 +99,28 @@ export class JoinGroupByCodeCommandHandler
       memberCount: response.members.count,
       success: response.success
     }));
+
+    // Send WebSocket notification to existing group members about new member
+    try {
+      const existingMemberIds = initialMembersResult.rows.map((m) => m.user_id);
+      const newMemberData = new GroupMember(result.rows[0]);
+
+      this.websocketService.notifyGroupMemberJoined(
+        group.group_id,
+        existingMemberIds, // Notify existing members (not including the new member)
+        userId,
+        newMemberData,
+      );
+
+      this.logger.debug(
+        `📡 Sent WebSocket notification for user ${userId} joining group ${group.group_id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to send WebSocket notification for group join: ${error.message}`,
+      );
+      // Don't fail the command if WebSocket notification fails
+    }
 
     return response;
   }

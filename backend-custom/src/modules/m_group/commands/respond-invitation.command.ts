@@ -3,6 +3,8 @@ import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { RespondInvitationDto } from '../dto/respond-invitation.dto';
 import { GroupInvitation } from '../models/group-invitation.model';
+import { GroupMember } from '../models/group.model';
+import { WebsocketService } from '../../m_websocket/websocket.service';
 
 export class RespondInvitationCommand implements ICommand {
   constructor(
@@ -17,7 +19,10 @@ export class RespondInvitationCommandHandler
 {
   private readonly logger = new Logger(RespondInvitationCommand.name);
 
-  constructor(private readonly repository: GroupRepository) {}
+  constructor(
+    private readonly repository: GroupRepository,
+    private readonly websocketService: WebsocketService,
+  ) {}
 
   async execute(command: RespondInvitationCommand): Promise<any> {
     const { dto, userId } = command;
@@ -64,7 +69,7 @@ export class RespondInvitationCommandHandler
     // If accepted, add user to group
     if (dto.response === 'accepted') {
       try {
-        await this.repository.addGroupMember({
+        const addMemberResult = await this.repository.addGroupMember({
           group_id: invitation.group_id,
           user_id: userId,
           role: 'member',
@@ -74,6 +79,33 @@ export class RespondInvitationCommandHandler
         this.logger.log(
           `User ${userId} accepted invitation and joined group ${invitation.group_id}`,
         );
+
+        // Send WebSocket notification to existing group members about new member
+        try {
+          // Get existing group members
+          const membersResult = await this.repository.getGroupMembers(invitation.group_id);
+          const existingMemberIds = membersResult.rows
+            .filter((m) => m.user_id !== userId) // Exclude the new member
+            .map((m) => m.user_id);
+
+          const newMemberData = new GroupMember(addMemberResult.rows[0]);
+
+          this.websocketService.notifyGroupMemberJoined(
+            invitation.group_id,
+            existingMemberIds, // Notify existing members (not including the new member)
+            userId,
+            newMemberData,
+          );
+
+          this.logger.debug(
+            `📡 Sent WebSocket notification for user ${userId} accepting invitation and joining group ${invitation.group_id}`,
+          );
+        } catch (wsError) {
+          this.logger.error(
+            `❌ Failed to send WebSocket notification for invitation acceptance: ${wsError.message}`,
+          );
+          // Don't fail the command if WebSocket notification fails
+        }
       } catch (error) {
         this.logger.error(
           `Failed to add user to group after accepting invitation: ${error.message}`,

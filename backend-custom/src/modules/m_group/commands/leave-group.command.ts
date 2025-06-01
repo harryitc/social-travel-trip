@@ -7,6 +7,7 @@ import {
 import { CommandHandler, ICommand, ICommandHandler } from '@nestjs/cqrs';
 import { GroupRepository } from '../repositories/group.repository';
 import { LeaveGroupDto } from '../dto/leave-group.dto';
+import { WebsocketService } from '../../m_websocket/websocket.service';
 
 export class LeaveGroupCommand implements ICommand {
   constructor(
@@ -21,7 +22,10 @@ export class LeaveGroupCommandHandler
 {
   private readonly logger = new Logger(LeaveGroupCommand.name);
 
-  constructor(private readonly repository: GroupRepository) {}
+  constructor(
+    private readonly repository: GroupRepository,
+    private readonly websocketService: WebsocketService,
+  ) {}
 
   async execute(command: LeaveGroupCommand): Promise<any> {
     const { dto, userId } = command;
@@ -53,6 +57,28 @@ export class LeaveGroupCommandHandler
       dto.group_id,
       userId,
     );
+
+    // Send WebSocket notification to remaining group members about member leaving
+    try {
+      // Get remaining members after the user left
+      const remainingMembersResult = await this.repository.getGroupMembers(dto.group_id);
+      const remainingMemberIds = remainingMembersResult.rows.map((m) => m.user_id);
+
+      this.websocketService.notifyGroupMemberLeft(
+        dto.group_id,
+        remainingMemberIds, // Notify remaining members
+        userId, // User who left
+      );
+
+      this.logger.debug(
+        `📡 Sent WebSocket notification for user ${userId} leaving group ${dto.group_id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to send WebSocket notification for group leave: ${error.message}`,
+      );
+      // Don't fail the command if WebSocket notification fails
+    }
 
     return {
       success: result.rowCount > 0,

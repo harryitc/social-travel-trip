@@ -2,6 +2,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import {
   CommandHandler,
@@ -11,6 +12,7 @@ import {
 import { GroupRepository } from '../repositories/group.repository';
 import { AddGroupMemberDto } from '../dto/add-group-member.dto';
 import { GroupMember } from '../models/group.model';
+import { WebsocketService } from '../../m_websocket/websocket.service';
 
 export class AddGroupMemberCommand implements ICommand {
   constructor(
@@ -23,7 +25,12 @@ export class AddGroupMemberCommand implements ICommand {
 export class AddGroupMemberCommandHandler
   implements ICommandHandler<AddGroupMemberCommand>
 {
-  constructor(private readonly repository: GroupRepository) {}
+  private readonly logger = new Logger(AddGroupMemberCommand.name);
+
+  constructor(
+    private readonly repository: GroupRepository,
+    private readonly websocketService: WebsocketService,
+  ) {}
 
   async execute(command: AddGroupMemberCommand): Promise<any> {
     const { dto, adminUserId } = command;
@@ -69,9 +76,29 @@ export class AddGroupMemberCommandHandler
       nickname: dto.nickname,
     });
 
-    // Note: This is direct member addition, not invitation system
-    // No notification needed as user is added directly by admin
+    const newMemberData = new GroupMember(result.rows[0]);
 
-    return new GroupMember(result.rows[0]);
+    // Send WebSocket notification to existing group members about new member
+    try {
+      const existingMemberIds = adminMembersResult.rows.map((m) => m.user_id);
+
+      this.websocketService.notifyGroupMemberJoined(
+        dto.group_id,
+        existingMemberIds, // Notify existing members (including admin)
+        dto.user_id,
+        newMemberData,
+      );
+
+      this.logger.debug(
+        `📡 Sent WebSocket notification for admin adding user ${dto.user_id} to group ${dto.group_id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `❌ Failed to send WebSocket notification for group member addition: ${error.message}`,
+      );
+      // Don't fail the command if WebSocket notification fails
+    }
+
+    return newMemberData;
   }
 }

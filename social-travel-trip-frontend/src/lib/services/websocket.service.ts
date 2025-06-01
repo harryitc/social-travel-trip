@@ -673,6 +673,58 @@ class WebSocketService {
     }
   }
 
+  // Group event listeners
+  /**
+   * Listen for group message events
+   * @param callback Callback function to handle the event
+   */
+  onGroupMessage(callback: (data: any) => void): void {
+    this.on(WebsocketEvent.GROUP_MESSAGE_SENT, callback);
+  }
+
+  /**
+   * Listen for group message like events
+   * @param callback Callback function to handle the event
+   */
+  onGroupMessageLike(callback: (data: any) => void): void {
+    this.on(WebsocketEvent.GROUP_MESSAGE_LIKED, callback);
+    this.on(WebsocketEvent.GROUP_MESSAGE_UNLIKED, callback);
+  }
+
+  /**
+   * Listen for group message pin events
+   * @param callback Callback function to handle the event
+   */
+  onGroupMessagePin(callback: (data: any) => void): void {
+    this.on(WebsocketEvent.GROUP_MESSAGE_PINNED, callback);
+    this.on(WebsocketEvent.GROUP_MESSAGE_UNPINNED, callback);
+  }
+
+  /**
+   * Listen for group member join events
+   * @param callback Callback function to handle the event
+   */
+  onGroupMemberJoined(callback: (data: any) => void): void {
+    this.on(WebsocketEvent.GROUP_MEMBER_JOINED, callback);
+  }
+
+  /**
+   * Listen for group member leave events
+   * @param callback Callback function to handle the event
+   */
+  onGroupMemberLeft(callback: (data: any) => void): void {
+    this.on(WebsocketEvent.GROUP_MEMBER_LEFT, callback);
+  }
+
+  /**
+   * Listen for group member typing events
+   * @param callback Callback function to handle the event
+   */
+  onGroupMemberTyping(callback: (data: any) => void): void {
+    this.on(WebsocketEvent.GROUP_MEMBER_TYPING, callback);
+    this.on(WebsocketEvent.GROUP_MEMBER_STOP_TYPING, callback);
+  }
+
 
 }
 
