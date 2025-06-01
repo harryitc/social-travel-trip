@@ -283,16 +283,16 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
     const currentReaction = item.stats.user_reaction;
 
     return (
-      <div key={item.comment_id} className={`flex space-x-3 ${isReply ? 'ml-8 mt-3' : ''}`}>
-        <Avatar className="h-8 w-8 shrink-0">
+      <div key={item.comment_id} className={`flex space-x-3 ${isReply ? 'ml-8 mt-3' : 'mt-4'}`}>
+        <Avatar className="h-8 w-8 shrink-0 border border-purple-100 dark:border-purple-900">
           <AvatarImage src={API_ENDPOINT.file_image_v2 + item.author.avatar} alt={item.author.full_name} />
           <AvatarFallback>{item.author.full_name?.[0]}</AvatarFallback>
         </Avatar>
-        <div className="flex-1 space-y-1">
-          <div className="bg-secondary/50 p-2 rounded-md relative group">
+        <div className="flex-1 space-y-1.5">
+          <div className="bg-white dark:bg-gray-800 p-3 rounded-lg relative group border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-start">
-              <div className="font-medium text-sm">{item.author.full_name}</div>
-              <DropdownMenu>
+              <div className="font-medium text-sm text-purple-800 dark:text-purple-300">{item.author.full_name}</div>
+              {/* <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
                     <MoreHorizontal className="h-4 w-4" />
@@ -302,9 +302,9 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
                   <DropdownMenuItem>Báo cáo</DropdownMenuItem>
                   <DropdownMenuItem>Sao chép liên kết</DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
+              </DropdownMenu> */}
             </div>
-            <p className="text-sm">{item.content}</p>
+            <p className="text-sm mt-1">{item.content}</p>
           </div>
           <div className="flex space-x-4 text-xs text-muted-foreground">
             <TooltipProvider>
@@ -424,49 +424,52 @@ export function PostComment({ postId, onCommentAdded }: PostCommentProps) {
         )}
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={API_ENDPOINT.file_image_v2 + currentUser?.avatar} alt={currentUser?.full_name || 'Avatar'} />
-          <AvatarFallback>{currentUser?.full_name?.[0] || 'U'}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 relative">
-          {replyingToName && (
-            <div className="absolute -top-6 left-0 text-xs text-purple-600 dark:text-purple-400">
-              Trả lời {replyingToName}
-              <button
-                className="ml-2 text-muted-foreground hover:text-foreground"
-                onClick={() => {
-                  setReplyTo(null);
-                  setReplyingToName(null);
-                }}
-              >
-                Hủy
-              </button>
-            </div>
-          )}
-          <Input
-            ref={inputRef}
-            placeholder={replyingToName ? `Trả lời ${replyingToName}...` : "Viết bình luận..."}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmitComment();
-              }
-            }}
-            className="flex-1"
-            disabled={submitting}
-          />
+      <div className="mt-6 bg-white dark:bg-gray-800 border border-purple-100 dark:border-purple-800 rounded-lg p-3 shadow-sm">
+        {replyingToName && (
+          <div className="mb-2 px-2 py-1 bg-purple-50 dark:bg-purple-900/20 text-sm text-purple-600 dark:text-purple-400 rounded-md flex items-center justify-between">
+            <span>Trả lời <span className="font-medium">{replyingToName}</span></span>
+            <button
+              className="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              onClick={() => {
+                setReplyTo(null);
+                setReplyingToName(null);
+              }}
+            >
+              <span className="text-xs">✕</span>
+            </button>
+          </div>
+        )}
+        
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-8 w-8 border border-purple-100 dark:border-purple-900">
+            <AvatarImage src={API_ENDPOINT.file_image_v2 + currentUser?.avatar} alt={currentUser?.full_name || 'Avatar'} />
+            <AvatarFallback>{currentUser?.full_name?.[0] || 'U'}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 flex items-center bg-gray-50 dark:bg-gray-900 rounded-full pr-1 border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <Input
+              ref={inputRef}
+              placeholder={replyingToName ? `Trả lời ${replyingToName}...` : "Viết bình luận..."}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmitComment();
+                }
+              }}
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-10"
+              disabled={submitting}
+            />
+            <Button
+              size="sm"
+              onClick={handleSubmitComment}
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-full h-8 w-8 p-0 ml-1 flex items-center justify-center"
+              disabled={!comment.trim() || submitting}
+            >
+              <SendIcon className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <Button
-          size="icon"
-          onClick={handleSubmitComment}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
-          disabled={!comment.trim() || submitting}
-        >
-          <SendIcon className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Likes Modal */}
