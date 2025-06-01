@@ -1,4 +1,4 @@
-# Base image
+# Build stage
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -8,17 +8,16 @@ RUN npm install
 
 COPY . .
 
-# Pass environment file for build
-ARG BUILD_ENV=prod
-COPY .env.${BUILD_ENV} .env
+# Explicitly set NODE_ENV=production during build
+ENV NODE_ENV=production
 
 RUN npm run build
 
-# Production image
+# Production stage
 FROM node:22-alpine AS runner
 
 WORKDIR /app
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
@@ -28,4 +27,3 @@ COPY --from=builder /app/package.json ./package.json
 EXPOSE 4200
 
 CMD ["npm", "start"]
-
