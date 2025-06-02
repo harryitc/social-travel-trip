@@ -58,7 +58,7 @@ export default function LoginForm() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(err?.response?.data?.reasons?.message || 'Đăng nhập không thành công. Vui lòng thử lại.');
+      setError(err?.message || 'Đăng nhập không thành công. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
