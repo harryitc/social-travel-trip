@@ -16,7 +16,9 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV APP_ENV=prod
+
+# ⭐️ thêm dòng này để ép server.js chạy đúng cổng
+ENV PORT=4200
 
 # Copy standalone output
 COPY --from=builder /app/.next/standalone ./
@@ -26,6 +28,7 @@ COPY --from=builder /app/.next/static ./.next/static
 
 # Copy public files if needed
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.ts ./
 
 EXPOSE 4200
 
