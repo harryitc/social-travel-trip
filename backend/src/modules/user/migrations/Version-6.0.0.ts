@@ -10,9 +10,9 @@ module.exports = async (client, schema) => {
     "following_count" integer DEFAULT 0,
     "groups_count" integer DEFAULT 0,
     "trips_count" integer DEFAULT 0,
-    "last_active" timestamp(6),
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6)
+    "last_active" timestamp(6) without timezone,
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone
   );`);
 
   // Create profile_views table for tracking who viewed whose profile
@@ -20,7 +20,7 @@ module.exports = async (client, schema) => {
     "view_id" bigserial PRIMARY KEY,
     "viewer_id" bigint NOT NULL,
     "profile_owner_id" bigint NOT NULL,
-    "viewed_at" timestamp(6)
+    "viewed_at" timestamp(6) without timezone
   );`);
 
   // Create indexes for better performance

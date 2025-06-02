@@ -21,8 +21,8 @@ module.exports = async (client, schema) => {
     "content" varchar(255),
     "json_data" jsonb,
     "comment_shared_id" int8,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone,
     "parent_id" int8,
     "user_id" int8,
     "post_id" int8
