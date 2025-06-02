@@ -4,7 +4,7 @@ module.exports = async (client, schema) => {
     "group_member_id" bigserial PRIMARY KEY,
     "nickname" varchar(100),
     "role" varchar(50),
-    "join_at" timestamp(6),
+    "join_at" timestamp(6) without timezone,
     "group_id" int8,
     "user_id" int8
   );`);
@@ -12,8 +12,8 @@ module.exports = async (client, schema) => {
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."group_messages" (
     "group_message_id" bigserial PRIMARY KEY,
     "message" text,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone,
     "group_id" int8,
     "user_id" int8
   );`);
@@ -25,13 +25,13 @@ module.exports = async (client, schema) => {
     "cover_url" varchar(255),
     "status" varchar(50),
     "json_data" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone,
     "plan_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_likes" (
-    "created_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
     "reaction_id" int default 1,
     "group_message_id" int8,
     "user_id" int8,
@@ -40,7 +40,7 @@ module.exports = async (client, schema) => {
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."message_pins" (
     "message_pin_id" bigserial PRIMARY KEY,
-    "created_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
     "group_message_id" int8,
     "group_id" int8,
     "user_id" int8

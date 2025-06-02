@@ -18,8 +18,8 @@ module.exports = async (client, schema) => {
     "location" jsonb,
     "status" varchar(255),
     "user_created" int8,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6)
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone
     );`);
 
   /**
@@ -43,12 +43,12 @@ module.exports = async (client, schema) => {
     "plan_schedule_id" bigserial PRIMARY KEY,
     "name" varchar(255),
     "description" varchar(255),
-    "start_time" timestamp(6),
-    "end_time" timestamp(6),
+    "start_time" timestamp(6) without timezone,
+    "end_time" timestamp(6) without timezone,
     "location" jsonb,
     "json_data" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone,
     "activity_id" int8,
     "plan_day_place_id" int8
   );`);
@@ -61,8 +61,8 @@ module.exports = async (client, schema) => {
     "plan_id" int8,
     "group_id" int8,
     "user_created" int8,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone,
     UNIQUE (plan_id, group_id)
   );`);
 };

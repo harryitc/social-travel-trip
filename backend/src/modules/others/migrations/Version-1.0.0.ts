@@ -47,8 +47,8 @@ module.exports = async (client, schema) => {
     "place_review_id" bigserial PRIMARY KEY,
     "content" varchar(255),
     "json_data" jsonb,
-    "created_at" timestamp(6),
-    "updated_at" timestamp(6),
+    "created_at" timestamp(6) without timezone,
+    "updated_at" timestamp(6) without timezone,
     "user_id" int8,
     "place_id" int8
   );`);
