@@ -51,7 +51,10 @@ export default function LoginForm() {
         // Đợi một chút để đảm bảo dữ liệu được lưu trước khi chuyển hướng
         setTimeout(() => {
           // Redirect to the original URL or default page
-          router.push(redirectUrl);
+          // router.push(redirectUrl);
+          console.log('redirectUrl:', redirectUrl);
+          console.log('Is browser?', typeof window !== 'undefined');
+          window.location.assign(redirectUrl);
         }, 500);
       } else {
         setError('Đăng nhập không thành công. Vui lòng thử lại.');
