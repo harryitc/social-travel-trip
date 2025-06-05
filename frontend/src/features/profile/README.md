@@ -1,6 +1,6 @@
 # Profile Feature
 
-Tính năng quản lý hồ sơ cá nhân cho ứng dụng Social Travel Trip.
+Tính năng quản lý hồ sơ cá nhân cho ứng dụng TravelLog.
 
 ## Cấu trúc thư mục
 

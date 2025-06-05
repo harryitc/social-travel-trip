@@ -36,7 +36,7 @@ export default function UserWelcome() {
         Xin chào, {user.full_name || user.username}!
       </h2>
       <p className="text-gray-600 dark:text-gray-300">
-        Chào mừng bạn quay trở lại với Social Travel Trip. Hãy khám phá và chia sẻ những trải nghiệm du lịch tuyệt vời của bạn.
+        Chào mừng bạn quay trở lại với TravelLog. Hãy khám phá và chia sẻ những trải nghiệm du lịch tuyệt vời của bạn.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-4">

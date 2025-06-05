@@ -24,7 +24,7 @@ export default function WeatherThemeComponent() {
   }
 
   return (
-    <main className="relative w-full h-screen overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden">
       {/* Sky Backgrounds */}
       <div
         className={`absolute inset-0 transition-opacity duration-1000 ease-in-out z-0 ${
@@ -62,6 +62,6 @@ export default function WeatherThemeComponent() {
       <div className="relative z-10 flex justify-center pt-8">
         <ThemeSelector currentTheme={theme} onThemeChange={changeTheme} />
       </div>
-    </main>
+    </div>
   )
 }

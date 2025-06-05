@@ -24,13 +24,9 @@ services:
 
   backend:
     container_name: backend
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ngoccuong9d/backend-app:latest
     ports:
       - "3000:3000"
-    volumes:
-      - ./upload-v2:/app/upload-v2
     depends_on:
       - postgres
     environment:
@@ -40,9 +36,7 @@ services:
 
   frontend:
     container_name: frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ngoccuong9d/frontend-app:latest
     ports:
       - "4200:4200"
     depends_on:
