@@ -102,7 +102,7 @@ export function SidebarNav() {
               <span className="text-white font-bold">TT</span>
             </div>
             <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-indigo-500">
-              TripTribe
+              TravelLog
             </span>
           </Link>
 

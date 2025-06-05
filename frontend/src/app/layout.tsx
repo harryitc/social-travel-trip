@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'TripTribe - Mạng xã hội du lịch',
+  title: 'TravelLog - Mạng xã hội du lịch',
   description: 'Kết nối những người đam mê du lịch',
   viewport: {
     width: 'device-width',

@@ -6,7 +6,7 @@ import { TopbarNav } from '@/components/common/top-bar';
 import { ReactNode } from 'react';
 
 /**
- * Layout component for Social travel trip pages
+ * Layout component for TravelLog pages
  * @param props Component props
  * @param props.children Child components
  */

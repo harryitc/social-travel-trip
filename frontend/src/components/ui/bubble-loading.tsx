@@ -54,7 +54,7 @@ function FloatingBubbles() {
 }
 
 export default function FloatingBubblesBackground({
-  title = "Social Travel Trip",
+  title = "TravelLog",
 }: {
   title?: string
 }) {

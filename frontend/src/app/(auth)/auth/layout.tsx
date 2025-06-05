@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import WeatherThemeComponent from '@/components/ui/theme-animation/weather';
 
 /**
  * Layout component for authentication pages
@@ -19,7 +20,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
               <span className="text-white font-bold">ST</span>
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">
-              Social Travel Trip
+              TravelLog
             </span>
           </Link>
         </div>
@@ -31,9 +32,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       <footer className="py-4 px-6 border-t border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
         <div className="container mx-auto text-center text-sm text-gray-600 dark:text-gray-400">
-          &copy; {new Date().getFullYear()} Social Travel Trip. All rights reserved.
+          &copy; {new Date().getFullYear()} TravelLog. All rights reserved.
         </div>
       </footer>
+      {/* <WeatherThemeComponent /> */}
     </div>
   );
 }

@@ -1,6 +1,6 @@
-# Social Travel Trip
+# TravelLog
 
-Social Travel Trip là một ứng dụng web giúp người dùng khám phá, chia sẻ và lưu giữ những kỷ niệm du lịch của họ. Dự án được xây dựng bằng [Next.js](https://nextjs.org/) và tích hợp với các công nghệ hiện đại như Tailwind CSS, React, và nhiều thư viện hỗ trợ khác.
+TravelLog là một ứng dụng web giúp người dùng khám phá, chia sẻ và lưu giữ những kỷ niệm du lịch của họ. Dự án được xây dựng bằng [Next.js](https://nextjs.org/) và tích hợp với các công nghệ hiện đại như Tailwind CSS, React, và nhiều thư viện hỗ trợ khác.
 
 <div>
     <img align="center" width="400" src="demo/home.png" />
