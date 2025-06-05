@@ -27,6 +27,8 @@ services:
     image: ngoccuong9d/backend-app:latest
     ports:
       - "3000:3000"
+    volumes:
+      - ./backend/upload-v2:/app/upload-v2
     depends_on:
       - postgres
     environment:
