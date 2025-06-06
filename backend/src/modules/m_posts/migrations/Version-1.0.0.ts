@@ -24,8 +24,8 @@ module.exports = async (client, schema) => {
     "json_data" jsonb,
     "post_shared_id" int8,
     "is_hidden" bool,
-    "created_at" timestamp(6) without timezone,
-    "updated_at" timestamp(6) without timezone,
+    "created_at" timestamp(6) WITHOUT TIME ZONE,
+    "updated_at" timestamp(6) WITHOUT TIME ZONE,
     "user_id" int8
   );`);
 };

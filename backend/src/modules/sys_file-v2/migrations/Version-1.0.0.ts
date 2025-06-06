@@ -11,8 +11,8 @@ module.exports = async (client, schema) => {
     "user_create" varchar(128),
     "user_update" varchar(128),
     "file_size" numeric,
-    "time_create" timestamp(6) without timezone,
-    "time_update" timestamp(6) without timezone,
+    "time_create" timestamp(6) WITHOUT TIME ZONE,
+    "time_update" timestamp(6) WITHOUT TIME ZONE,
     "resize_path" jsonb
   );`);
 };

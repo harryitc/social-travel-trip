@@ -7,7 +7,7 @@ module.exports = async (client, schema) => {
     ADD "gender" bit,
     ADD "address" varchar(255),
     ADD "json_data" jsonb,
-    ADD "created_at" timestamp(6) without timezone,
-    ADD "updated_at" timestamp(6) without timezone
+    ADD "created_at" timestamp(6) WITHOUT TIME ZONE,
+    ADD "updated_at" timestamp(6) WITHOUT TIME ZONE
     ;`);
 };

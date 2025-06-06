@@ -3,7 +3,7 @@ module.exports = async (client, schema) => {
   // Add join_code column to groups table
   await client.query(`ALTER TABLE ${schema}."groups" 
     ADD COLUMN IF NOT EXISTS "join_code" varchar(50),
-    ADD COLUMN IF NOT EXISTS "join_code_expires_at" timestamp(6) without timezone
+    ADD COLUMN IF NOT EXISTS "join_code_expires_at" timestamp(6) WITHOUT TIME ZONE
     ;`);
 
   // Add index for faster lookups

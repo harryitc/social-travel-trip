@@ -3,15 +3,15 @@ module.exports = async (client, schema) => {
     "mini_blog_comment_id" bigserial PRIMARY KEY,
     "message" varchar(255),
     "json_data" jsonb,
-    "created_at" timestamp(6) without timezone,
-    "updated_at" timestamp(6) without timezone,
+    "created_at" timestamp(6) WITHOUT TIME ZONE,
+    "updated_at" timestamp(6) WITHOUT TIME ZONE,
     "mini_blog_id" int8,
     "user_id" int8,
     "parent_id" int8
   );`);
 
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blog_comment_likes" (
-    "created_at" timestamp(6) without timezone,
+    "created_at" timestamp(6) WITHOUT TIME ZONE,
     "mini_blog_comment_id" int8,
     "user_id" int8,
     "reaction_id" int default 1,
@@ -24,8 +24,8 @@ module.exports = async (client, schema) => {
     "description" varchar(255),
     "is_show_map" bit,
     "is_show_timeline" bit,
-    "created_at" timestamp(6) without timezone,
-    "updated_at" timestamp(6) without timezone,
+    "created_at" timestamp(6) WITHOUT TIME ZONE,
+    "updated_at" timestamp(6) WITHOUT TIME ZONE,
     "mini_blog_id" int8
   );`);
   await client.query(`CREATE TABLE IF NOT EXISTS ${schema}."mini_blogs" (
@@ -33,12 +33,12 @@ module.exports = async (client, schema) => {
     "title" varchar(255),
     "slug" varchar(255),
     "description" varchar(255),
-    "day_travel" timestamp(6) without timezone,
+    "day_travel" timestamp(6) WITHOUT TIME ZONE,
     "location" jsonb,
     "thumbnail_url" varchar(255),
     "json_data" jsonb,
-    "created_at" timestamp(6) without timezone,
-    "updated_at" timestamp(6) without timezone,
+    "created_at" timestamp(6) WITHOUT TIME ZONE,
+    "updated_at" timestamp(6) WITHOUT TIME ZONE,
     "user_id" int8
   );`);
 };
