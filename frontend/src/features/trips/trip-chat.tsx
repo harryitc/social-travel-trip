@@ -1197,7 +1197,7 @@ export function TripChat({ tripId }: TripChatProps) {
                             className={`relative px-4 py-2.5 group shadow-sm ${isOwnMessage
                               ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-br-md'
                               : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md'
-                            }`}
+                              }`}
                           >
                             {/* Reply indicator */}
                             {message.replyTo && (
@@ -1466,44 +1466,27 @@ export function TripChat({ tripId }: TripChatProps) {
               {/* Image preview area */}
               <AnimatePresence>
                 {imagePreviewUrls.length > 0 && (
-                  <motion.div
+                  <div
                     className="mb-3"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
                   >
                     <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Hình ảnh ({imagePreviewUrls.length})
                     </div>
-                    <motion.div
+                    <div
                       className="flex flex-wrap gap-2"
-                      variants={chatMotionVariants.messageContainer}
-                      initial="hidden"
-                      animate="visible"
                     >
                       {imagePreviewUrls.map((url, index) => (
-                        <motion.div
+                        <div
                           key={index}
                           className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm"
-                          variants={chatMotionVariants.fileUpload}
-                          initial="hidden"
-                          animate="visible"
-                          exit="exit"
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ delay: index * 0.05 }}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <motion.img
+                          <img
                             src={url}
                             alt="preview"
                             className="w-full h-full object-cover"
-                            whileHover={{ scale: 1.1 }}
-                            transition={{ duration: 0.2 }}
                           />
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                          <div
                           >
                             <Button
                               variant="ghost"
@@ -1513,11 +1496,11 @@ export function TripChat({ tripId }: TripChatProps) {
                             >
                               <X className="h-3 w-3 text-white" />
                             </Button>
-                          </motion.div>
-                        </motion.div>
+                          </div>
+                        </div>
                       ))}
-                    </motion.div>
-                  </motion.div>
+                    </div>
+                  </div>
                 )}
               </AnimatePresence>
 
@@ -1630,11 +1613,8 @@ export function TripChat({ tripId }: TripChatProps) {
               </AnimatePresence>
 
               {/* Input controls */}
-              <motion.div
+              <div
                 className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 transition-all duration-200 focus-within:border-purple-300 focus-within:shadow-lg focus-within:shadow-purple-500/10"
-                initial={{ scale: 1 }}
-                whileHover={{ scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >
                 <input
                   type="file"
@@ -1728,7 +1708,7 @@ export function TripChat({ tripId }: TripChatProps) {
                     )}
                   </Button>
                 </motion.div>
-              </motion.div>
+              </div>
             </div>
           </div>
         ) : (

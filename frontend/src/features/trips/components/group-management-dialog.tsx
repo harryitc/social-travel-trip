@@ -94,12 +94,12 @@ export function GroupManagementDialog({
 
       onGroupUpdated(updatedGroup);
 
-      notification.success({
-        message: 'Cập nhật thành công',
-        description: 'Thông tin nhóm đã được cập nhật',
-        placement: 'topRight',
-        duration: 3,
-      });
+      // notification.success({
+      //   message: 'Cập nhật thành công',
+      //   description: 'Thông tin nhóm đã được cập nhật',
+      //   placement: 'topRight',
+      //   duration: 3,
+      // });
 
     } catch (error: any) {
       console.error('Error updating group:', error);
